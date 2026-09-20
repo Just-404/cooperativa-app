@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cooperativa_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    env_file: ./server/.env
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  db_data:
