@@ -1,15 +1,7 @@
-const evaluacionService = require('../services/evaluacion.service');
+const evaluacion = require('../services/evaluacion.service');
 
-// Controlador del módulo: evaluacion
-// TODO: implementar los endpoints correspondientes a este módulo
-
-async function listar(req, res, next) {
-  try {
-    const data = await evaluacionService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+async function evaluar(req, res, next) {
+  try { res.json(await evaluacion.evaluar(req.params.id, req.body)); } catch (err) { next(err); }
 }
 
-module.exports = { listar };
+module.exports = { evaluar };

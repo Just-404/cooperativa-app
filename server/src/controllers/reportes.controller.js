@@ -1,15 +1,10 @@
-const reportesService = require('../services/reportes.service');
+const reportes = require('../services/reportes.service');
 
-// Controlador del módulo: reportes
-// TODO: implementar los endpoints correspondientes a este módulo
-
-async function listar(req, res, next) {
-  try {
-    const data = await reportesService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+async function resumen(req, res, next) {
+  try { res.json(await reportes.resumenGeneral()); } catch (err) { next(err); }
+}
+async function prestamosPorEstado(req, res, next) {
+  try { res.json(await reportes.prestamosPorEstado()); } catch (err) { next(err); }
 }
 
-module.exports = { listar };
+module.exports = { resumen, prestamosPorEstado };

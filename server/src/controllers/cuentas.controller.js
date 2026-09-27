@@ -1,15 +1,19 @@
-const cuentasService = require('../services/cuentas.service');
-
-// Controlador del módulo: cuentas
-// TODO: implementar los endpoints correspondientes a este módulo
+const cuentas = require('../services/cuentas.service');
 
 async function listar(req, res, next) {
+  try { res.json(await cuentas.listar()); } catch (err) { next(err); }
+}
+async function listarPorSocio(req, res, next) {
+  try { res.json(await cuentas.listarPorSocio(req.params.socioId)); } catch (err) { next(err); }
+}
+async function obtener(req, res, next) {
+  try { res.json(await cuentas.obtener(req.params.id)); } catch (err) { next(err); }
+}
+async function abrir(req, res, next) {
   try {
-    const data = await cuentasService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+    const { socioId, saldoInicial } = req.body;
+    res.status(201).json(await cuentas.abrir(socioId, saldoInicial));
+  } catch (err) { next(err); }
 }
 
-module.exports = { listar };
+module.exports = { listar, listarPorSocio, obtener, abrir };

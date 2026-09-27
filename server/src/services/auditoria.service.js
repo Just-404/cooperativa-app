@@ -1,8 +1,15 @@
-// Lógica de negocio del módulo: auditoria
-// TODO: implementar reglas de negocio (ver Alcance_del_proyecto.docx)
+const { Auditoria } = require('../models');
 
-async function listar() {
-  return [];
+async function registrar({ usuarioId, accion, entidad, entidadId, detalle }) {
+  return Auditoria.create({ usuarioId, accion, entidad, entidadId, detalle });
 }
 
-module.exports = { listar };
+async function listar() {
+  return Auditoria.findAll({
+    include: ['usuario'],
+    order: [['fecha', 'DESC']],
+    limit: 200,
+  });
+}
+
+module.exports = { registrar, listar };

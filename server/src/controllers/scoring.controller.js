@@ -1,15 +1,10 @@
-const scoringService = require('../services/scoring.service');
+const scoring = require('../services/scoring.service');
 
-// Controlador del módulo: scoring
-// TODO: implementar los endpoints correspondientes a este módulo
-
-async function listar(req, res, next) {
-  try {
-    const data = await scoringService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+async function obtenerPorSocio(req, res, next) {
+  try { res.json(await scoring.obtenerPorSocio(req.params.socioId)); } catch (err) { next(err); }
+}
+async function calcular(req, res, next) {
+  try { res.status(201).json(await scoring.calcular(req.params.socioId)); } catch (err) { next(err); }
 }
 
-module.exports = { listar };
+module.exports = { obtenerPorSocio, calcular };

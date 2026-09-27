@@ -1,15 +1,19 @@
-const transaccionesService = require('../services/transacciones.service');
+const transacciones = require('../services/transacciones.service');
 
-// Controlador del módulo: transacciones
-// TODO: implementar los endpoints correspondientes a este módulo
-
-async function listar(req, res, next) {
+async function listarPorCuenta(req, res, next) {
+  try { res.json(await transacciones.listarPorCuenta(req.params.cuentaId)); } catch (err) { next(err); }
+}
+async function depositar(req, res, next) {
   try {
-    const data = await transaccionesService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+    const { cuentaId, monto } = req.body;
+    res.status(201).json(await transacciones.depositar(cuentaId, monto, req.user.id));
+  } catch (err) { next(err); }
+}
+async function retirar(req, res, next) {
+  try {
+    const { cuentaId, monto } = req.body;
+    res.status(201).json(await transacciones.retirar(cuentaId, monto, req.user.id));
+  } catch (err) { next(err); }
 }
 
-module.exports = { listar };
+module.exports = { listarPorCuenta, depositar, retirar };

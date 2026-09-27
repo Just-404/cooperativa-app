@@ -4,7 +4,6 @@ const auth = require('../middlewares/auth.middleware');
 
 const router = Router();
 
-// GET /api/cuotas
-router.get('/', auth, controller.listar);
+router.get('/prestamo/:prestamoId', auth, controller.listarPorPrestamo);
 
 module.exports = router;

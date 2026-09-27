@@ -1,15 +1,7 @@
-const auditoriaService = require('../services/auditoria.service');
-
-// Controlador del módulo: auditoria
-// TODO: implementar los endpoints correspondientes a este módulo
+const auditoria = require('../services/auditoria.service');
 
 async function listar(req, res, next) {
-  try {
-    const data = await auditoriaService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+  try { res.json(await auditoria.listar()); } catch (err) { next(err); }
 }
 
 module.exports = { listar };

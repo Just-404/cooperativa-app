@@ -7,6 +7,7 @@ router.use('/socios', require('./socios.routes'));
 router.use('/cuentas', require('./cuentas.routes'));
 router.use('/transacciones', require('./transacciones.routes')); // depósitos y retiros
 router.use('/prestamos', require('./prestamos.routes'));
+router.use('/tipos-prestamo', require('./tipos-prestamo.routes'));
 router.use('/evaluacion', require('./evaluacion.routes'));
 router.use('/aprobacion', require('./aprobacion.routes'));
 router.use('/desembolso', require('./desembolso.routes'));

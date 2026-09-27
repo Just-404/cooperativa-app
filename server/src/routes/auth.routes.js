@@ -5,7 +5,6 @@ const validate = require('../middlewares/validate.middleware');
 
 const router = Router();
 
-// POST /api/auth/login
 router.post(
   '/login',
   [

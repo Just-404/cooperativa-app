@@ -1,7 +1,6 @@
 import apiClient from '../../../services/apiClient';
 
-// Llamadas a la API del módulo: evaluacion
-export async function listar() {
-  const { data } = await apiClient.get('/evaluacion');
+export async function evaluar(prestamoId, comentario) {
+  const { data } = await apiClient.post(`/evaluacion/${prestamoId}/evaluar`, { comentario });
   return data;
 }

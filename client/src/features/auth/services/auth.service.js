@@ -1,7 +1,6 @@
 import apiClient from '../../../services/apiClient';
 
-// Llamadas a la API del módulo: auth
-export async function listar() {
-  const { data } = await apiClient.get('/auth');
+export async function login(email, password) {
+  const { data } = await apiClient.post('/auth/login', { email, password });
   return data;
 }

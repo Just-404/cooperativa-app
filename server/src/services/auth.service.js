@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Usuario = require('../models/Usuario');
+const { Usuario } = require('../models');
 const env = require('../config/env');
 
 async function login(email, passwordPlano) {
@@ -23,7 +23,7 @@ async function login(email, passwordPlano) {
     { expiresIn: env.jwt.expiresIn }
   );
 
-  return { token, usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol } };
+  return { token, usuario };
 }
 
 module.exports = { login };

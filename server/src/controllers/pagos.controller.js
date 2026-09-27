@@ -1,15 +1,16 @@
-const pagosService = require('../services/pagos.service');
+const pagos = require('../services/pagos.service');
 
-// Controlador del módulo: pagos
-// TODO: implementar los endpoints correspondientes a este módulo
-
-async function listar(req, res, next) {
+async function listarEnMora(req, res, next) {
+  try { res.json(await pagos.listarEnMora()); } catch (err) { next(err); }
+}
+async function registrar(req, res, next) {
   try {
-    const data = await pagosService.listar();
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
+    const { cuotaId, monto } = req.body;
+    res.status(201).json(await pagos.registrarPago(cuotaId, monto, req.user.id));
+  } catch (err) { next(err); }
+}
+async function calcularMora(req, res, next) {
+  try { res.json(await pagos.calcularMora()); } catch (err) { next(err); }
 }
 
-module.exports = { listar };
+module.exports = { listarEnMora, registrar, calcularMora };
