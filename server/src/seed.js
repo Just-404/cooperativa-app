@@ -1,5 +1,3 @@
-// Script de semilla: crea el usuario administrador inicial y catálogos base.
-// Uso: npm run seed  (después de tener la base de datos accesible)
 const { sequelize, Usuario, TipoPrestamo } = require('./models');
 
 async function seed() {

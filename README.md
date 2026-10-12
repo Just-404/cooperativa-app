@@ -13,9 +13,6 @@ Basado en el documento `docs/Alcance_del_proyecto.docx`.
 - **Seguridad:** JSON Web Tokens (jsonwebtoken), bcryptjs, express-validator
 - **Desarrollo:** nodemon
 
-No se usan otras dependencias fuera de esta lista (sin helmet, morgan, node-cron, etc.)
-para mantener la superficie de vulnerabilidades al mínimo.
-
 ## Estructura del proyecto
 
 ```
@@ -59,9 +56,6 @@ cooperativa-app/
 12. Reportes
 13. Scoring crediticio
 
-Fuera de alcance: transferencias bancarias reales, pagos con tarjetas de débito/crédito,
-aplicación móvil, nómina de empleados, cajeros automáticos y contabilidad de la cooperativa.
-
 ## Cómo empezar
 
 ### Backend
@@ -93,26 +87,3 @@ npm run dev
 ```bash
 docker compose up --build
 ```
-
-## Estado actual del sistema
-
-Ya implementado y probado de punta a punta (login → socio → cuenta → depósito/retiro →
-solicitud de préstamo → evaluación → aprobación → desembolso con generación automática de
-cuotas → pago → cierre del préstamo):
-
-- Autenticación con JWT y bcryptjs, control de acceso por rol en cada endpoint.
-- CRUD de socios y apertura de cuentas de ahorro.
-- Depósitos y retiros con actualización transaccional de saldo.
-- Ciclo completo de préstamos: solicitud, evaluación, aprobación/rechazo, desembolso,
-  generación de cuotas (amortización simple) y registro de pagos.
-- Cálculo de mora por cuota vencida (`POST /api/pagos/calcular-mora`, pensado para
-  dispararse desde un cron externo al proceso Node).
-- Scoring crediticio simplificado basado en historial de pagos.
-- Auditoría de acciones y reportes básicos (resumen general, préstamos por estado).
-- Frontend en React con el mismo sistema de diseño en tonos verdes del esquema inicial:
-  login, panel principal, socios, préstamos (con stepper de estado), cuotas en mora,
-  usuarios y auditoría.
-
-Pendiente de refinar: paginación en los listados, edición de socios/usuarios desde la UI,
-reportes exportables y ajuste fino de la matriz de permisos según el detalle final del
-alcance.

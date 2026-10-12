@@ -12,3 +12,8 @@ export async function abrir(socioId, saldoInicial) {
   const { data } = await apiClient.post('/cuentas', { socioId, saldoInicial });
   return data;
 }
+
+export async function cerrarCuenta(cuentaId){
+  const {data} = await apiClient.delete(`/cuentas/socio/cerrarCuenta/${cuentaId}`);
+  return data;
+}

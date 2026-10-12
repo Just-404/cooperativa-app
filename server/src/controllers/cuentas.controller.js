@@ -12,8 +12,16 @@ async function obtener(req, res, next) {
 async function abrir(req, res, next) {
   try {
     const { socioId, saldoInicial } = req.body;
+
     res.status(201).json(await cuentas.abrir(socioId, saldoInicial));
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, listarPorSocio, obtener, abrir };
+async function cerrarCuenta(req, res, next){
+  try {
+    const {cuentaId} = req.params; 
+    res.json(await cuentas.cerrarCuenta(cuentaId));
+  } catch (err) { next(err) }
+}
+
+module.exports = { listar, listarPorSocio, obtener, abrir, cerrarCuenta };

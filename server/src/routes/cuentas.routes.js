@@ -26,4 +26,6 @@ router.post(
   controller.abrir
 );
 
+router.delete('/socio/cerrarCuenta/:cuentaId', auth, puedeOperar, validate, auditoria('cerrar_cuenta'), controller.cerrarCuenta)
+
 module.exports = router;

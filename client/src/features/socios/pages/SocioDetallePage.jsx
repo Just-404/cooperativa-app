@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { obtener } from '../services/socios.service';
-import { abrir, listarPorSocio } from '../../cuentas-ahorro/services/cuentas-ahorro.service';
+import { abrir, listarPorSocio, cerrarCuenta } from '../../cuentas-ahorro/services/cuentas-ahorro.service';
 import { depositar, retirar } from '../../transacciones/services/transacciones.service';
 import { obtenerPorSocio, calcular } from '../../scoring/services/scoring.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
@@ -56,6 +56,17 @@ export default function SocioDetallePage() {
     }
   }
 
+  async function handleCerrarCuenta(cuentaId) {
+    setError(''); setMensaje('');
+    try {
+      await cerrarCuenta(cuentaId);
+      setMensaje(`Cuenta cerrada con exito`);
+      cargar();
+    } catch (err) {
+       setError(err.response?.data?.error?.message || 'No se pudo procesar la operación');
+    }
+  }
+
   async function handleCalcularScoring() {
     setError('');
     try {
@@ -103,6 +114,7 @@ export default function SocioDetallePage() {
               />
               <button className="btn primary" onClick={() => handleOperacion(c.id, 'deposito')}>Depositar</button>
               <button className="btn secondary" onClick={() => handleOperacion(c.id, 'retiro')}>Retirar</button>
+              <button className='btn secondary' onClick={() => handleCerrarCuenta(c.id)}>Cerrar Cuenta</button>
             </div>
           )}
         </div>
