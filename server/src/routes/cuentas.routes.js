@@ -22,10 +22,10 @@ router.post(
     body('saldoInicial').optional().isFloat({ min: 0 }).withMessage('El saldo inicial no puede ser negativo'),
   ],
   validate,
-  auditoria('abrir_cuenta'),
+  auditoria('abrir_cuenta', 'cuenta'),
   controller.abrir
 );
 
-router.delete('/socio/cerrarCuenta/:cuentaId', auth, puedeOperar, validate, auditoria('cerrar_cuenta'), controller.cerrarCuenta)
+router.delete('/socio/cerrarCuenta/:cuentaId', auth, puedeOperar, validate, auditoria('cerrar_cuenta', 'cuenta'), controller.cerrarCuenta)
 
 module.exports = router;

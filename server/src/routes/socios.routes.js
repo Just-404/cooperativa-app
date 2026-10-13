@@ -23,11 +23,11 @@ router.post(
     body('email').optional({ values: 'falsy' }).isEmail().withMessage('Email inválido'),
   ],
   validate,
-  auditoria('crear_socio'),
+  auditoria('crear_socio', 'socio'),
   controller.crear
 );
 
-router.put('/:id', auth, puedeEscribir, auditoria('actualizar_socio'), controller.actualizar);
-router.patch('/:id/estado', auth, puedeEscribir, auditoria('cambiar_estado_socio'), controller.cambiarEstado);
+router.put('/:id', auth, puedeEscribir, auditoria('actualizar_socio', 'socio'), controller.actualizar);
+router.patch('/:id/estado', auth, puedeEscribir, auditoria('cambiar_estado_socio', 'socio'), controller.cambiarEstado);
 
 module.exports = router;

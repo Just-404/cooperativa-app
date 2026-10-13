@@ -18,7 +18,7 @@ router.post(
     body('monto').isFloat({ gt: 0 }).withMessage('El monto debe ser mayor a cero'),
   ],
   validate,
-  auditoria('registrar_pago'),
+  auditoria('registrar_pago', 'pago'),
   controller.registrar
 );
 

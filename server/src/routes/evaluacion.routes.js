@@ -13,7 +13,7 @@ router.post(
   auth, checkRole('administrador', 'oficial_credito'),
   [body('comentario').notEmpty().withMessage('El comentario de evaluación es requerido')],
   validate,
-  auditoria('evaluar_prestamo'),
+  auditoria('evaluar_prestamo', 'prestamo'),
   controller.evaluar
 );
 

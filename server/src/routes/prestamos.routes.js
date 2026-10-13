@@ -21,7 +21,7 @@ router.post(
     body('plazoMeses').isInt({ min: 1 }).withMessage('El plazo debe ser al menos 1 mes'),
   ],
   validate,
-  auditoria('solicitar_prestamo'),
+  auditoria('solicitar_prestamo', 'prestamos'),
   controller.solicitar
 );
 

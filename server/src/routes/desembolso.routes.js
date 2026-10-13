@@ -9,7 +9,7 @@ const router = Router();
 router.post(
   '/:id/desembolsar',
   auth, checkRole('administrador', 'cajero'),
-  auditoria('desembolsar_prestamo'),
+  auditoria('desembolsar_prestamo', 'prestamo'),
   controller.desembolsar
 );
 

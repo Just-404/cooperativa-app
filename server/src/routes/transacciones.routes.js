@@ -15,7 +15,7 @@ const validarMonto = [
 ];
 
 router.get('/cuenta/:cuentaId', auth, controller.listarPorCuenta);
-router.post('/depositos', auth, puedeOperar, validarMonto, validate, auditoria('deposito'), controller.depositar);
-router.post('/retiros', auth, puedeOperar, validarMonto, validate, auditoria('retiro'), controller.retirar);
+router.post('/depositos', auth, puedeOperar, validarMonto, validate, auditoria('deposito', 'transaccion'), controller.depositar);
+router.post('/retiros', auth, puedeOperar, validarMonto, validate, auditoria('retiro', 'transaccion'), controller.retirar);
 
 module.exports = router;

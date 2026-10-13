@@ -14,7 +14,7 @@ router.post(
   auth, soloGerente,
   [body('montoAprobado').optional().isFloat({ gt: 0 })],
   validate,
-  auditoria('aprobar_prestamo'),
+  auditoria('aprobar_prestamo', 'prestamo'),
   controller.aprobar
 );
 
@@ -23,7 +23,7 @@ router.post(
   auth, soloGerente,
   [body('comentario').notEmpty().withMessage('El motivo del rechazo es requerido')],
   validate,
-  auditoria('rechazar_prestamo'),
+  auditoria('rechazar_prestamo', 'prestamo'),
   controller.rechazar
 );
 

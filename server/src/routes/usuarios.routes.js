@@ -25,7 +25,7 @@ router.post(
   controller.crear
 );
 
-router.put('/:id', auth, soloAdmin, auditoria('actualizar_usuario'), controller.actualizar);
-router.patch('/:id/estado', auth, soloAdmin, auditoria('cambiar_estado_usuario'), controller.cambiarEstado);
+router.put('/:id', auth, soloAdmin, auditoria('actualizar_usuario', 'usuario'), controller.actualizar);
+router.patch('/:id/estado', auth, soloAdmin, auditoria('cambiar_estado_usuario', 'usuario'), controller.cambiarEstado);
 
 module.exports = router;
