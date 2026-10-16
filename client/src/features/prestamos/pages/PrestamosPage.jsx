@@ -4,6 +4,7 @@ import { listar, solicitar, listarTipos } from '../services/prestamos.service';
 import { listar as listarSocios } from '../../socios/services/socios.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
+import SocioSelect from './SociosSelect.jsx';
 
 const VACIO = { socioId: '', tipoPrestamoId: '', montoSolicitado: '', plazoMeses: '' };
 
@@ -25,8 +26,8 @@ export default function PrestamosPage() {
 
   useEffect(() => {
     cargar();
-    listarSocios().then(setSocios).catch(() => {});
-    listarTipos().then(setTipos).catch(() => {});
+    listarSocios().then(setSocios).catch(() => { });
+    listarTipos().then(setTipos).catch(() => { });
   }, []);
 
   async function handleSubmit(e) {
@@ -68,10 +69,11 @@ export default function PrestamosPage() {
           {error && <div className="alert error">{error}</div>}
           <div className="field">
             <label>Socio</label>
-            <select value={form.socioId} onChange={(e) => setForm({ ...form, socioId: e.target.value })} required>
-              <option value="">Selecciona un socio</option>
-              {socios.map((s) => <option key={s.id} value={s.id}>{s.nombre} {s.apellido}</option>)}
-            </select>
+            <SocioSelect
+              socios={socios}
+              value={form.socioId}
+              onChange={(id) => setForm({ ...form, socioId: id })}
+            />
           </div>
           <div className="field">
             <label>Tipo de préstamo</label>
