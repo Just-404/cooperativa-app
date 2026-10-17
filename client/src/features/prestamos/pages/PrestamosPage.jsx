@@ -11,6 +11,7 @@ import Paginacion from '../../../components/common/Paginacion.jsx';
 const POR_PAGINA = 10;
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 
 const VACIO = { socioId: '', tipoPrestamoId: '', montoSolicitado: '', plazoMeses: '' };
 
@@ -26,12 +27,17 @@ export default function PrestamosPage() {
   const [busqueda, setBusqueda] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('');
 
+  const [errorLista, setErrorLista] = useState('');
+  const [cargandoLista, setCargandoLista] = useState(true);
   const puedeSolicitar = ['administrador', 'cajero', 'oficial_credito'].includes(user?.rol);
 
   function cargar() {
-    listar().then(setPrestamos).catch(() => setError('No se pudieron cargar los préstamos'));
+    setErrorLista('');
+    listar()
+      .then(setPrestamos)
+      .catch(() => setErrorLista('No se pudieron cargar los préstamos'))
+      .finally(() => setCargandoLista(false));
   }
-
   useEffect(() => {
     cargar();
     listarSocios().then(setSocios).catch(() => { });
@@ -73,7 +79,7 @@ export default function PrestamosPage() {
         p,
         texto: normalizar(
           [
-            p.socio?.nombre, p.socio?.apellido, p.socio?.cedula,
+            p.socio?.nombre, p.socio?.apellido, soloDigitos(p.socio?.documento),
             p.tipoPrestamo?.nombre,
             p.montoSolicitado, Number(p.montoSolicitado).toLocaleString(),
           ].filter(Boolean).join(' ')
@@ -93,13 +99,21 @@ export default function PrestamosPage() {
 
   const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
     usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro] });
+  const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '';
+
+  function limpiarFiltros() {
+    setBusqueda('');
+    setEstadoFiltro('');
+  }
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
         <div>
           <h3>Préstamos</h3>
-          <p style={{ color: 'var(--ink-soft)', margin: 0 }}>{prestamos.length} registrados</p>
+          <p style={{ color: 'var(--ink-soft)', margin: 0 }}>
+            {hayFiltros ? `${filtrados.length} de ${prestamos.length} préstamos` : `${prestamos.length} registrados`}
+          </p>
         </div>
         {puedeSolicitar && (
           <button className="btn primary" onClick={() => setMostrarForm((v) => !v)}>
@@ -158,6 +172,11 @@ export default function PrestamosPage() {
           <option value="">Todos los estados</option>
           {estados.map((e) => <option key={e} value={e}>{e}</option>)}
         </select>
+        {hayFiltros && (
+          <button type="button" className="btn ghost" onClick={limpiarFiltros}>
+            Limpiar
+          </button>
+        )}
       </div>
 
       <table className="ledger">
@@ -174,7 +193,11 @@ export default function PrestamosPage() {
           ))}
           {visibles.length === 0 && (
             <tr><td colSpan="5" style={{ color: 'var(--ink-soft)' }}>
-              {prestamos.length === 0 ? 'Aún no hay préstamos registrados.' : 'Ningún préstamo coincide con la búsqueda.'}
+              {cargandoLista
+                ? 'Cargando…'
+                : prestamos.length === 0
+                  ? 'Aún no hay préstamos registrados.'
+                  : 'Ningún préstamo coincide con la búsqueda.'}
             </td></tr>
           )}
         </tbody>

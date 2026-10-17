@@ -100,7 +100,9 @@ export default function SociosPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
         <div>
           <h3>Socios</h3>
-          <p style={{ color: 'var(--ink-soft)', margin: 0 }}>{socios.length} registrados</p>
+          <p style={{ color: 'var(--ink-soft)', margin: 0 }}>
+            {hayFiltros ? `${filtrados.length} de ${socios.length} socios` : `${socios.length} registrados`}
+          </p>
         </div>
         {puedeCrear && (
           <button className="btn primary" onClick={() => setMostrarForm((v) => !v)}>
