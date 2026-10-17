@@ -16,6 +16,7 @@ const PASOS = [
   { estado: 'cerrado', label: 'Cuotas / pago' },
 ];
 
+
 export default function PrestamoDetallePage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -65,6 +66,7 @@ export default function PrestamoDetallePage() {
   }
 
   if (!prestamo) return null;
+  const rechazado = prestamo.estado === 'rechazado';
   const pasoActualIdx = Math.max(0, PASOS.findIndex((p) => p.estado === prestamo.estado));
 
   return (
@@ -81,16 +83,22 @@ export default function PrestamoDetallePage() {
       {error && <div className="alert error">{error}</div>}
       {mensaje && <div className="alert success">{mensaje}</div>}
 
-      <div style={{ display: 'flex', gap: 6, margin: '20px 0 26px', flexWrap: 'wrap' }}>
-        {PASOS.map((p, idx) => (
-          <span key={p.estado} className="tag-status" style={{
-            color: idx <= pasoActualIdx ? 'var(--forest)' : 'var(--ink-soft)',
-            opacity: idx <= pasoActualIdx ? 1 : 0.5,
-          }}>
-            {idx + 1}. {p.label}
-          </span>
-        ))}
-      </div>
+      {rechazado ? (
+        <div className="alert error" style={{ margin: '20px 0 26px' }}>
+          Solicitud rechazada
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 6, margin: '20px 0 26px', flexWrap: 'wrap' }}>
+          {PASOS.map((p, idx) => (
+            <span key={p.estado} className="tag-status" style={{
+              color: idx <= pasoActualIdx ? 'var(--forest)' : 'var(--ink-soft)',
+              opacity: idx <= pasoActualIdx ? 1 : 0.5,
+            }}>
+              {idx + 1}. {p.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {prestamo.estado === 'solicitado' && puedeEvaluar && (
         <div className="card" style={{ maxWidth: 480, marginBottom: 20 }}>
