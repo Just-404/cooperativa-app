@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { listar, solicitar, listarTipos } from '../services/prestamos.service';
 import { listar as listarSocios } from '../../socios/services/socios.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import SocioSelect from './SociosSelect.jsx';
+import usePaginacion from '../../../hooks/usePaginacion';
+import Paginacion from '../../../components/common/Paginacion.jsx';
+
+const POR_PAGINA = 10;
+const normalizar = (t) =>
+  String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 const VACIO = { socioId: '', tipoPrestamoId: '', montoSolicitado: '', plazoMeses: '' };
 
@@ -17,6 +23,8 @@ export default function PrestamosPage() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [estadoFiltro, setEstadoFiltro] = useState('');
 
   const puedeSolicitar = ['administrador', 'cajero', 'oficial_credito'].includes(user?.rol);
 
@@ -32,6 +40,10 @@ export default function PrestamosPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!form.socioId) {
+      setError('Selecciona un socio');
+      return;
+    }
     setError('');
     setCargando(true);
     try {
@@ -49,6 +61,38 @@ export default function PrestamosPage() {
       setCargando(false);
     }
   }
+
+  const estados = useMemo(
+    () => [...new Set(prestamos.map((p) => p.estado).filter(Boolean))],
+    [prestamos]
+  );
+
+  const indexados = useMemo(
+    () =>
+      prestamos.map((p) => ({
+        p,
+        texto: normalizar(
+          [
+            p.socio?.nombre, p.socio?.apellido, p.socio?.cedula,
+            p.tipoPrestamo?.nombre,
+            p.montoSolicitado, Number(p.montoSolicitado).toLocaleString(),
+          ].filter(Boolean).join(' ')
+        ),
+      })),
+    [prestamos]
+  );
+
+  const filtrados = useMemo(() => {
+    const palabras = normalizar(busqueda).split(/\s+/).filter(Boolean);
+    return indexados
+      .filter(({ p, texto }) =>
+        (!estadoFiltro || p.estado === estadoFiltro) &&
+        palabras.every((w) => texto.includes(w)))
+      .map(({ p }) => p);
+  }, [indexados, busqueda, estadoFiltro]);
+
+  const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
+    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro] });
 
   return (
     <div>
@@ -98,10 +142,28 @@ export default function PrestamosPage() {
         </form>
       )}
 
+      <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          type="search"
+          placeholder="Buscar por socio, tipo o monto…"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{ flex: '1 1 220px', width: 'auto', minWidth: 0 }}
+        />
+        <select
+          value={estadoFiltro}
+          onChange={(e) => { setEstadoFiltro(e.target.value); }}
+          style={{ flex: '0 0 auto', width: 'auto' }}
+        >
+          <option value="">Todos los estados</option>
+          {estados.map((e) => <option key={e} value={e}>{e}</option>)}
+        </select>
+      </div>
+
       <table className="ledger">
         <thead><tr><th>Socio</th><th>Tipo</th><th>Monto</th><th>Estado</th><th></th></tr></thead>
         <tbody>
-          {prestamos.map((p) => (
+          {visibles.map((p) => (
             <tr key={p.id}>
               <td>{p.socio?.nombre} {p.socio?.apellido}</td>
               <td>{p.tipoPrestamo?.nombre}</td>
@@ -110,11 +172,22 @@ export default function PrestamosPage() {
               <td><Link to={`/prestamos/${p.id}`}>Ver</Link></td>
             </tr>
           ))}
-          {prestamos.length === 0 && (
-            <tr><td colSpan="5" style={{ color: 'var(--ink-soft)' }}>Aún no hay préstamos registrados.</td></tr>
+          {visibles.length === 0 && (
+            <tr><td colSpan="5" style={{ color: 'var(--ink-soft)' }}>
+              {prestamos.length === 0 ? 'Aún no hay préstamos registrados.' : 'Ningún préstamo coincide con la búsqueda.'}
+            </td></tr>
           )}
         </tbody>
       </table>
+
+      <Paginacion
+        paginaActual={paginaActual}
+        totalPaginas={totalPaginas}
+        onCambiar={setPagina}
+        desde={desde}
+        hasta={hasta}
+        total={total}
+      />
     </div>
   );
 }

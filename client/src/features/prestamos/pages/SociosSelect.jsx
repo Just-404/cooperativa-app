@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 
 export default function SocioSelect({ socios, value, onChange }) {
   const [texto, setTexto] = useState('');
@@ -11,16 +12,35 @@ export default function SocioSelect({ socios, value, onChange }) {
 
   const seleccionado = socios.find((s) => String(s.id) === String(value));
 
+  const indexados = useMemo(
+    () =>
+      socios.map((s) => ({
+        s,
+        texto: normalizar(`${s.nombre} ${s.apellido} ${s.documento ?? ''}`),
+        digitos: soloDigitos(s.documento),
+      })),
+    [socios]
+  );
+
   const resultados = useMemo(() => {
     const palabras = normalizar(texto).split(/\s+/).filter(Boolean);
     if (palabras.length === 0) return socios.slice(0, 50);
-    return socios
-      .filter((s) => {
-        const hay = normalizar(`${s.nombre} ${s.apellido} ${s.documento ?? ''}`);
-        return palabras.every((p) => hay.includes(p));
-      })
-      .slice(0, 50);
-  }, [socios, texto]);
+    return indexados
+      .filter(({ texto: hay, digitos }) =>
+        palabras.every((p) => {
+          if (hay.includes(p)) return true;
+          // Si la palabra parece una cédula (solo dígitos y guiones),
+          // compárala también sin guiones.
+          if (/^[\d-]+$/.test(p)) {
+            const pd = soloDigitos(p);
+            return pd.length > 0 && digitos.includes(pd);
+          }
+          return false;
+        })
+      )
+      .slice(0, 50)
+      .map(({ s }) => s);
+  }, [socios, indexados, texto]);
 
   useEffect(() => setActivo(0), [texto]);
 
@@ -75,7 +95,7 @@ export default function SocioSelect({ socios, value, onChange }) {
         tabIndex={-1}
         required
         value={value}
-        onChange={() => {}}
+        onChange={() => { }}
         style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
       />
 
