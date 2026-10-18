@@ -1,13 +1,13 @@
 const cuentas = require('../services/cuentas.service');
 
 async function listar(req, res, next) {
-  try { res.json(await cuentas.listar()); } catch (err) { next(err); }
+  try { res.json(await cuentas.listar(req.user.rol)); } catch (err) { next(err); }
 }
 async function listarPorSocio(req, res, next) {
-  try { res.json(await cuentas.listarPorSocio(req.params.socioId)); } catch (err) { next(err); }
+  try { res.json(await cuentas.listarPorSocio(req.params.socioId, req.user.rol)); } catch (err) { next(err); }
 }
 async function obtener(req, res, next) {
-  try { res.json(await cuentas.obtener(req.params.id)); } catch (err) { next(err); }
+  try { res.json(await cuentas.obtener(req.params.id, req.user.rol)); } catch (err) { next(err); }
 }
 async function abrir(req, res, next) {
   try {
@@ -24,4 +24,10 @@ async function cerrarCuenta(req, res, next){
   } catch (err) { next(err) }
 }
 
-module.exports = { listar, listarPorSocio, obtener, abrir, cerrarCuenta };
+async function cambiarEstado(req, res, next) {
+  try {
+    res.json(await cuentas.cambiarEstado(req.params.id, req.body.estado));
+  } catch (err) { next(err); }
+}
+
+module.exports = { listar, listarPorSocio, obtener, abrir, cerrarCuenta, cambiarEstado };

@@ -3,7 +3,7 @@ const { Usuario } = require('../models');
 const env = require('../config/env');
 
 async function login(email, passwordPlano) {
-  const usuario = await Usuario.findOne({ where: { email, activo: true } });
+  const usuario = await Usuario.findOne({ where: { email } });
   if (!usuario) {
     const err = new Error('Credenciales inválidas');
     err.status = 401;
@@ -14,6 +14,12 @@ async function login(email, passwordPlano) {
   if (!esValido) {
     const err = new Error('Credenciales inválidas');
     err.status = 401;
+    throw err;
+  }
+
+  if (!usuario.activo) {
+    const err = new Error('El usuario está desactivado');
+    err.status = 403;
     throw err;
   }
 

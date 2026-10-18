@@ -15,10 +15,27 @@ async function actualizar(id, datos) {
     err.status = 404;
     throw err;
   }
-  return usuario.update(datos);
+  if (!usuario.activo) {
+    const err = new Error('No se puede editar un usuario desactivado. Actívalo primero.');
+    err.status = 409;
+    throw err;
+  }
+  const cambios = {
+    nombre: datos.nombre,
+    email: datos.email,
+    rol: datos.rol,
+  };
+  if (datos.password) cambios.password = datos.password;
+  return usuario.update(cambios);
 }
 
-async function cambiarEstado(id, activo) {
+async function cambiarEstado(id, activo, usuarioActualId) {
+  if (!activo && id === usuarioActualId) {
+    const err = new Error('No puedes desactivar tu propio usuario');
+    err.status = 400;
+    throw err;
+  }
+
   const usuario = await Usuario.findByPk(id);
   if (!usuario) {
     const err = new Error('Usuario no encontrado');

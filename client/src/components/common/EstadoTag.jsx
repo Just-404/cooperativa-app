@@ -1,7 +1,7 @@
 const MAPA = {
   activo: 'ok', activa: 'ok', pagada: 'ok', aprobado: 'ok', desembolsado: 'ok', cerrado: 'neutral',
   vencida: 'late', rechazado: 'late', inactivo: 'neutral', pendiente: 'wait',
-  solicitado: 'wait', en_evaluacion: 'wait', evaluado: 'wait',
+  inactiva: 'neutral', cerrada: 'neutral', solicitado: 'wait', en_evaluacion: 'wait', evaluado: 'wait',
 };
 
 export default function EstadoTag({ estado }) {

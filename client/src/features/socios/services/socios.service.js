@@ -12,3 +12,11 @@ export async function crear(socio) {
   const { data } = await apiClient.post('/socios', socio);
   return data;
 }
+export async function actualizar(id, socio) {
+  const { data } = await apiClient.put(`/socios/${id}`, socio);
+  return data;
+}
+export async function cambiarEstado(id, estado) {
+  const { data } = await apiClient.patch(`/socios/${id}/estado`, { estado });
+  return data;
+}

@@ -6,6 +6,7 @@ import LoginPage from '../features/auth/pages/LoginPage.jsx';
 import DashboardPage from '../features/reportes/pages/DashboardPage.jsx';
 import SociosPage from '../features/socios/pages/SociosPage.jsx';
 import SocioDetallePage from '../features/socios/pages/SocioDetallePage.jsx';
+import SocioCuentasPage from '../features/socios/pages/SocioCuentasPage.jsx';
 import PrestamosPage from '../features/prestamos/pages/PrestamosPage.jsx';
 import PrestamoDetallePage from '../features/prestamos/pages/PrestamoDetallePage.jsx';
 import CuotasPagosPage from '../features/cuotas-pagos/pages/CuotasPagosPage.jsx';
@@ -23,6 +24,7 @@ function AppRoutes() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/socios" element={<SociosPage />} />
             <Route path="/socios/:id" element={<SocioDetallePage />} />
+            <Route path="/socios/:id/cuentas" element={<SocioCuentasPage />} />
             <Route path="/prestamos" element={<PrestamosPage />} />
             <Route path="/prestamos/:id" element={<PrestamoDetallePage />} />
             <Route path="/pagos" element={<CuotasPagosPage />} />
