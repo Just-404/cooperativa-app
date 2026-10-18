@@ -4,7 +4,15 @@ import { listar, crear } from '../services/socios.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 
-const VACIO = { nombre: '', apellido: '', documento: '', email: '', telefono: '' };
+const VACIO = {
+  nombre: '',
+  apellido: '',
+  documento: '',
+  email: '',
+  telefono: '',
+  direccion: '',
+  fechaNacimiento: '',
+};
 
 export default function SociosPage() {
   const { user } = useAuth();
@@ -38,6 +46,12 @@ export default function SociosPage() {
     }
   }
 
+  function cerrarFormulario() {
+    setForm(VACIO);
+    setError('');
+    setMostrarForm(false);
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
@@ -46,41 +60,56 @@ export default function SociosPage() {
           <p style={{ color: 'var(--ink-soft)', margin: 0 }}>{socios.length} registrados</p>
         </div>
         {puedeCrear && (
-          <button className="btn primary" onClick={() => setMostrarForm((v) => !v)}>
-            {mostrarForm ? 'Cancelar' : 'Nuevo socio'}
+          <button className="btn primary" onClick={() => { setError(''); setMostrarForm(true); }}>
+            Nuevo socio
           </button>
         )}
       </div>
 
       {mostrarForm && (
-        <form onSubmit={handleSubmit} className="card" style={{ marginBottom: 22, maxWidth: 480 }}>
-          {error && <div className="alert error">{error}</div>}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="field">
-              <label>Nombre</label>
-              <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+        <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) cerrarFormulario(); }}>
+          <form onSubmit={handleSubmit} className="card socio-modal" aria-labelledby="nuevo-socio-titulo" role="dialog" aria-modal="true">
+            <h3 id="nuevo-socio-titulo">Registrar socio</h3>
+            <p className="socio-modal-description">Completa todos los datos del socio.</p>
+            {error && <div className="alert error" role="alert">{error}</div>}
+            <div className="socio-form-grid">
+              <div className="field">
+                <label htmlFor="socio-nombre">Nombre</label>
+                <input id="socio-nombre" autoFocus value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label htmlFor="socio-apellido">Apellido</label>
+                <input id="socio-apellido" value={form.apellido} onChange={(e) => setForm({ ...form, apellido: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label htmlFor="socio-documento">Documento (cédula)</label>
+                <input id="socio-documento" value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label htmlFor="socio-email">Email</label>
+                <input id="socio-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label htmlFor="socio-telefono">Teléfono</label>
+                <input id="socio-telefono" type="tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label htmlFor="socio-fecha-nacimiento">Fecha de nacimiento</label>
+                <input id="socio-fecha-nacimiento" type="date" value={form.fechaNacimiento} onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })} required />
+              </div>
+              <div className="field socio-address-field">
+                <label htmlFor="socio-direccion">Dirección</label>
+                <input id="socio-direccion" value={form.direccion} onChange={(e) => setForm({ ...form, direccion: e.target.value })} required />
+              </div>
             </div>
-            <div className="field">
-              <label>Apellido</label>
-              <input value={form.apellido} onChange={(e) => setForm({ ...form, apellido: e.target.value })} required />
+            <div className="socio-modal-actions">
+              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>Cancelar</button>
+              <button className="btn primary" type="submit" disabled={cargando}>
+                {cargando ? 'Guardando…' : 'Registrar socio'}
+              </button>
             </div>
-          </div>
-          <div className="field">
-            <label>Documento (cédula)</label>
-            <input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} required />
-          </div>
-          <div className="field">
-            <label>Email (opcional)</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </div>
-          <div className="field">
-            <label>Teléfono (opcional)</label>
-            <input value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
-          </div>
-          <button className="btn primary" type="submit" disabled={cargando}>
-            {cargando ? 'Guardando…' : 'Registrar socio'}
-          </button>
-        </form>
+          </form>
+        </div>
       )}
 
       <table className="ledger">

@@ -119,3 +119,36 @@ table.ledger tr:hover td { background: var(--paper-2); }
 }
 .alert.error { background: #f4e2dd; color: var(--danger); border: 1px solid var(--danger); }
 .alert.success { background: #e7efe0; color: var(--forest); border: 1px solid var(--forest); }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgb(28 43 31 / 55%);
+}
+.socio-modal {
+  width: min(100%, 640px);
+  max-height: 100%;
+  overflow-y: auto;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 24%);
+}
+.socio-modal-description { margin: 2px 0 18px; color: var(--ink-soft); }
+.socio-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+}
+.socio-address-field { grid-column: 1 / -1; }
+.socio-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+@media (max-width: 520px) {
+  .socio-form-grid { grid-template-columns: 1fr; }
+  .socio-address-field { grid-column: auto; }
+  .socio-modal-actions { flex-direction: column-reverse; }
+  .socio-modal-actions .btn { width: 100%; }
+}

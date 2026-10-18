@@ -32,40 +32,53 @@ export default function UsuariosRolesPage() {
     }
   }
 
+  function cerrarFormulario() {
+    setForm(VACIO);
+    setError('');
+    setMostrarForm(false);
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
         <h3>Usuarios del sistema</h3>
-        <button className="btn primary" onClick={() => setMostrarForm((v) => !v)}>
-          {mostrarForm ? 'Cancelar' : 'Nuevo usuario'}
+        <button className="btn primary" onClick={() => { setError(''); setMostrarForm(true); }}>
+          Nuevo usuario
         </button>
       </div>
 
       {mostrarForm && (
-        <form onSubmit={handleSubmit} className="card" style={{ marginBottom: 22, maxWidth: 420 }}>
-          {error && <div className="alert error">{error}</div>}
-          <div className="field">
-            <label>Nombre</label>
-            <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
-          </div>
-          <div className="field">
-            <label>Email</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          </div>
-          <div className="field">
-            <label>Contraseña temporal</label>
-            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} />
-          </div>
-          <div className="field">
-            <label>Rol</label>
-            <select value={form.rol} onChange={(e) => setForm({ ...form, rol: e.target.value })}>
-              {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <button className="btn primary" type="submit" disabled={cargando}>
-            {cargando ? 'Creando…' : 'Crear usuario'}
-          </button>
-        </form>
+        <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) cerrarFormulario(); }}>
+          <form onSubmit={handleSubmit} className="card socio-modal" aria-labelledby="nuevo-usuario-titulo" role="dialog" aria-modal="true">
+            <h3 id="nuevo-usuario-titulo">Crear usuario</h3>
+            <p className="socio-modal-description">Completa los datos de acceso del usuario.</p>
+            {error && <div className="alert error" role="alert">{error}</div>}
+            <div className="field">
+              <label htmlFor="usuario-nombre">Nombre</label>
+              <input id="usuario-nombre" autoFocus value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+            </div>
+            <div className="field">
+              <label htmlFor="usuario-email">Email</label>
+              <input id="usuario-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+            </div>
+            <div className="field">
+              <label htmlFor="usuario-password">Contraseña temporal</label>
+              <input id="usuario-password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} />
+            </div>
+            <div className="field">
+              <label htmlFor="usuario-rol">Rol</label>
+              <select id="usuario-rol" value={form.rol} onChange={(e) => setForm({ ...form, rol: e.target.value })} required>
+                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="socio-modal-actions">
+              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>Cancelar</button>
+              <button className="btn primary" type="submit" disabled={cargando}>
+                {cargando ? 'Creando…' : 'Crear usuario'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       <table className="ledger">

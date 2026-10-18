@@ -17,10 +17,17 @@ router.post(
   '/',
   auth, puedeEscribir,
   [
-    body('nombre').notEmpty().withMessage('El nombre es requerido'),
-    body('apellido').notEmpty().withMessage('El apellido es requerido'),
-    body('documento').notEmpty().withMessage('El documento es requerido'),
-    body('email').optional({ values: 'falsy' }).isEmail().withMessage('Email inválido'),
+    body('nombre').trim().notEmpty().withMessage('El nombre es requerido'),
+    body('apellido').trim().notEmpty().withMessage('El apellido es requerido'),
+    body('documento').trim().notEmpty().withMessage('El documento es requerido'),
+    body('email').trim().notEmpty().withMessage('El email es requerido').bail().isEmail().withMessage('Email inválido'),
+    body('telefono').trim().notEmpty().withMessage('El teléfono es requerido'),
+    body('direccion').trim().notEmpty().withMessage('La dirección es requerida'),
+    body('fechaNacimiento')
+      .trim()
+      .notEmpty().withMessage('La fecha de nacimiento es requerida')
+      .bail()
+      .isISO8601({ strict: true }).withMessage('La fecha de nacimiento es inválida'),
   ],
   validate,
   auditoria('crear_socio', 'socio'),
