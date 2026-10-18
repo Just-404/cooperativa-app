@@ -35,6 +35,7 @@ router.post(
 );
 
 router.put('/:id', auth, puedeEscribir, auditoria('actualizar_socio', 'socio'), controller.actualizar);
+router.delete( '/:id', auth, checkRole('administrador'), auditoria('eliminar_socio'), controller.eliminar);
 router.patch('/:id/estado', auth, puedeEscribir, auditoria('cambiar_estado_socio', 'socio'), controller.cambiarEstado);
 
 module.exports = router;

@@ -25,9 +25,19 @@ async function actualizar(id, datos) {
   return socio.update(datos);
 }
 
+async function eliminar(id) {
+  const socio = await obtener(id);
+  await socio.destroy();
+
+  return {
+    mensaje: 'Socio eliminado correctamente',
+    id: socio.id,
+  };
+}
+
 async function cambiarEstado(id, estado) {
   const socio = await obtener(id);
   return socio.update({ estado });
 }
 
-module.exports = { listar, obtener, crear, actualizar, cambiarEstado };
+module.exports = { listar, obtener, crear, actualizar, eliminar, cambiarEstado };
