@@ -43,7 +43,7 @@ async function numeroCuentas(socioId){
   return CuentaAhorro.count({ where: { socioId } })
 }
 async function listarPorSocio(socioId) {
-  return CuentaAhorro.findAll({ where: { socioId }, order: [['createdAt', 'DESC']], where: {estado: "activa"} });
+  return CuentaAhorro.findAll({ where: { socioId, estado:"activa" }, order: [['createdAt', 'DESC']] });
 }
 
 async function obtener(id) {
