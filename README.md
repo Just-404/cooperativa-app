@@ -87,3 +87,52 @@ npm run dev
 ```bash
 docker compose up --build
 ```
+
+
+
+
+## GUIA DE USO PARA EL BACKEND: 
+
+### EDITAR UN INFORMACIÓN DE UN SOCIO: 
+Método: PUT
+URL: http://localhost:4000/api/socios/IdDelSocio
+Body: 
+{
+  "nombre": "Socio",
+  "apellido": "De Prueba Perez",
+  "documento": "00112345678",
+  "email": "prueba.actualizado@example.com",
+  "telefono": "8095551234",
+  "direccion": "Santiago de los Caballeros",
+  "estado": "activo"
+}
+
+Un body con la data a cambiar. 
+
+Respuesta del servidor: 
+
+{
+    "id": "f7780184-e07c-4479-9c78-27b4e858a545",
+    "nombre": "Socio",
+    "apellido": "De Prueba Perez",
+    "documento": "00112345678",
+    "email": "prueba.actualizado@example.com",
+    "telefono": "8095551234",
+    "direccion": "Santiago de los Caballeros",
+    "fechaNacimiento": "2004-07-23",
+    "fechaIngreso": "2026-10-18",
+    "estado": "activo",
+    "createdAt": "2026-10-18T16:10:52.433Z",
+    "updatedAt": "2026-10-18T16:38:00.432Z",
+    "cuentas": [],
+    "prestamos": []
+}
+
+### DELETE DE UN SOCIO: 
+Método: DELETE
+http://localhost:4000/api/socios/IdDelSocio
+Respuesta del servidor: 
+{
+    "mensaje": "Socio eliminado correctamente",
+    "id": "f7780184-e07c-4479-9c78-27b4e858a545"
+}
