@@ -19,44 +19,33 @@ export default function Paginacion({ paginaActual, totalPaginas, onCambiar, desd
   const ir = (n) => onCambiar(Math.min(Math.max(1, n), totalPaginas));
 
   return (
-    <nav
-      aria-label="Paginación"
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 12,
-        flexWrap: 'wrap',
-        marginTop: 14,
-      }}
-    >
-      <span style={{ color: 'var(--ink-soft)' }}>
+    <nav aria-label="Paginación" className="pag">
+      <span className="pag-info">
         {total != null
           ? `Mostrando ${desde}–${hasta} de ${total}`
           : `Página ${paginaActual} de ${totalPaginas}`}
       </span>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="pag-controles">
         <button
           type="button"
-          className="btn"
+          className="btn pag-nav"
           onClick={() => ir(paginaActual - 1)}
           disabled={paginaActual === 1}
           aria-label="Página anterior"
         >
-          ‹ Anterior
+          ‹<span className="pag-txt"> Anterior</span>
         </button>
 
         {ventana(paginaActual, totalPaginas).map((p, i) =>
           p === '…' ? (
-            <span key={`gap-${i}`} aria-hidden="true" style={{ color: 'var(--ink-soft)', padding: '0 4px' }}>
-              …
-            </span>
+            <span key={`gap-${i}`} aria-hidden="true" className="pag-gap">…</span>
           ) : (
             <button
               key={p}
               type="button"
-              className={p === paginaActual ? 'btn primary' : 'btn'}
+              className={`${p === paginaActual ? 'btn primary' : 'btn'} pag-num${p === paginaActual ? ' actual' : ''
+                }`}
               onClick={() => ir(p)}
               aria-current={p === paginaActual ? 'page' : undefined}
               aria-label={`Página ${p}`}
@@ -66,14 +55,18 @@ export default function Paginacion({ paginaActual, totalPaginas, onCambiar, desd
           )
         )}
 
+        <span className="pag-movil" aria-hidden="true">
+          {paginaActual} / {totalPaginas}
+        </span>
+
         <button
           type="button"
-          className="btn"
+          className="btn pag-nav"
           onClick={() => ir(paginaActual + 1)}
           disabled={paginaActual === totalPaginas}
           aria-label="Página siguiente"
         >
-          Siguiente ›
+          <span className="pag-txt">Siguiente </span>›
         </button>
       </div>
     </nav>

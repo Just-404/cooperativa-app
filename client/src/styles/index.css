@@ -16,7 +16,9 @@
   --white: #FFFFFF;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -26,17 +28,26 @@ body {
   line-height: 1.5;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: 'Roboto Slab', Georgia, serif;
   color: var(--forest);
   margin: 0 0 4px;
 }
 
-.mono { font-family: 'IBM Plex Mono', monospace; }
+.mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
 
-a { color: var(--forest); }
+a {
+  color: var(--forest);
+}
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.9rem;
   padding: 9px 11px;
@@ -46,10 +57,14 @@ input, select, textarea {
   color: var(--ink);
   width: 100%;
 }
-input:focus, select:focus, textarea:focus {
+
+input:focus,
+select:focus,
+textarea:focus {
   outline: 2px solid var(--leaf);
   outline-offset: 1px;
 }
+
 label {
   font-size: 0.78rem;
   font-weight: 600;
@@ -57,7 +72,10 @@ label {
   display: block;
   margin-bottom: 5px;
 }
-.field { margin-bottom: 14px; }
+
+.field {
+  margin-bottom: 14px;
+}
 
 .btn {
   font-family: 'IBM Plex Sans', sans-serif;
@@ -70,12 +88,35 @@ label {
   background: transparent;
   color: var(--forest);
 }
-.btn.primary { background: var(--forest); color: var(--paper); }
-.btn.primary:hover { background: var(--moss); }
-.btn.secondary { background: transparent; color: var(--forest); }
-.btn.ghost { border-color: var(--ledger-line); color: var(--ink-soft); }
-.btn.danger { border-color: var(--danger); color: var(--danger); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn.primary {
+  background: var(--forest);
+  color: var(--paper);
+}
+
+.btn.primary:hover {
+  background: var(--moss);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--forest);
+}
+
+.btn.ghost {
+  border-color: var(--ledger-line);
+  color: var(--ink-soft);
+}
+
+.btn.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .card {
   background: var(--card);
@@ -84,7 +125,12 @@ label {
   padding: 18px 20px;
 }
 
-table.ledger { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+table.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
 table.ledger th {
   text-align: left;
   font-family: 'IBM Plex Mono', monospace;
@@ -94,9 +140,19 @@ table.ledger th {
   padding: 8px 10px;
   border-bottom: 1px solid var(--ledger-line);
 }
-table.ledger td { padding: 9px 10px; border-bottom: 1px solid var(--ledger-line); }
-table.ledger tr:last-child td { border-bottom: none; }
-table.ledger tr:hover td { background: var(--paper-2); }
+
+table.ledger td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--ledger-line);
+}
+
+table.ledger tr:last-child td {
+  border-bottom: none;
+}
+
+table.ledger tr:hover td {
+  background: var(--paper-2);
+}
 
 .tag-status {
   display: inline-block;
@@ -106,10 +162,22 @@ table.ledger tr:hover td { background: var(--paper-2); }
   border-radius: 20px;
   border: 1px solid currentColor;
 }
-.tag-status.ok { color: var(--forest); }
-.tag-status.wait { color: var(--gold); }
-.tag-status.late { color: var(--danger); }
-.tag-status.neutral { color: var(--ink-soft); }
+
+.tag-status.ok {
+  color: var(--forest);
+}
+
+.tag-status.wait {
+  color: var(--gold);
+}
+
+.tag-status.late {
+  color: var(--danger);
+}
+
+.tag-status.neutral {
+  color: var(--ink-soft);
+}
 
 .alert {
   padding: 10px 14px;
@@ -117,8 +185,18 @@ table.ledger tr:hover td { background: var(--paper-2); }
   font-size: 0.85rem;
   margin-bottom: 14px;
 }
-.alert.error { background: #f4e2dd; color: var(--danger); border: 1px solid var(--danger); }
-.alert.success { background: #e7efe0; color: var(--forest); border: 1px solid var(--forest); }
+
+.alert.error {
+  background: #f4e2dd;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.alert.success {
+  background: #e7efe0;
+  color: var(--forest);
+  border: 1px solid var(--forest);
+}
 
 .modal-backdrop {
   position: fixed;
@@ -131,24 +209,128 @@ table.ledger tr:hover td { background: var(--paper-2); }
   overflow-y: auto;
   background: rgb(28 43 31 / 55%);
 }
+
 .socio-modal {
   width: min(100%, 640px);
   max-height: 100%;
   overflow-y: auto;
   box-shadow: 0 18px 48px rgb(0 0 0 / 24%);
 }
-.socio-modal-description { margin: 2px 0 18px; color: var(--ink-soft); }
+
+.socio-modal-description {
+  margin: 2px 0 18px;
+  color: var(--ink-soft);
+}
+
 .socio-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 16px;
 }
-.socio-address-field { grid-column: 1 / -1; }
-.socio-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+.socio-address-field {
+  grid-column: 1 / -1;
+}
+
+.socio-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
 
 @media (max-width: 520px) {
-  .socio-form-grid { grid-template-columns: 1fr; }
-  .socio-address-field { grid-column: auto; }
-  .socio-modal-actions { flex-direction: column-reverse; }
-  .socio-modal-actions .btn { width: 100%; }
+  .socio-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .socio-address-field {
+    grid-column: auto;
+  }
+
+  .socio-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .socio-modal-actions .btn {
+    width: 100%;
+  }
+}
+
+.pag {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.pag-info {
+  color: var(--ink-soft);
+}
+
+.pag-controles {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pag-gap {
+  color: var(--ink-soft);
+  padding: 0 4px;
+}
+
+.pag-movil {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .pag {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .pag-controles {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  /* Oculta números y puntos suspensivos */
+  .pag-num,
+  .pag-gap {
+    display: none;
+  }
+
+  /* Oculta el texto de los botones: queda solo ‹ y › */
+  .pag-txt {
+    display: none;
+  }
+
+  /* Muestra "5 / 12" */
+  .pag-movil {
+    display: inline-block;
+    min-width: 64px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Área táctil cómoda */
+  .pag-nav {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .btn.pag-nav:hover {
+    background: var(--paper-2);
+  }
+}
+
+@media (max-width: 900px) {
+  .pag-num {
+    min-width: 36px;
+    padding-inline: 8px;
+  }
 }
