@@ -32,7 +32,7 @@ export default function Layout() {
         flexDirection: 'column',
       }}>
         <div style={{ padding: '0 18px 18px', borderBottom: '1px solid var(--ledger-line)', marginBottom: 12 }}>
-          <strong style={{ fontFamily: "'Roboto Slab', serif", color: 'var(--forest)' }}>Cooperativa</strong>
+          <strong style={{ fontFamily: "'Roboto Slab', serif", color: 'var(--forest)' }}>CoopAhorros</strong>
         </div>
         <nav style={{ flex: 1 }}>
           {visibleItems.map((item) => (
