@@ -1,7 +1,24 @@
-const { Socio } = require('../models');
+const { Socio, ScoringCrediticio } = require('../models');
 
 async function listar() {
-  return Socio.findAll({ order: [['createdAt', 'DESC']] });
+  const lista = await Socio.findAll({ order: [['createdAt', 'DESC']] });
+
+  const evaluaciones = await ScoringCrediticio.findAll({
+    attributes: ['socioId', 'puntaje'],
+    order: [['fechaEvaluacion', 'DESC']],
+    raw: true,
+  });
+
+  const ultimo = new Map();
+  for (const e of evaluaciones) {
+    if (!ultimo.has(e.socioId)) ultimo.set(e.socioId, e.puntaje);
+  }
+
+  return lista.map((s) => ({
+    ...s.toJSON(),
+    scoring: ultimo.get(s.id) ?? null,
+  }));
+
 }
 
 async function obtener(id) {

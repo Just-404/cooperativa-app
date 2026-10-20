@@ -21,6 +21,14 @@ const VACIO = {
   fechaNacimiento: '',
 };
 
+const TRAMOS = [
+  { value: 'sin-scoring', label: 'Sin evaluar' },
+  { value: '300-579', label: 'Bajo (300-579)', min: 300, max: 579 },
+  { value: '580-669', label: 'Medio (580-669)', min: 580, max: 669 },
+  { value: '670-739', label: 'Bueno (670-739)', min: 670, max: 739 },
+  { value: '740+', label: 'Excelente (740+)', min: 740, max: Infinity },
+];
+
 export default function SociosPage() {
   const { user } = useAuth();
   const [socios, setSocios] = useState([]);
@@ -32,6 +40,7 @@ export default function SociosPage() {
   const [errorLista, setErrorLista] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('');
+  const [tramoFiltro, setTramoFiltro] = useState('');
 
   const puedeCrear = ['administrador', 'oficial_credito'].includes(user?.rol);
 
@@ -86,21 +95,31 @@ export default function SociosPage() {
 
   const filtrados = useMemo(() => {
     const palabras = normalizar(busqueda).split(/\s+/).filter(Boolean);
+    const tramo = TRAMOS.find((t) => t.value === tramoFiltro);
+
+    const coincideTramo = (p) => {
+      if (!tramo) return true;                        // sin filtro: todos
+      if (tramo.value === 'sin') return p == null;    // null o undefined
+      return p != null && p >= tramo.min && p <= tramo.max;
+    };
+
     return indexados
       .filter(({ s, texto }) =>
         (!estadoFiltro || s.estado === estadoFiltro) &&
+        coincideTramo(s.scoring) &&
         palabras.every((w) => texto.includes(w)))
       .map(({ s }) => s);
-  }, [indexados, busqueda, estadoFiltro]);
+  }, [indexados, busqueda, estadoFiltro, tramoFiltro]);
 
   const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
-    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro] });
+    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro, tramoFiltro] });
 
-  const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '';
+  const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '' || tramoFiltro !== '';
 
   function limpiarFiltros() {
     setBusqueda('');
     setEstadoFiltro('');
+    setTramoFiltro('');
   }
 
   function cerrarFormulario() {
@@ -192,6 +211,15 @@ export default function SociosPage() {
           <option value="">Todos los estados</option>
           {estados.map((e) => <option key={e} value={e}>{e}</option>)}
         </select>
+        <select
+          aria-label="Filtrar por scoring crediticio"
+          value={tramoFiltro}
+          onChange={(e) => setTramoFiltro(e.target.value)}
+          style={{ flex: '0 0 auto', width: 'auto' }}
+        >
+          <option value="">Todos los scorings</option>
+          {TRAMOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
             Limpiar
@@ -201,7 +229,7 @@ export default function SociosPage() {
 
       <table className="ledger">
         <thead>
-          <tr><th>Nombre</th><th>Documento</th><th>Email</th><th>Estado</th><th></th></tr>
+          <tr><th>Nombre</th><th>Documento</th><th>Email</th><th>Scoring</th><th>Estado</th><th></th></tr>
         </thead>
         <tbody>
           {visibles.map((s) => (
@@ -209,13 +237,14 @@ export default function SociosPage() {
               <td>{s.nombre} {s.apellido}</td>
               <td className="mono">{s.documento}</td>
               <td>{s.email || '—'}</td>
+              <td className="mono">{s.scoring ?? '—'}</td>
               <td><EstadoTag estado={s.estado} /></td>
               <td><Link to={`/socios/${s.id}`}>Ver</Link></td>
             </tr>
           ))}
           {visibles.length === 0 && (
             <tr>
-              <td colSpan="5" style={{ color: 'var(--ink-soft)' }}>
+              <td colSpan="6" style={{ color: 'var(--ink-soft)' }}>
                 {cargandoLista
                   ? 'Cargando…'
                   : socios.length === 0
