@@ -17,3 +17,8 @@ export async function cerrarCuenta(cuentaId){
   const {data} = await apiClient.delete(`/cuentas/socio/cerrarCuenta/${cuentaId}`);
   return data;
 }
+
+export async function cambiarEstado(cuentaId, estado) {
+  const { data } = await apiClient.patch(`/cuentas/${cuentaId}/estado`, { estado });
+  return data;
+}

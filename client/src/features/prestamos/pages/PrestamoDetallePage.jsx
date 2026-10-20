@@ -85,7 +85,11 @@ export default function PrestamoDetallePage() {
 
       {rechazado ? (
         <div className="alert error" style={{ margin: '20px 0 26px' }}>
-          Solicitud rechazada
+          <strong>Solicitud rechazada</strong>
+          <p style={{ margin: '6px 0 0' }}>
+            <strong>Motivo:</strong>{' '}
+            {prestamo.comentarioAprobacion?.trim() || 'No se registró un motivo para el rechazo.'}
+          </p>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 6, margin: '20px 0 26px', flexWrap: 'wrap' }}>

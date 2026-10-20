@@ -25,7 +25,30 @@ router.post(
   controller.crear
 );
 
-router.put('/:id', auth, soloAdmin, auditoria('actualizar_usuario', 'usuario'), controller.actualizar);
-router.patch('/:id/estado', auth, soloAdmin, auditoria('cambiar_estado_usuario', 'usuario'), controller.cambiarEstado);
+router.put(
+  '/:id',
+  auth, soloAdmin,
+  [
+    body('nombre').trim().notEmpty().withMessage('El nombre es requerido'),
+    body('email').trim().isEmail().withMessage('Email inválido'),
+    body('password')
+      .optional({ values: 'falsy' })
+      .isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
+    body('rol')
+      .isIn(['administrador', 'cajero', 'oficial_credito', 'gerente', 'auditor'])
+      .withMessage('Rol inválido'),
+  ],
+  validate,
+  auditoria('actualizar_usuario', 'usuario'),
+  controller.actualizar
+);
+router.patch(
+  '/:id/estado',
+  auth, soloAdmin,
+  [body('activo').isBoolean().withMessage('El estado activo debe ser verdadero o falso').toBoolean()],
+  validate,
+  auditoria('cambiar_estado_usuario', 'usuario'),
+  controller.cambiarEstado
+);
 
 module.exports = router;

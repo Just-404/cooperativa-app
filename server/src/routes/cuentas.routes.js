@@ -8,7 +8,7 @@ const auditoria = require('../middlewares/auditoria.middleware');
 
 const router = Router();
 
-const puedeOperar = checkRole('administrador', 'cajero');
+const puedeGestionar = checkRole('administrador', 'oficial_credito');
 
 router.get('/', auth, controller.listar);
 router.get('/socio/:socioId', auth, controller.listarPorSocio);
@@ -16,7 +16,7 @@ router.get('/:id', auth, controller.obtener);
 
 router.post(
   '/',
-  auth, puedeOperar,
+  auth, puedeGestionar,
   [
     body('socioId').isUUID().withMessage('socioId inválido'),
     body('saldoInicial').optional().isFloat({ min: 0 }).withMessage('El saldo inicial no puede ser negativo'),
@@ -26,6 +26,15 @@ router.post(
   controller.abrir
 );
 
-router.delete('/socio/cerrarCuenta/:cuentaId', auth, puedeOperar, validate, auditoria('cerrar_cuenta', 'cuenta'), controller.cerrarCuenta)
+router.patch(
+  '/:id/estado',
+  auth, puedeGestionar,
+  [body('estado').isIn(['activa', 'inactiva']).withMessage('Estado inválido')],
+  validate,
+  auditoria('cambiar_estado_cuenta', 'cuenta'),
+  controller.cambiarEstado
+);
+
+router.delete('/socio/cerrarCuenta/:cuentaId', auth, puedeGestionar, validate, auditoria('cerrar_cuenta', 'cuenta'), controller.cerrarCuenta)
 
 module.exports = router;

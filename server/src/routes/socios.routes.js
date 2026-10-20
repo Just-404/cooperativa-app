@@ -34,8 +34,34 @@ router.post(
   controller.crear
 );
 
-router.put('/:id', auth, puedeEscribir, auditoria('actualizar_socio', 'socio'), controller.actualizar);
 router.delete( '/:id', auth, checkRole('administrador'), auditoria('eliminar_socio'), controller.eliminar);
-router.patch('/:id/estado', auth, puedeEscribir, auditoria('cambiar_estado_socio', 'socio'), controller.cambiarEstado);
+router.put(
+  '/:id',
+  auth, puedeEscribir,
+  [
+    body('nombre').trim().notEmpty().withMessage('El nombre es requerido'),
+    body('apellido').trim().notEmpty().withMessage('El apellido es requerido'),
+    body('documento').trim().notEmpty().withMessage('El documento es requerido'),
+    body('email').trim().notEmpty().withMessage('El email es requerido').bail().isEmail().withMessage('Email inválido'),
+    body('telefono').trim().notEmpty().withMessage('El teléfono es requerido'),
+    body('direccion').trim().notEmpty().withMessage('La dirección es requerida'),
+    body('fechaNacimiento')
+      .trim()
+      .notEmpty().withMessage('La fecha de nacimiento es requerida')
+      .bail()
+      .isISO8601({ strict: true }).withMessage('La fecha de nacimiento es inválida'),
+  ],
+  validate,
+  auditoria('actualizar_socio', 'socio'),
+  controller.actualizar
+);
+router.patch(
+  '/:id/estado',
+  auth, puedeEscribir,
+  [body('estado').isIn(['activo', 'inactivo']).withMessage('Estado inválido')],
+  validate,
+  auditoria('cambiar_estado_socio', 'socio'),
+  controller.cambiarEstado
+);
 
 module.exports = router;
