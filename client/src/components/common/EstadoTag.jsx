@@ -6,5 +6,9 @@ const MAPA = {
 
 export default function EstadoTag({ estado }) {
   const clase = MAPA[estado] || 'neutral';
-  return <span className={`tag-status ${clase}`}>{estado?.replace('_', ' ')}</span>;
+  const etiqueta = estado?.replace('_', ' ');
+  const etiquetaCapitalizada = etiqueta
+    ? etiqueta.charAt(0).toLocaleUpperCase('es') + etiqueta.slice(1)
+    : '';
+  return <span className={`tag-status ${clase}`}>{etiquetaCapitalizada}</span>;
 }

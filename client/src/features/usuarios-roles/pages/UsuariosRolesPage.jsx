@@ -3,6 +3,7 @@ import { listar, crear, actualizar, cambiarEstado } from '../services/usuarios-r
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
+import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 
 const POR_PAGINA = 10;
@@ -226,7 +227,9 @@ export default function UsuariosRolesPage() {
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los roles</option>
-          {ROLES.map((r) => <option key={r} value={r}>{etiquetaRol(r)}</option>)}
+          {ROLES.map((e) => (
+            <option key={e} value={e}>{e.charAt(0).toLocaleUpperCase('es') + e.slice(1)}</option>
+          ))}
         </select>
         <select
           aria-label="Filtrar por estado"
@@ -253,7 +256,7 @@ export default function UsuariosRolesPage() {
               <td>{u.nombre}</td>
               <td>{u.email}</td>
               <td className="mono">{u.rol}</td>
-              <td>{u.activo ? 'Activo' : 'Inactivo'}</td>
+              <td><EstadoTag estado={u.activo ? 'activo' : 'inactivo'} /></td>
               <td>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button
