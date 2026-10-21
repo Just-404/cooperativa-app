@@ -12,7 +12,14 @@ const normalizar = (t) =>
 
 const VACIO = { nombre: '', email: '', password: '', rol: 'cajero' };
 const ROLES = ['administrador', 'cajero', 'oficial_credito', 'gerente', 'auditor'];
-const etiquetaRol = (r) => String(r ?? '').replace(/_/g, ' ');
+const ETIQUETAS_ROL = {
+  administrador: 'Administrador',
+  cajero: 'Cajero',
+  oficial_credito: 'Oficial de Crédito',
+  gerente: 'Gerente',
+  auditor: 'Auditor',
+};
+const etiquetaRol = (rol) => ETIQUETAS_ROL[rol] || String(rol ?? '').replace(/_/g, ' ');
 
 export default function UsuariosRolesPage() {
   const { user: usuarioActual } = useAuth();
@@ -227,9 +234,7 @@ export default function UsuariosRolesPage() {
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los roles</option>
-          {ROLES.map((e) => (
-            <option key={e} value={e}>{e.charAt(0).toLocaleUpperCase('es') + e.slice(1)}</option>
-          ))}
+          {ROLES.map((e) => <option key={e} value={e}>{etiquetaRol(e)}</option>)}
         </select>
         <select
           aria-label="Filtrar por estado"
