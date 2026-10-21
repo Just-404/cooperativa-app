@@ -265,15 +265,15 @@ export default function UsuariosRolesPage() {
                   >
                     Editar
                   </button>
-                  <button
-                    className={`btn ${u.activo ? 'danger' : 'primary'}`}
-                    type="button"
-                    onClick={() => solicitarCambioEstado(u)}
-                    disabled={u.id === usuarioActual?.id && u.activo}
-                    title={u.id === usuarioActual?.id && u.activo ? 'No puedes desactivar tu propio usuario' : undefined}
-                  >
-                    {u.activo ? 'Desactivar' : 'Activar'}
-                  </button>
+                  {!(u.id === usuarioActual?.id && u.activo) && (
+                    <button
+                      className={`btn ${u.activo ? 'danger' : 'primary'}`}
+                      type="button"
+                      onClick={() => solicitarCambioEstado(u)}
+                    >
+                      {u.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

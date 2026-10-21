@@ -1,0 +1,95 @@
+.login-split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+}
+
+.login-hero {
+  background-color: var(--forest);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding: 48px;
+}
+
+.login-hero-text h1 {
+  color: var(--paper);
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+}
+
+.login-hero-text p {
+  color: var(--paper);
+  font-size: 1.05rem;
+  max-width: 380px;
+  margin: 0;
+}
+
+.login-panel {
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-subtitle {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin: 0 0 24px;
+}
+
+.login-submit {
+  width: 100%;
+}
+
+.login-forgot {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 800px) {
+  .login-split {
+    grid-template-columns: 1fr;
+  }
+
+  .login-hero {
+    display: none;
+  }
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 84px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--forest);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--moss);
+}

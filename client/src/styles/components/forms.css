@@ -1,0 +1,31 @@
+input,
+select,
+textarea {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  padding: 9px 11px;
+  border: 1px solid var(--ledger-line);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink);
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--leaf);
+  outline-offset: 1px;
+}
+
+label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  display: block;
+  margin-bottom: 5px;
+}
+
+.field {
+  margin-bottom: 14px;
+}

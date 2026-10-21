@@ -3,6 +3,7 @@ export default function ConfirmacionModal({
   mensaje,
   confirmarTexto = 'Confirmar',
   cancelarTexto = 'Volver',
+  confirmarPrimero = false,
   peligro = false,
   procesando = false,
   onConfirmar,
@@ -14,12 +15,19 @@ export default function ConfirmacionModal({
         <h3 id="confirmacion-titulo">{titulo}</h3>
         <p>{mensaje}</p>
         <div className="socio-modal-actions">
+          {confirmarPrimero && (
+            <button className={`btn ${peligro ? 'danger' : 'primary'}`} type="button" onClick={onConfirmar} disabled={procesando}>
+              {procesando ? 'Procesando…' : confirmarTexto}
+            </button>
+          )}
           <button className="btn secondary" type="button" onClick={onCancelar} disabled={procesando}>
             {cancelarTexto}
           </button>
-          <button className={`btn ${peligro ? 'danger' : 'primary'}`} type="button" onClick={onConfirmar} disabled={procesando}>
-            {procesando ? 'Procesando…' : confirmarTexto}
-          </button>
+          {!confirmarPrimero && (
+            <button className={`btn ${peligro ? 'danger' : 'primary'}`} type="button" onClick={onConfirmar} disabled={procesando}>
+              {procesando ? 'Procesando…' : confirmarTexto}
+            </button>
+          )}
         </div>
       </section>
     </div>

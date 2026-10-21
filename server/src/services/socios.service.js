@@ -44,6 +44,11 @@ async function actualizar(id, datos) {
     err.status = 404;
     throw err;
   }
+  if (socio.estado !== 'activo') {
+    const err = new Error('No se puede editar un socio desactivado. Actívalo primero.');
+    err.status = 409;
+    throw err;
+  }
 
   const camposEditables = [
     'nombre',

@@ -131,6 +131,7 @@ export default function SocioCuentasPage() {
         titulo: 'Confirmación final: cerrar cuenta',
         mensaje: `¿Confirmas definitivamente el cierre de ${confirmacion.numeroCuenta}? Esta acción es irreversible y no se podrá abrir nuevamente.`,
         confirmarTexto: 'Sí, cerrar definitivamente',
+        confirmarPrimero: true,
       });
       return;
     }
@@ -303,6 +304,7 @@ export default function SocioCuentasPage() {
           titulo={confirmacion.titulo}
           mensaje={confirmacion.mensaje}
           confirmarTexto={confirmacion.confirmarTexto}
+          confirmarPrimero={confirmacion.confirmarPrimero}
           peligro={confirmacion.peligro}
           procesando={procesando}
           onConfirmar={confirmarAccion}

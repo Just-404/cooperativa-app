@@ -1,0 +1,40 @@
+.btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--forest);
+  cursor: pointer;
+  background: transparent;
+  color: var(--forest);
+}
+
+.btn.primary {
+  background: var(--forest);
+  color: var(--paper);
+}
+
+.btn.primary:hover {
+  background: var(--moss);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--forest);
+}
+
+.btn.ghost {
+  border-color: var(--ledger-line);
+  color: var(--ink-soft);
+}
+
+.btn.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
