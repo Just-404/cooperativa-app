@@ -1,0 +1,60 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--ledger-line);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+table.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+table.ledger th {
+  text-align: left;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--moss);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ledger-line);
+}
+
+table.ledger td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--ledger-line);
+}
+
+table.ledger tr:last-child td {
+  border-bottom: none;
+}
+
+table.ledger tr:hover td {
+  background: var(--paper-2);
+}
+
+.tag-status {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid currentColor;
+}
+
+.tag-status.ok {
+  color: var(--forest);
+}
+
+.tag-status.wait {
+  color: var(--gold);
+}
+
+.tag-status.late {
+  color: var(--danger);
+}
+
+.tag-status.neutral {
+  color: var(--ink-soft);
+}

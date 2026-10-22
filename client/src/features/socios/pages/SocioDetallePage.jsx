@@ -71,6 +71,10 @@ export default function SocioDetallePage() {
   useEffect(() => { cargar(); }, [id]);
 
   function iniciarEdicion() {
+    if (socio.estado !== 'activo') {
+      setError('No se puede editar un socio desactivado. Actívalo primero.');
+      return;
+    }
     const datos = formDesdeSocio(socio);
     setForm(datos);
     setFormInicial(datos);
@@ -182,7 +186,15 @@ export default function SocioDetallePage() {
         <div className="socio-detail-actions">
           {puedeGestionar && (
             <>
-              <button className="btn secondary" type="button" onClick={iniciarEdicion}>Editar socio</button>
+              <button
+                className="btn secondary"
+                type="button"
+                onClick={iniciarEdicion}
+                disabled={socio.estado !== 'activo'}
+                title={socio.estado !== 'activo' ? 'Activa el socio antes de editarlo' : undefined}
+              >
+                Editar socio
+              </button>
               <button
                 className={`btn ${socio.estado === 'activo' ? 'danger' : 'primary'}`}
                 type="button"

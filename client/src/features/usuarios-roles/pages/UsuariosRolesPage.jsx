@@ -3,6 +3,7 @@ import { listar, crear, actualizar, cambiarEstado } from '../services/usuarios-r
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
+import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 
 const POR_PAGINA = 10;
@@ -11,7 +12,14 @@ const normalizar = (t) =>
 
 const VACIO = { nombre: '', email: '', password: '', rol: 'cajero' };
 const ROLES = ['administrador', 'cajero', 'oficial_credito', 'gerente', 'auditor'];
-const etiquetaRol = (r) => String(r ?? '').replace(/_/g, ' ');
+const ETIQUETAS_ROL = {
+  administrador: 'Administrador',
+  cajero: 'Cajero',
+  oficial_credito: 'Oficial de Crédito',
+  gerente: 'Gerente',
+  auditor: 'Auditor',
+};
+const etiquetaRol = (rol) => ETIQUETAS_ROL[rol] || String(rol ?? '').replace(/_/g, ' ');
 
 export default function UsuariosRolesPage() {
   const { user: usuarioActual } = useAuth();
@@ -226,7 +234,7 @@ export default function UsuariosRolesPage() {
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los roles</option>
-          {ROLES.map((r) => <option key={r} value={r}>{etiquetaRol(r)}</option>)}
+          {ROLES.map((e) => <option key={e} value={e}>{etiquetaRol(e)}</option>)}
         </select>
         <select
           aria-label="Filtrar por estado"
@@ -253,7 +261,7 @@ export default function UsuariosRolesPage() {
               <td>{u.nombre}</td>
               <td>{u.email}</td>
               <td className="mono">{u.rol}</td>
-              <td>{u.activo ? 'Activo' : 'Inactivo'}</td>
+              <td><EstadoTag estado={u.activo ? 'activo' : 'inactivo'} /></td>
               <td>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button
@@ -265,15 +273,15 @@ export default function UsuariosRolesPage() {
                   >
                     Editar
                   </button>
-                  <button
-                    className={`btn ${u.activo ? 'danger' : 'primary'}`}
-                    type="button"
-                    onClick={() => solicitarCambioEstado(u)}
-                    disabled={u.id === usuarioActual?.id && u.activo}
-                    title={u.id === usuarioActual?.id && u.activo ? 'No puedes desactivar tu propio usuario' : undefined}
-                  >
-                    {u.activo ? 'Desactivar' : 'Activar'}
-                  </button>
+                  {!(u.id === usuarioActual?.id && u.activo) && (
+                    <button
+                      className={`btn ${u.activo ? 'danger' : 'primary'}`}
+                      type="button"
+                      onClick={() => solicitarCambioEstado(u)}
+                    >
+                      {u.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

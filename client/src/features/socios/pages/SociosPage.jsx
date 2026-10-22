@@ -209,7 +209,9 @@ export default function SociosPage() {
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los estados</option>
-          {estados.map((e) => <option key={e} value={e}>{e}</option>)}
+          {estados.map((e) => (
+            <option key={e} value={e}>{e.charAt(0).toLocaleUpperCase('es') + e.slice(1)}</option>
+          ))}
         </select>
         <select
           aria-label="Filtrar por scoring crediticio"

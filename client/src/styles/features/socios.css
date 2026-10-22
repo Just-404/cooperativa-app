@@ -1,0 +1,82 @@
+.socio-detail-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 14px 0 20px;
+}
+
+.socio-detail-heading > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.socio-detail-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.socio-button-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.socio-personal-card {
+  margin-bottom: 26px;
+}
+
+.socio-personal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 22px;
+  margin: 18px 0 0;
+}
+
+.socio-personal-grid dt {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.socio-personal-grid dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.socio-scoring-section {
+  margin-top: 24px;
+}
+
+.socio-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 520px) {
+  .socio-detail-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .socio-detail-actions {
+    justify-content: flex-start;
+  }
+
+  .socio-personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .socio-personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
