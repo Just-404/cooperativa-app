@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { resumen } from '../services/reportes.service';
 import { useAuth } from '../../../context/AuthContext.jsx';
+import ResumenMes from '../components/ResumenMes.jsx';
+import PrestadoVsIngresos from '../components/PrestadoVsIngresos.jsx';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const puedeVerResumen = ['administrador', 'gerente', 'oficial_credito'].includes(user?.rol);
 
   useEffect(() => {
     resumen()
@@ -39,6 +42,12 @@ export default function DashboardPage() {
             <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Cuotas en mora</div>
           </div>
         </div>
+      )}
+      {puedeVerResumen && (
+        <>
+          <ResumenMes />
+          <PrestadoVsIngresos />
+        </>
       )}
     </div>
   );
