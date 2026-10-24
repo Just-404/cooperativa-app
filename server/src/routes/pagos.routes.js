@@ -22,6 +22,18 @@ router.post(
   controller.registrar
 );
 
+router.post(
+  '/abono-capital',
+  auth, checkRole('administrador', 'cajero'),
+  [
+    body('prestamoId').isUUID().withMessage('prestamoId inválido'),
+    body('monto').isFloat({ gt: 0 }).withMessage('El monto debe ser mayor a cero'),
+  ],
+  validate,
+  auditoria('abono_capital', 'pago'),
+  controller.registrarAbonoCapital
+);
+
 router.post('/calcular-mora', auth, checkRole('administrador'), controller.calcularMora);
 
 module.exports = router;

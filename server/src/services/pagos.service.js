@@ -37,6 +37,24 @@ async function listarEnMora() {
   });
 }
 
+// Verifica que no haya cuotas anteriores impagas antes de permitir pagar una cuota
+async function validarCuotasAnterioresPagadas(prestamoId, numeroCuota, transaction) {
+  const cuotasImpagas = await Cuota.count({
+    where: {
+      prestamoId,
+      numeroCuota: { [sequelize.Sequelize.Op.lt]: numeroCuota },
+      estado: ['pendiente', 'vencida'],
+    },
+    transaction,
+  });
+  if (cuotasImpagas > 0) {
+    const err = new Error('No se puede pagar esta cuota: existen cuotas anteriores sin pagar');
+    err.status = 400;
+    throw err;
+  }
+}
+
+// Registra el pago de una cuota (incluye mora si aplica)
 async function registrarPago(cuotaId, monto, usuarioId) {
   return sequelize.transaction(async (t) => {
     const cuota = await Cuota.findByPk(cuotaId, { transaction: t, lock: t.LOCK.UPDATE });
@@ -50,6 +68,9 @@ async function registrarPago(cuotaId, monto, usuarioId) {
       err.status = 400;
       throw err;
     }
+
+    // Validar cuotas anteriores pagadas
+    await validarCuotasAnterioresPagadas(cuota.prestamoId, cuota.numeroCuota, t);
 
     const mora = cuota.estado === 'vencida' ? Number(cuota.montoMora) : 0;
     const totalEsperado = Number(cuota.montoTotal) + mora;
@@ -82,4 +103,77 @@ async function registrarPago(cuotaId, monto, usuarioId) {
   });
 }
 
-module.exports = { listarEnMora, registrarPago, calcularMora };
+// Abono a capital: reduce el saldo pendiente y recalcula cuotas futuras
+async function registrarAbonoCapital(prestamoId, monto, usuarioId) {
+  return sequelize.transaction(async (t) => {
+    const prestamo = await Prestamo.findByPk(prestamoId, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!prestamo) {
+      const err = new Error('Préstamo no encontrado');
+      err.status = 404;
+      throw err;
+    }
+    if (prestamo.estado !== 'desembolsado' && prestamo.estado !== 'cerrado') {
+      const err = new Error('Solo se puede abonar capital a préstamos desembolsados');
+      err.status = 400;
+      throw err;
+    }
+
+    // Obtener cuotas pendientes/vencidas ordenadas
+    const cuotasPendientes = await Cuota.findAll({
+      where: { prestamoId, estado: ['pendiente', 'vencida'] },
+      order: [['numeroCuota', 'ASC']],
+      transaction: t,
+    });
+
+    if (cuotasPendientes.length === 0) {
+      const err = new Error('No hay cuotas pendientes para aplicar abono');
+      err.status = 400;
+      throw err;
+    }
+
+    let montoRestante = Number(monto);
+
+    // Aplicar abono a las cuotas futuras (reduce capital de cada cuota)
+    for (const cuota of cuotasPendientes) {
+      if (montoRestante <= 0) break;
+
+      const capitalActual = Number(cuota.montoCapital);
+      const reduccion = Math.min(capitalActual, montoRestante);
+      const nuevoCapital = round2(capitalActual - reduccion);
+      const nuevoTotal = round2(nuevoCapital + Number(cuota.montoInteres));
+
+      await cuota.update({
+        montoCapital: nuevoCapital,
+        montoTotal: nuevoTotal,
+      }, { transaction: t });
+
+      montoRestante = round2(montoRestante - reduccion);
+    }
+
+    // Registrar el abono como un pago sin cuotaId (o con tipo especial)
+    const pago = await Pago.create({
+      cuotaId: null,
+      usuarioId,
+      monto,
+      moraCobrada: 0,
+      tipo: 'abono_capital', // se asume que la tabla Pago tiene este campo o se ignora
+    }, { transaction: t });
+
+    // Si el préstamo ya estaba cerrado y se abre de nuevo, o verificar cierre
+    const cuotasQuedan = await Cuota.count({
+      where: { prestamoId, estado: ['pendiente', 'vencida'] },
+      transaction: t,
+    });
+    if (cuotasQuedan === 0) {
+      await Prestamo.update({ estado: 'cerrado' }, { where: { id: prestamoId }, transaction: t });
+    }
+
+    return { pago, montoAplicado: Number(monto) - montoRestante };
+  });
+}
+
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
+module.exports = { listarEnMora, registrarPago, calcularMora, registrarAbonoCapital };

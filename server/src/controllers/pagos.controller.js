@@ -12,5 +12,11 @@ async function registrar(req, res, next) {
 async function calcularMora(req, res, next) {
   try { res.json(await pagos.calcularMora()); } catch (err) { next(err); }
 }
+async function registrarAbonoCapital(req, res, next) {
+  try {
+    const { prestamoId, monto } = req.body;
+    res.status(201).json(await pagos.registrarAbonoCapital(prestamoId, monto, req.user.id));
+  } catch (err) { next(err); }
+}
 
-module.exports = { listarEnMora, registrar, calcularMora };
+module.exports = { listarEnMora, registrar, calcularMora, registrarAbonoCapital };
