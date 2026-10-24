@@ -8,6 +8,10 @@ export async function registrarPago(cuotaId, monto) {
   const { data } = await apiClient.post('/pagos', { cuotaId, monto });
   return data;
 }
+export async function registrarAbonoCapital(prestamoId, monto) {
+  const { data } = await apiClient.post('/pagos/abono-capital', { prestamoId, monto });
+  return data;
+}
 export async function listarEnMora() {
   const { data } = await apiClient.get('/pagos/mora');
   return data;

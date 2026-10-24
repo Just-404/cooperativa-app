@@ -4,7 +4,7 @@ import { obtener } from '../services/prestamos.service';
 import { evaluar } from '../../evaluacion/services/evaluacion.service';
 import { aprobar, rechazar } from '../../aprobacion/services/aprobacion.service';
 import { desembolsar } from '../../desembolso/services/desembolso.service';
-import { listarCuotas, registrarPago } from '../../cuotas-pagos/services/cuotas-pagos.service';
+import { listarCuotas, registrarPago, registrarAbonoCapital } from '../../cuotas-pagos/services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 
@@ -25,6 +25,7 @@ export default function PrestamoDetallePage() {
   const [comentario, setComentario] = useState('');
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
+  const [abonoMonto, setAbonoMonto] = useState('');
 
   const puedeEvaluar = ['administrador', 'oficial_credito'].includes(user?.rol);
   const puedeAprobar = ['administrador', 'gerente'].includes(user?.rol);
@@ -65,9 +66,33 @@ export default function PrestamoDetallePage() {
     }
   }
 
+  async function handleAbonoCapital() {
+    setError(''); setMensaje('');
+    if (!abonoMonto || Number(abonoMonto) <= 0) {
+      setError('Ingrese un monto válido para el abono');
+      return;
+    }
+    try {
+      await registrarAbonoCapital(id, Number(abonoMonto));
+      setAbonoMonto('');
+      setMensaje('Abono a capital registrado. Las cuotas futuras se han reducido.');
+      cargar();
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'No se pudo registrar el abono');
+    }
+  }
+
   if (!prestamo) return null;
   const rechazado = prestamo.estado === 'rechazado';
   const pasoActualIdx = Math.max(0, PASOS.findIndex((p) => p.estado === prestamo.estado));
+
+  // Verificar si hay cuotas anteriores impagas para cada cuota
+  const cuotasConBloqueo = cuotas.map((c, idx) => {
+    const cuotasAnterioresImpagas = cuotas
+      .slice(0, idx)
+      .some(prev => prev.estado !== 'pagada');
+    return { ...c, bloqueada: cuotasAnterioresImpagas && c.estado !== 'pagada' };
+  });
 
   return (
     <div>
@@ -132,14 +157,35 @@ export default function PrestamoDetallePage() {
 
       {cuotas.length > 0 && (
         <>
-          <h4>Cuotas</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h4 style={{ margin: 0 }}>Cuotas (amortización francesa)</h4>
+            {puedeRegistrarPago && (
+              <div className="card" style={{ padding: 12, maxWidth: 350, margin: 0 }}>
+                <label style={{ display: 'block', marginBottom: 6 }}>Abono a capital (reduce cuotas futuras)</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="Monto"
+                    value={abonoMonto}
+                    onChange={(e) => setAbonoMonto(e.target.value)}
+                    style={{ flex: 1 }}
+                  />
+                  <button className="btn primary" onClick={handleAbonoCapital}>Aplicar abono</button>
+                </div>
+                <small style={{ color: 'var(--ink-soft)' }}>Reduce el capital de las cuotas pendientes en orden.</small>
+              </div>
+            )}
+          </div>
           <table className="ledger">
             <thead><tr><th>#</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Mora</th><th>Total</th><th>Estado</th><th></th></tr></thead>
             <tbody>
-              {cuotas.map((c) => {
+              {cuotasConBloqueo.map((c) => {
                 const total = Number(c.montoTotal) + Number(c.montoMora || 0);
+                const puedePagar = c.estado !== 'pagada' && puedeRegistrarPago && !c.bloqueada;
                 return (
-                  <tr key={c.id}>
+                  <tr key={c.id} style={{ opacity: c.bloqueada && c.estado !== 'pagada' ? 0.6 : 1 }}>
                     <td>{c.numeroCuota}</td>
                     <td>{new Date(c.fechaVencimiento).toLocaleDateString()}</td>
                     <td className="mono">{Number(c.montoCapital).toLocaleString()}</td>
@@ -149,7 +195,14 @@ export default function PrestamoDetallePage() {
                     <td><EstadoTag estado={c.estado} /></td>
                     <td>
                       {c.estado !== 'pagada' && puedeRegistrarPago && (
-                        <button className="btn ghost" onClick={() => handlePago(c)}>Registrar pago</button>
+                        <button
+                          className="btn ghost"
+                          onClick={() => handlePago(c)}
+                          disabled={c.bloqueada}
+                          title={c.bloqueada ? 'Debe pagar las cuotas anteriores primero' : ''}
+                        >
+                          {c.bloqueada ? 'Bloqueada' : 'Registrar pago'}
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -157,6 +210,11 @@ export default function PrestamoDetallePage() {
               })}
             </tbody>
           </table>
+          {cuotasConBloqueo.some(c => c.bloqueada && c.estado !== 'pagada') && (
+            <p style={{ color: 'var(--ink-soft)', fontSize: '0.85rem', marginTop: 8 }}>
+              Las cuotas en gris están bloqueadas: debe pagar las anteriores en orden.
+            </p>
+          )}
         </>
       )}
     </div>
