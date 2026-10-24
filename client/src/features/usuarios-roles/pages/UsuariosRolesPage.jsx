@@ -91,6 +91,8 @@ export default function UsuariosRolesPage() {
     usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, rolFiltro, estadoFiltro] });
 
   const hayFiltros = busqueda.trim() !== '' || rolFiltro !== '' || estadoFiltro !== '';
+  const editandoAdminActual =
+    usuarioEditando?.id === usuarioActual?.id && usuarioEditando?.rol === 'administrador';
 
   function limpiarFiltros() {
     setBusqueda('');
@@ -200,9 +202,16 @@ export default function UsuariosRolesPage() {
             </div>
             <div className="field">
               <label htmlFor="usuario-rol">Rol</label>
-              <select id="usuario-rol" value={form.rol} onChange={(e) => setForm({ ...form, rol: e.target.value })} required>
+              <select
+                id="usuario-rol"
+                value={form.rol}
+                onChange={(e) => setForm({ ...form, rol: e.target.value })}
+                required
+                disabled={editandoAdminActual}
+              >
                 {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
+              {editandoAdminActual && <small>No puedes cambiar el rol de tu propio usuario administrador.</small>}
             </div>
             <div className="socio-modal-actions">
               <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>Cancelar</button>

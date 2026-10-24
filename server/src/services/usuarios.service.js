@@ -8,7 +8,7 @@ async function crear(datos) {
   return Usuario.create(datos);
 }
 
-async function actualizar(id, datos) {
+async function actualizar(id, datos, usuarioActualId) {
   const usuario = await Usuario.findByPk(id);
   if (!usuario) {
     const err = new Error('Usuario no encontrado');
@@ -18,6 +18,11 @@ async function actualizar(id, datos) {
   if (!usuario.activo) {
     const err = new Error('No se puede editar un usuario desactivado. Actívalo primero.');
     err.status = 409;
+    throw err;
+  }
+  if (id === usuarioActualId && usuario.rol === 'administrador' && datos.rol !== usuario.rol) {
+    const err = new Error('No puedes cambiar el rol de tu propio usuario administrador.');
+    err.status = 400;
     throw err;
   }
   const cambios = {
