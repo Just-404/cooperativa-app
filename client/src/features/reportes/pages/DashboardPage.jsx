@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 import ResumenMes from '../components/ResumenMes.jsx';
 import PrestadoVsIngresos from '../components/PrestadoVsIngresos.jsx';
 
-export default function DashboardPage() {
+export default function DashboardPage({ modo = 'panel' }) {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -16,10 +16,18 @@ export default function DashboardPage() {
       .catch((err) => setError(err.response?.data?.error?.message || 'No se pudo cargar el resumen'));
   }, []);
 
+  const esPanel = modo === 'panel';
+  const esReportes = modo === 'reportes';
+
   return (
     <div>
-      <h3>Bienvenido, {user?.nombre}</h3>
-      <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Resumen general del sistema</p>
+      {esPanel && (
+        <>
+          <h3>Bienvenido, {user?.nombre}</h3>
+          <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Resumen general del sistema</p>
+        </>
+      )}
+      {esReportes && <h3>Reportes</h3>}
 
       {error && <div className="alert error">{error}</div>}
 
@@ -43,7 +51,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      {puedeVerResumen && (
+      {esReportes && puedeVerResumen && (
         <>
           <ResumenMes />
           <PrestadoVsIngresos />

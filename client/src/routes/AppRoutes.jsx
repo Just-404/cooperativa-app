@@ -21,14 +21,14 @@ function AppRoutes() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/" element={<DashboardPage modo="panel" />} />
             <Route path="/socios" element={<SociosPage />} />
             <Route path="/socios/:id" element={<SocioDetallePage />} />
             <Route path="/socios/:id/cuentas" element={<SocioCuentasPage />} />
             <Route path="/prestamos" element={<PrestamosPage />} />
             <Route path="/prestamos/:id" element={<PrestamoDetallePage />} />
             <Route path="/pagos" element={<CuotasPagosPage />} />
-            <Route path="/reportes" element={<DashboardPage />} />
+            <Route path="/reportes" element={<DashboardPage modo="reportes" />} />
 
             <Route element={<ProtectedRoute roles={['administrador']} />}>
               <Route path="/usuarios" element={<UsuariosRolesPage />} />
