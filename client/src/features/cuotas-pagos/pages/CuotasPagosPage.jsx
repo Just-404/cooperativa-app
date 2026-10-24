@@ -51,6 +51,7 @@ export default function CuotasPagosPage() {
               [
                 socio?.nombre, socio?.apellido,
                 socio?.documento, soloDigitos(socio?.documento),
+                c.prestamo?.id,
                 c.numeroCuota,
                 c.montoTotal, Number(c.montoTotal).toLocaleString(),
                 c.montoMora, Number(c.montoMora || 0).toLocaleString(),
