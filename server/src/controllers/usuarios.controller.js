@@ -8,7 +8,7 @@ async function crear(req, res, next) {
 }
 async function actualizar(req, res, next) {
   try {
-    res.json(await usuarios.actualizar(req.params.id, req.body));
+    res.json(await usuarios.actualizar(req.params.id, req.body, req.user.id));
   } catch (err) { next(err); }
 }
 async function cambiarEstado(req, res, next) {
