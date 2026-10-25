@@ -51,6 +51,7 @@ export default function CuotasPagosPage() {
               [
                 socio?.nombre, socio?.apellido,
                 socio?.documento, soloDigitos(socio?.documento),
+                c.prestamo?.id,
                 c.numeroCuota,
                 c.montoTotal, Number(c.montoTotal).toLocaleString(),
                 c.montoMora, Number(c.montoMora || 0).toLocaleString(),
@@ -129,13 +130,14 @@ export default function CuotasPagosPage() {
       <table className="ledger">
         <thead>
           <tr>
-            <th>Socio</th><th>Cuota #</th><th>Vencimiento</th><th>Atraso</th>
+            <th>Prestamo #</th><th>Socio</th><th>Cuota #</th><th>Vencimiento</th><th>Atraso</th>
             <th>Monto</th><th>Mora</th><th>Estado</th><th></th>
           </tr>
         </thead>
         <tbody>
           {visibles.map(({ c, dias }) => (
             <tr key={c.id}>
+              <td>{c.prestamo?.id?.slice(0, 8)}</td>
               <td>{c.prestamo?.socio?.nombre} {c.prestamo?.socio?.apellido}</td>
               <td>{c.numeroCuota}</td>
               <td>{new Date(c.fechaVencimiento).toLocaleDateString()}</td>

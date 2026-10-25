@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { resumen } from '../services/reportes.service';
 import { useAuth } from '../../../context/AuthContext.jsx';
+import ResumenMes from '../components/ResumenMes.jsx';
+import PrestadoVsIngresos from '../components/PrestadoVsIngresos.jsx';
 
-export default function DashboardPage() {
+export default function DashboardPage({ modo = 'panel' }) {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const puedeVerResumen = ['administrador', 'gerente', 'oficial_credito'].includes(user?.rol);
 
   useEffect(() => {
     resumen()
@@ -13,10 +16,18 @@ export default function DashboardPage() {
       .catch((err) => setError(err.response?.data?.error?.message || 'No se pudo cargar el resumen'));
   }, []);
 
+  const esPanel = modo === 'panel';
+  const esReportes = modo === 'reportes';
+
   return (
     <div>
-      <h3>Bienvenido, {user?.nombre}</h3>
-      <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Resumen general del sistema</p>
+      {esPanel && (
+        <>
+          <h3>Bienvenido, {user?.nombre}</h3>
+          <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Resumen general del sistema</p>
+        </>
+      )}
+      {esReportes && <h3>Reportes</h3>}
 
       {error && <div className="alert error">{error}</div>}
 
@@ -39,6 +50,12 @@ export default function DashboardPage() {
             <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Cuotas en mora</div>
           </div>
         </div>
+      )}
+      {esReportes && puedeVerResumen && (
+        <>
+          <ResumenMes />
+          <PrestadoVsIngresos />
+        </>
       )}
     </div>
   );
