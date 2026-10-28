@@ -46,7 +46,7 @@ export default function SocioDetallePage() {
   const [confirmacion, setConfirmacion] = useState(null);
 
   const puedeGestionar = ['administrador', 'oficial_credito'].includes(user?.rol);
-  const puedeCalcularScoring = ['administrador', 'oficial_credito', 'cajero'].includes(user?.rol);
+  const puedeCalcularScoring = ['administrador', 'oficial_credito', 'cajero', 'gerente'].includes(user?.rol);
   const puntuacion = usePaginacion(scoring, POR_PAGINA, { clave: 'scoringPagina' });
 
   async function cargar() {
