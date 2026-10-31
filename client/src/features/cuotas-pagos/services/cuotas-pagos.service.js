@@ -16,3 +16,8 @@ export async function listarEnMora() {
   const { data } = await apiClient.get('/pagos/mora');
   return data;
 }
+
+export async function recalcularFechasCuotas(prestamoId) {
+  const { data } = await apiClient.post(`/cuotas/prestamo/${prestamoId}/recalcular-fechas`);
+  return data;
+}

@@ -10,4 +10,17 @@ async function login(req, res, next) {
   }
 }
 
-module.exports = { login };
+async function recuperarContrasena(req, res, next) {
+  try {
+    const { email } = req.body;
+    const resultado = await authService.recuperarContrasena(email);
+    res.json({
+      mensaje: resultado.mensaje,
+      ticketId: resultado.ticketId,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { login, recuperarContrasena };

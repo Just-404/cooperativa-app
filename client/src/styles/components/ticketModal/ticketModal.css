@@ -1,0 +1,90 @@
+.ticket-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgb(28 43 31 / 55%);
+}
+
+.ticket-modal {
+  width: min(100%, 560px);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 24%);
+}
+
+.ticket-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ticket-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+
+.ticket-modal-close:hover {
+  color: var(--ink);
+}
+
+.ticket-modal-body {
+  margin-bottom: 20px;
+}
+
+.ticket-modal-body p {
+  margin: 6px 0;
+  color: var(--ink-soft);
+}
+
+.ticket-modal-body strong {
+  color: var(--ink);
+}
+
+.ticket-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.ticket-modal-field {
+  margin: 16px 0;
+}
+
+.ticket-modal-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: var(--ink);
+}
+
+.ticket-modal-field select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 520px) {
+  .ticket-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .ticket-modal-actions button {
+    width: 100%;
+  }
+}

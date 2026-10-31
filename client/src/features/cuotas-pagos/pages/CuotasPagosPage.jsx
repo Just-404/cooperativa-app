@@ -4,9 +4,9 @@ import { listarEnMora } from '../services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
+import { formatearFecha, diasAtraso } from '../../../utils/fecha';
 
 const POR_PAGINA = 10;
-const MS_DIA = 24 * 60 * 60 * 1000;
 
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -18,12 +18,6 @@ const TRAMOS = [
   { value: '61-90', label: '61 a 90 días', min: 61, max: 90 },
   { value: '90+', label: 'Más de 90 días', min: 91, max: Infinity },
 ];
-
-function diasAtraso(fechaVencimiento) {
-  const dias = Math.floor((Date.now() - new Date(fechaVencimiento).getTime()) / MS_DIA);
-  return Math.max(0, dias);
-}
-
 
 export default function CuotasPagosPage() {
   const [cuotas, setCuotas] = useState([]);
@@ -140,7 +134,7 @@ export default function CuotasPagosPage() {
               <td>{c.prestamo?.id?.slice(0, 8)}</td>
               <td>{c.prestamo?.socio?.nombre} {c.prestamo?.socio?.apellido}</td>
               <td>{c.numeroCuota}</td>
-              <td>{new Date(c.fechaVencimiento).toLocaleDateString()}</td>
+              <td>{formatearFecha(c.fechaVencimiento)}</td>
               <td>{dias} {dias === 1 ? 'día' : 'días'}</td>
               <td className="mono">{Number(c.montoTotal).toLocaleString()}</td>
               <td className="mono">{Number(c.montoMora || 0).toLocaleString()}</td>

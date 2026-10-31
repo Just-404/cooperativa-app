@@ -10,6 +10,7 @@ const Cuota = require('./Cuota');
 const Pago = require('./Pago');
 const Auditoria = require('./Auditoria');
 const ScoringCrediticio = require('./ScoringCrediticio');
+const Ticket = require('./Ticket');
 
 // Socio <-> CuentaAhorro
 Socio.hasMany(CuentaAhorro, { foreignKey: 'socioId', as: 'cuentas' });
@@ -60,4 +61,5 @@ module.exports = {
   Pago,
   Auditoria,
   ScoringCrediticio,
+  Ticket,
 };

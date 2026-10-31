@@ -6,6 +6,53 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 
+// Expresiones regulares para validación de cliente
+const EXP = {
+  cedulaDominicana: /^(?:[0-9]{8}|[0-9]{3}-[0-9]{7}-[0-9])$/,
+  telefono: /^(?:\+\d{1,3}-)?\d{3}-\d{3}-\d{4}$|^(?:\+\d{1,3}\s)?\d{3}\s\d{3}\s\d{4}$|^\d{10}$|^\d{3}\s\d{3}\s\d{4}$/,
+  // Validar edad: mínimo 18 años, máximo 90 años
+  edadMinima: 18,
+  edadMaxima: 90,
+};
+
+// Helper: calcular edad desde fecha de nacimiento (cliente)
+function calcularEdadCliente(fechaNacimiento) {
+  const hoy = new Date();
+  const nacimiento = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+  return edad;
+}
+
+// Helper: validar si una fecha es un día laborable (no fin de semana ni feriado dominicano)
+function esDiaLaborableCliente(dia) {
+  const diaSemana = dia.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
+  if (diaSemana === 0 || diaSemana === 6) return false; // fin de semana
+
+  // Feriados oficiales de República Dominicana
+  const mes = dia.getMonth(); // 0-11
+  const diaMes = dia.getDate();
+
+  const feriados = {
+    '01-06': 'Día de los Reyes',     // 6 de enero
+    '02-27': 'Día de la Independencia', // 27 de febrero
+    '04-16': 'Día de la Libertad',    // 16 de abril
+    '05-01': 'Día del Trabajo',       // 1 de mayo
+    '08-15': 'Día de la Altagracia',  // 15 de agosto
+    '11-03': 'Día de la Constitución',// 3 de noviembre
+    '12-25': 'Navidad',               // 25 de diciembre
+    '12-31': 'Año Nuevo',             // 31 de diciembre
+  };
+
+  const clave = `${mes + 1}-${diaMes.toString().padStart(2, '0')}`;
+  if (feriados[clave]) return false; // es feriado
+
+  return true;
+}
+
 const POR_PAGINA = 10;
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -58,6 +105,48 @@ export default function SociosPage() {
     e.preventDefault();
     setError('');
     setCargando(true);
+    
+    // Validaciones en cliente
+    let valid = true;
+    let mensajeError = '';
+    
+    // Validar documento (cédula dominicana)
+    if (!EXP.cedulaDominicana.test(form.documento)) {
+      valid = false;
+      mensajeError = 'Formato de cédula dominicana inválido. Use: 00000000 o 001-1234567-8';
+    }
+    
+    // Validar email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      valid = false;
+      mensajeError = 'Email inválido';
+    }
+    
+    // Validar teléfono
+    if (!EXP.telefono.test(form.telefono)) {
+      valid = false;
+      mensajeError = 'Formato de teléfono inválido. Use: 000-000-0000 o +XX-000-000-0000';
+    }
+    
+    // Validar edad (fecha de nacimiento)
+    if (form.fechaNacimiento) {
+      const edad = calcularEdadCliente(form.fechaNacimiento);
+      if (edad < EXP.edadMinima) {
+        valid = false;
+        mensajeError = `El socio debe ser mayor de ${EXP.edadMinima} años. Edad actual: ${edad}`;
+      }
+      if (edad > EXP.edadMaxima) {
+        valid = false;
+        mensajeError = `La edad máxima permitida es de ${EXP.edadMaxima} años. Edad actual: ${edad}`;
+      }
+    }
+    
+    if (!valid) {
+      setError(mensajeError);
+      setCargando(false);
+      return;
+    }
+
     try {
       await crear(form);
       setForm(VACIO);
@@ -69,6 +158,7 @@ export default function SociosPage() {
       setCargando(false);
     }
   }
+
   const estados = useMemo(
     () => [...new Set(socios.map((s) => s.estado).filter(Boolean))],
     [socios]
@@ -162,18 +252,30 @@ export default function SociosPage() {
               <div className="field">
                 <label htmlFor="socio-documento">Documento (cédula)</label>
                 <input id="socio-documento" value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} required />
+                <small style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                  Formato: 00000000 o 001-1234567-8
+                </small>
               </div>
               <div className="field">
                 <label htmlFor="socio-email">Email</label>
                 <input id="socio-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                <small style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                  Ejemplo: nombre@dominio.com
+                </small>
               </div>
               <div className="field">
                 <label htmlFor="socio-telefono">Teléfono</label>
                 <input id="socio-telefono" type="tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} required />
+                <small style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                  Formato: 000-000-0000 o +XX-000-000-0000
+                </small>
               </div>
               <div className="field">
                 <label htmlFor="socio-fecha-nacimiento">Fecha de nacimiento</label>
                 <input id="socio-fecha-nacimiento" type="date" value={form.fechaNacimiento} onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })} required />
+                <small style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                  Edad mínima: 18 años, máxima: 90 años
+                </small>
               </div>
               <div className="field socio-address-field">
                 <label htmlFor="socio-direccion">Dirección</label>
@@ -221,6 +323,7 @@ export default function SociosPage() {
         >
           <option value="">Todos los scorings</option>
           {TRAMOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+        
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>

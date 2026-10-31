@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import fondoLogin from '../../../img/fondo-login.jpg';
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
             {cargando ? 'Ingresando…' : 'Ingresar'}
           </button>
 
-          <a href="/recuperar-contraseña" className="login-forgot">¿Olvidaste tu contraseña?</a>
+          <Link to="/recuperar-contraseña" className="login-forgot">¿Olvidaste tu contraseña?</Link>
         </form>
       </main>
     </div>

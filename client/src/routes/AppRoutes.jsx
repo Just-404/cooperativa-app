@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout.jsx';
 import ProtectedRoute from '../components/common/ProtectedRoute.jsx';
 
 import LoginPage from '../features/auth/pages/LoginPage.jsx';
+import RecuperarContrasenaPage from '../features/auth/pages/RecuperarContrasenaPage.jsx';
 import DashboardPage from '../features/reportes/pages/DashboardPage.jsx';
 import SociosPage from '../features/socios/pages/SociosPage.jsx';
 import SocioDetallePage from '../features/socios/pages/SocioDetallePage.jsx';
@@ -12,12 +13,14 @@ import PrestamoDetallePage from '../features/prestamos/pages/PrestamoDetallePage
 import CuotasPagosPage from '../features/cuotas-pagos/pages/CuotasPagosPage.jsx';
 import UsuariosRolesPage from '../features/usuarios-roles/pages/UsuariosRolesPage.jsx';
 import AuditoriaPage from '../features/auditoria/pages/AuditoriaPage.jsx';
+import AdminTicketsPage from '../features/admin/AdminTicketsPage.jsx';
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/recuperar-contraseña" element={<RecuperarContrasenaPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
@@ -36,6 +39,10 @@ function AppRoutes() {
 
             <Route element={<ProtectedRoute roles={['administrador', 'auditor']} />}>
               <Route path="/auditoria" element={<AuditoriaPage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute roles={['administrador', 'gerente', 'auditor']} />}>
+              <Route path="/tickets" element={<AdminTicketsPage />} />
             </Route>
           </Route>
         </Route>
