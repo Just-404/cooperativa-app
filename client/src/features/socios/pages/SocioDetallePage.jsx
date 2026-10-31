@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { actualizar, cambiarEstado, obtener } from '../services/socios.service';
 import { calcular, obtenerPorSocio } from '../../scoring/services/scoring.service';
+import axios from 'axios';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
@@ -30,6 +31,11 @@ function fechaLegible(fecha) {
   return new Date(`${fecha}T00:00:00`).toLocaleDateString();
 }
 
+// Helper: formatear monto con separador de miles
+function formatoMonto(monto) {
+  return new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(monto);
+}
+
 export default function SocioDetallePage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -44,6 +50,7 @@ export default function SocioDetallePage() {
   const [form, setForm] = useState(FORM_VACIO);
   const [formInicial, setFormInicial] = useState(FORM_VACIO);
   const [confirmacion, setConfirmacion] = useState(null);
+  const [moraInfo, setMoraInfo] = useState(null); // Información de mora
 
   const puedeGestionar = ['administrador', 'oficial_credito'].includes(user?.rol);
   const puedeCalcularScoring = ['administrador', 'oficial_credito', 'cajero'].includes(user?.rol);
@@ -52,6 +59,7 @@ export default function SocioDetallePage() {
   async function cargar() {
     setCargando(true);
     setError('');
+    setMoraInfo(null); // Reset Mora info
     try {
       const datosSocio = await obtener(id);
       setSocio(datosSocio);
@@ -60,6 +68,18 @@ export default function SocioDetallePage() {
         setErrorScoring('');
       } catch {
         setErrorScoring('No se pudo cargar el historial de scoring.');
+      }
+      // Cargar información de Mora usando axios directamente
+      try {
+        const { data } = await axios.get('/api/pagos/mora');
+        // Filtrar mora solo para este socio
+        const socioMora = data.find(c => c.documento === socio.documento || (c.socio && c.socio.documento === socio.documento));
+        if (socioMora) {
+          setMoraInfo(socioMora);
+        }
+      } catch (moraErr) {
+        console.error('Error cargando Mora:', moraErr.message);
+        // No mostramos error en UI, solo en consola
       }
     } catch (err) {
       setError(err.response?.data?.error?.message || 'No se pudo cargar la información del socio.');
@@ -175,6 +195,11 @@ export default function SocioDetallePage() {
     );
   }
 
+  // Calcular total de mora para este socio desde los datos de Mora
+  const totalMoraSocio = moraInfo
+    ? MoraInfo.reduce((acc, cuota) => acc + (cuota.montoMora || 0), 0)
+    : 0;
+
   return (
     <div>
       <Link to="/socios" style={{ fontSize: '0.82rem' }}>← Volver a socios</Link>
@@ -221,36 +246,78 @@ export default function SocioDetallePage() {
           <div><dt>Dirección</dt><dd>{socio.direccion || '—'}</dd></div>
           <div><dt>Fecha de nacimiento</dt><dd>{fechaLegible(socio.fechaNacimiento)}</dd></div>
         </dl>
-      </section>
+        
+        {/* Nueva sección: Información de Mora */}
+        {moraInfo && moraInfo.length > 0 && (
+          <section className="card socio-mora-section" aria-labelledby="mora-titulo">
+            <div className="socio-section-heading">
+              <h4 id="mora-titulo">🔔 Cuotas con Mora</h4>
+              <p style={{ color: 'var(--danger)', fontSize: '0.875rem', margin: '0.5rem 0' }}>
+                {moraInfo.length} cuotas vencidas con mora acumulada
+              </p>
+            </div>
+            <div style={{ 
+              background: 'rgba(255, 80, 80, 0.05)', 
+              borderRadius: '4px', 
+              padding: '12px', 
+              marginTop: '12px'
+            }}>
+              <p style={{ 
+                color: 'var(--danger)', 
+                fontWeight: 'bold', 
+                margin: '0 0 8px 0',
+                fontSize: '0.9rem'
+              }}>
+                Mora Total: {formatoMonto(totalMoraSocio)}
+              </p>
+              <p style={{ 
+                color: 'var(--ink-soft)', 
+                fontSize: '0.75rem',
+                margin: '0'
+              }}>
+                {moraInfo.length} cuotas vencidas del mes pasado. Mora diaria 0.1% sobre cuota vencida.
+              </p>
+            </div>
+          </section>
+        )}
 
-      <section className="socio-scoring-section" aria-labelledby="scoring-titulo">
-        <div className="socio-section-heading">
-          <h4 id="scoring-titulo">Scoring crediticio</h4>
-          {puedeCalcularScoring && (
-            <button className="btn secondary" type="button" onClick={solicitarCalculoScoring}>Calcular scoring</button>
-          )}
-        </div>
-        {errorScoring && <div className="alert error" role="alert">{errorScoring}</div>}
-        <table className="ledger">
-          <thead><tr><th>Fecha</th><th>Puntaje</th></tr></thead>
-          <tbody>
-            {puntuacion.visibles.map((s) => (
-              <tr key={s.id}>
-                <td>{fechaLegible(s.fechaEvaluacion?.slice(0, 10))}</td>
-                <td className="mono">{s.puntaje}</td>
-              </tr>
-            ))}
-            {scoring.length === 0 && <tr><td colSpan="2" style={{ color: 'var(--ink-soft)' }}>Sin evaluaciones aún.</td></tr>}
-          </tbody>
-        </table>
-        <Paginacion
-          paginaActual={puntuacion.paginaActual}
-          totalPaginas={puntuacion.totalPaginas}
-          onCambiar={puntuacion.setPagina}
-          desde={puntuacion.desde}
-          hasta={puntuacion.hasta}
-          total={puntuacion.total}
-        />
+        {!moraInfo || moraInfo.length === 0 && (
+          <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+            Sin cuotas en mora
+          </p>
+        )}
+
+        <section className="socio-scoring-section" aria-labelledby="scoring-titulo">
+          <div className="socio-section-heading">
+            <h4 id="scoring-titulo">Scoring crediticio</h4>
+            {puedeCalcularScoring && (
+              <button className="btn secondary" type="button" onClick={solicitarCalculoScoring}>
+                Calcular scoring
+              </button>
+            )}
+          </div>
+          {errorScoring && <div className="alert error" role="alert">{errorScoring}</div>}
+          <table className="ledger">
+            <thead><tr><th>Fecha</th><th>Puntaje</th></tr></thead>
+            <tbody>
+              {puntuacion.visibles.map((s) => (
+                <tr key={s.id}>
+                  <td>{fechaLegible(s.fechaEvaluacion?.slice(0, 10))}</td>
+                  <td className="mono">{s.puntaje}</td>
+                </tr>
+              ))}
+              {scoring.length === 0 && <tr><td colSpan="2" style={{ color: 'var(--ink-soft)' }}>Sin evaluaciones aún.</td></tr>}
+            </tbody>
+          </table>
+          <Paginacion
+            paginaActual={puntuacion.paginaActual}
+            totalPaginas={puntuacion.totalPaginas}
+            onCambiar={puntuacion.setPagina}
+            desde={puntuacion.desde}
+            hasta={puntuacion.hasta}
+            total={puntuacion.total}
+          />
+        </section>
       </section>
 
       {editando && (

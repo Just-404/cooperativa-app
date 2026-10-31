@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { Usuario } = require('../models');
+const { Usuario, Ticket } = require('../models');
 const env = require('../config/env');
 
 async function login(email, passwordPlano) {
@@ -32,4 +32,26 @@ async function login(email, passwordPlano) {
   return { token, usuario };
 }
 
-module.exports = { login };
+async function recuperarContrasena(email) {
+  const usuario = await Usuario.findOne({ where: { email } });
+  if (!usuario) {
+    const err = new Error('El correo electrónico no está registrado');
+    err.status = 400;
+    throw err;
+  }
+
+  const ticket = await Ticket.create({
+    usuarioId: usuario.id,
+    tipo: 'forgot_password',
+    titulo: 'Solicitud de recuperación de contraseña',
+    descripcion: 'El usuario ha solicitado recuperar su contraseña. El administrador debe restablecerla.',
+    estado: 'pending',
+  });
+
+  return {
+    mensaje: 'Ticket para recuperar contraseña enviado con éxito',
+    ticketId: ticket.id,
+  };
+}
+
+module.exports = { login, recuperarContrasena };

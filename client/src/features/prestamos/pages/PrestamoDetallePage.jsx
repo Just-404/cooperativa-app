@@ -4,9 +4,10 @@ import { obtener } from '../services/prestamos.service';
 import { evaluar } from '../../evaluacion/services/evaluacion.service';
 import { aprobar, rechazar } from '../../aprobacion/services/aprobacion.service';
 import { desembolsar } from '../../desembolso/services/desembolso.service';
-import { listarCuotas, registrarPago, registrarAbonoCapital } from '../../cuotas-pagos/services/cuotas-pagos.service';
+import { listarCuotas, registrarPago, registrarAbonoCapital, recalcularFechasCuotas } from '../../cuotas-pagos/services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
+import { formatearFecha, nombreDia } from '../../../utils/fecha';
 
 const PASOS = [
   { estado: 'solicitado', label: 'Solicitud' },
@@ -22,6 +23,9 @@ export default function PrestamoDetallePage() {
   const { user } = useAuth();
   const [prestamo, setPrestamo] = useState(null);
   const [cuotas, setCuotas] = useState([]);
+  const [totalPendiente, setTotalPendiente] = useState(0);
+  const [cuotasPagadas, setCuotasPagadas] = useState(0);
+  const [totalPrestamoConIntereses, setTotalPrestamoConIntereses] = useState(0);
   const [comentario, setComentario] = useState('');
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
@@ -36,7 +40,20 @@ export default function PrestamoDetallePage() {
     const p = await obtener(id);
     setPrestamo(p);
     if (['desembolsado', 'cerrado'].includes(p.estado)) {
-      setCuotas(await listarCuotas(id));
+      const c = await listarCuotas(id);
+      setCuotas(c);
+      const pendiente = c.filter((cuota) => cuota.estado !== 'pagada').reduce(
+        (sum, cuota) => sum + Number(cuota.montoTotal) + Number(cuota.montoMora || 0),
+        0
+      );
+      const pagadas = c.filter((cuota) => cuota.estado === 'pagada').length;
+      const totalConIntereses = c.reduce(
+        (sum, cuota) => sum + Number(cuota.montoTotal),
+        0
+      );
+      setTotalPendiente(pendiente);
+      setCuotasPagadas(pagadas);
+      setTotalPrestamoConIntereses(totalConIntereses);
     }
   }
 
@@ -79,6 +96,17 @@ export default function PrestamoDetallePage() {
       cargar();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'No se pudo registrar el abono');
+    }
+  }
+
+  async function handleRecalcularFechas() {
+    setError(''); setMensaje('');
+    try {
+      const resultado = await recalcularFechasCuotas(id);
+      setMensaje(`Fechas de vencimiento actualizadas (${resultado.cuotasActualizadas} cuota(s) modificada(s))`);
+      cargar();
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'No se pudieron recalcular las fechas');
     }
   }
 
@@ -158,15 +186,15 @@ export default function PrestamoDetallePage() {
       {cuotas.length > 0 && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <h4 style={{ margin: 0 }}>Cuotas (amortización francesa)</h4>
+            <h4 style={{ margin: 0 }}>Cuotas</h4>
             {puedeRegistrarPago && (
-              <div className="card" style={{ padding: 12, maxWidth: 350, margin: 0 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Abono a capital (reduce cuotas futuras)</label>
+              <div className="card" style={{ padding: 12, maxWidth: 350, margin: 0, boxShadow: 'none'}}>
+                <label style={{ display: 'block', marginBottom: 6 }}>Abono a capital</label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     type="number"
-                    step="0.01"
-                    min="0.01"
+                    step="1"
+                    min="1"
                     placeholder="Monto"
                     value={abonoMonto}
                     onChange={(e) => setAbonoMonto(e.target.value)}
@@ -178,6 +206,35 @@ export default function PrestamoDetallePage() {
               </div>
             )}
           </div>
+
+          <div style={{ marginBottom: 16, padding: 12, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Total a pagar (pendiente)</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)', fontFamily: "'Roboto Slab', serif" }}>
+                RD$ {totalPendiente.toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Cuotas pagadas</div>
+              <div style={{ fontSize: '1rem', color: 'var(--ink)' }}>{cuotasPagadas} de {cuotas.length}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Total préstamo (capital + intereses)</div>
+              <div style={{ fontSize: '1rem', color: 'var(--ink)' }}>RD$ {totalPrestamoConIntereses.toLocaleString()}</div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={handleRecalcularFechas}
+                disabled={prestamo.estado !== 'desembolsado' && prestamo.estado !== 'cerrado'}
+              >
+                Recalcular fechas de vencimiento
+              </button>
+              <small style={{ color: 'var(--ink-soft)' }}>Ajusta feriados y fines de semana</small>
+            </div>
+          </div>
+
           <table className="ledger">
             <thead><tr><th>#</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Mora</th><th>Total</th><th>Estado</th><th></th></tr></thead>
             <tbody>
@@ -187,7 +244,10 @@ export default function PrestamoDetallePage() {
                 return (
                   <tr key={c.id} style={{ opacity: c.bloqueada && c.estado !== 'pagada' ? 0.6 : 1 }}>
                     <td>{c.numeroCuota}</td>
-                    <td>{new Date(c.fechaVencimiento).toLocaleDateString()}</td>
+                    <td>
+                      {formatearFecha(c.fechaVencimiento)}{' '}
+                      <small style={{ color: 'var(--ink-soft)' }}>{nombreDia(c.fechaVencimiento)}</small>
+                    </td>
                     <td className="mono">{Number(c.montoCapital).toLocaleString()}</td>
                     <td className="mono">{Number(c.montoInteres).toLocaleString()}</td>
                     <td className="mono">{Number(c.montoMora || 0).toLocaleString()}</td>

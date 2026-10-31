@@ -1,0 +1,119 @@
+.ticket-reporte-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgb(28 43 31 / 55%);
+}
+
+.ticket-reporte-modal {
+  width: min(100%, 420px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--card);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 24%);
+  position: relative;
+}
+
+.ticket-reporte-header {
+  margin: -24px 0 16px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ticket-reporte-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--forest);
+}
+
+.ticket-reporte-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ticket-reporte-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.ticket-reporte-field label {
+  font-weight: bold;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.ticket-reporte-field input,
+.ticket-reporte-field textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--background);
+  color: var(--ink);
+}
+
+.ticket-reporte-field input:focus,
+.ticket-reporte-field textarea:focus {
+  outline: none;
+  border-color: var(--forest);
+}
+
+.ticket-reporte-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ticket-reporte-btn-cancelar {
+  padding: 8px 16px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.ticket-reporte-btn-cancelar:hover {
+  background: var(--hover);
+}
+
+.ticket-reporte-btn-enviar {
+  padding: 8px 16px;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.ticket-reporte-btn-enviar:hover {
+  background: var(--forest);
+} 
+
+.ticket-reporte-trigger:hover {
+  color: var(--moss);
+}
+
+@media (max-width: 520px) {
+  .ticket-reporte-modal {
+    width: min(100%, 90%);
+    padding: 16px;
+  }
+}

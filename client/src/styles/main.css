@@ -6,6 +6,8 @@
 @import './components/data-display.css';
 @import './components/feedback.css';
 @import './components/modals.css';
+@import './components/ticketModal/ticketModal.css';
+@import './components/ticketReporte.css';
 @import './features/socios.css';
 @import './features/cuentas.css';
 @import './utilities/accessibility.css';

@@ -15,4 +15,13 @@ router.post(
   controller.login
 );
 
+router.post(
+  '/recuperar-contrasena',
+  [
+    body('email').isEmail().withMessage('Email inválido'),
+  ],
+  validate,
+  controller.recuperarContrasena
+);
+
 module.exports = router;

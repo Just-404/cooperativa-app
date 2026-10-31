@@ -1,7 +1,11 @@
 const pagos = require('../services/pagos.service');
 
 async function listarEnMora(req, res, next) {
-  try { res.json(await pagos.listarEnMora()); } catch (err) { next(err); }
+  try {
+    // Recalcular mora antes de listar, para que los datos estén actualizados
+    await pagos.calcularMora();
+    res.json(await pagos.listarEnMora());
+  } catch (err) { next(err); }
 }
 async function registrar(req, res, next) {
   try {

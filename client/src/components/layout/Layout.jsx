@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { TicketReporte } from '../common/TicketReporte';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Panel', roles: null },
@@ -9,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/reportes', label: 'Reportes', roles: ['administrador', 'gerente', 'auditor'] },
   { to: '/usuarios', label: 'Usuarios', roles: ['administrador'] },
   { to: '/auditoria', label: 'Auditoría', roles: ['administrador', 'auditor'] },
+  { to: '/tickets', label: 'Tickets', roles: ['administrador', 'gerente', 'auditor'] },
 ];
 
 export default function Layout() {
@@ -30,11 +32,18 @@ export default function Layout() {
         padding: '18px 0',
         display: 'flex',
         flexDirection: 'column',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflowY: 'auto',
       }}>
         <div style={{ padding: '0 18px 18px', borderBottom: '1px solid var(--ledger-line)', marginBottom: 12 }}>
           <strong style={{ fontFamily: "'Roboto Slab', serif", color: 'var(--forest)' }}>CoopAhorros</strong>
+          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>{user?.nombre}</div>
+          <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--moss)', marginBottom: 0 }}>{user?.rol}</div>
+
         </div>
-        <nav style={{ flex: 1 }}>
+        <nav style={{ flex: 1, overflowY: 'auto' }}>
           {visibleItems.map((item) => (
             <NavLink
               key={item.to}
@@ -55,10 +64,11 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div style={{ padding: '12px 18px', borderTop: '1px solid var(--ledger-line)' }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>{user?.nombre}</div>
-          <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--moss)', marginBottom: 8 }}>{user?.rol}</div>
-          <button className="btn ghost" onClick={handleLogout} style={{ width: '100%' }}>Cerrar sesión</button>
+        <div style={{ padding: '12px 18px', borderTop: '1px solid var(--ledger-line)', paddingBottom: 24 }}>
+
+          <TicketReporte />
+          <hr style={{ border: 'none', borderBottom: '1px solid var(--ledger-line)', margin: '8px 0' }} />
+          <button className="btn ghost" onClick={handleLogout} style={{ width: '100%', marginBottom: 12 }}>Cerrar sesión</button>
         </div>
       </aside>
       <main style={{ padding: '28px 32px' }}>
