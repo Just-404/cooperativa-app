@@ -13,8 +13,25 @@ function ventana(actual, total, vecinos = 1) {
   return salida;
 }
 
-export default function Paginacion({ paginaActual, totalPaginas, onCambiar, desde, hasta, total }) {
-  if (totalPaginas <= 1) return null;
+export default function Paginacion({
+  paginaActual,
+  totalPaginas,
+  onCambiar,
+  desde,
+  hasta,
+  total,
+  porPagina,
+  opcionesPorPagina = [],
+  onCambiarPorPagina,
+}) {
+  const puedeCambiarTamano =
+    Boolean(onCambiarPorPagina) &&
+    total != null &&
+    total > Math.min(...opcionesPorPagina);
+
+  // No se oculta si hay selector: si el usuario eligió "100" y queda una sola
+  // página, necesita poder volver a un tamaño menor.
+  if (totalPaginas <= 1 && !puedeCambiarTamano) return null;
 
   const ir = (n) => onCambiar(Math.min(Math.max(1, n), totalPaginas));
 
@@ -25,6 +42,22 @@ export default function Paginacion({ paginaActual, totalPaginas, onCambiar, desd
           ? `Mostrando ${desde}–${hasta} de ${total}`
           : `Página ${paginaActual} de ${totalPaginas}`}
       </span>
+
+      {puedeCambiarTamano && (
+        <label className="pag-tamano">
+          <span className="pag-txt">Por página </span>
+          <select
+            value={porPagina}
+            onChange={(e) => onCambiarPorPagina(Number(e.target.value))}
+            aria-label="Registros por página"
+            style={{ width: 'auto', padding: '3px 24px 3px 8px', fontSize: 13, height: 'auto', minHeight: 0 }}
+          >
+            {opcionesPorPagina.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div className="pag-controles">
         <button
