@@ -18,5 +18,14 @@ async function prestadoVsIngresos(req, res, next) {
     res.json(await reportes.prestadoVsIngresos(meses));
   } catch (err) { next(err); }
 }
+async function cuentasMovimiento(req, res, next) {
+  try {
+    const meses = Math.min(Number(req.query.meses) || 6, 12);
+    res.json(await reportes.cuentasMovimiento(meses));
+  } catch (err) { next(err); }
+}
+async function prestamosPorTipo(req, res, next) {
+  try { res.json(await reportes.prestamosPorTipo()); } catch (err) { next(err); }
+}
 
-module.exports = { resumen, prestamosPorEstado, prestamosDelMes, prestadoVsIngresos };
+module.exports = { resumen, prestamosPorEstado, prestamosDelMes, prestadoVsIngresos, cuentasMovimiento, prestamosPorTipo };
