@@ -105,29 +105,29 @@ export default function SociosPage() {
     e.preventDefault();
     setError('');
     setCargando(true);
-    
+
     // Validaciones en cliente
     let valid = true;
     let mensajeError = '';
-    
+
     // Validar documento (cédula dominicana)
     if (!EXP.cedulaDominicana.test(form.documento)) {
       valid = false;
       mensajeError = 'Formato de cédula dominicana inválido. Use: 00000000 o 001-1234567-8';
     }
-    
+
     // Validar email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       valid = false;
       mensajeError = 'Email inválido';
     }
-    
+
     // Validar teléfono
     if (!EXP.telefono.test(form.telefono)) {
       valid = false;
       mensajeError = 'Formato de teléfono inválido. Use: 000-000-0000 o +XX-000-000-0000';
     }
-    
+
     // Validar edad (fecha de nacimiento)
     if (form.fechaNacimiento) {
       const edad = calcularEdadCliente(form.fechaNacimiento);
@@ -140,7 +140,7 @@ export default function SociosPage() {
         mensajeError = `La edad máxima permitida es de ${EXP.edadMaxima} años. Edad actual: ${edad}`;
       }
     }
-    
+
     if (!valid) {
       setError(mensajeError);
       setCargando(false);
@@ -201,8 +201,10 @@ export default function SociosPage() {
       .map(({ s }) => s);
   }, [indexados, busqueda, estadoFiltro, tramoFiltro]);
 
-  const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
-    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro, tramoFiltro] });
+  const {
+    visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total,
+    porPagina, setPorPagina, opciones,
+  } = usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro, tramoFiltro] });
 
   const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '' || tramoFiltro !== '';
 
@@ -323,7 +325,7 @@ export default function SociosPage() {
         >
           <option value="">Todos los scorings</option>
           {TRAMOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-        
+
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
@@ -365,6 +367,9 @@ export default function SociosPage() {
         desde={desde}
         hasta={hasta}
         total={total}
+        porPagina={porPagina}
+        opcionesPorPagina={opciones}
+        onCambiarPorPagina={setPorPagina}
       />
     </div>
   );

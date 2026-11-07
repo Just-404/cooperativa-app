@@ -108,8 +108,11 @@ export default function PrestamosPage() {
       .map(({ p }) => p);
   }, [indexados, busqueda, estadoFiltro]);
 
-  const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
-    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro] });
+  const {
+    visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total,
+    porPagina, setPorPagina, opciones,
+  } = usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, estadoFiltro] });
+
   const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '';
 
   function limpiarFiltros() {
@@ -262,6 +265,9 @@ export default function PrestamosPage() {
         desde={desde}
         hasta={hasta}
         total={total}
+        porPagina={porPagina}
+        opcionesPorPagina={opciones}
+        onCambiarPorPagina={setPorPagina}
       />
     </div>
   );

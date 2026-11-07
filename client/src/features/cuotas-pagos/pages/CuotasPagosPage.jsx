@@ -71,8 +71,10 @@ export default function CuotasPagosPage() {
     [filtradas]
   );
 
-  const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
-    usePaginacion(filtradas, POR_PAGINA, { reiniciarCon: [busqueda, tramoFiltro] });
+  const {
+    visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total,
+    porPagina, setPorPagina, opciones,
+  } = usePaginacion(filtradas, POR_PAGINA, { reiniciarCon: [busqueda, tramoFiltro] });
 
   const hayFiltros = busqueda.trim() !== '' || tramoFiltro !== '';
 
@@ -163,6 +165,9 @@ export default function CuotasPagosPage() {
         desde={desde}
         hasta={hasta}
         total={total}
+        porPagina={porPagina}
+        opcionesPorPagina={opciones}
+        onCambiarPorPagina={setPorPagina}
       />
     </div>
   );

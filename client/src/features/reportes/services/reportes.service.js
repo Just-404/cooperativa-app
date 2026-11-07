@@ -21,3 +21,11 @@ export async function prestadoVsIngresos(meses = 6) {
   const { data } = await apiClient.get('/reportes/prestado-vs-ingresos', { params: { meses } });
   return data;
 }
+export async function cuentasMovimiento(meses = 6) {
+  const { data } = await apiClient.get('/reportes/cuentas-movimiento', { params: { meses } });
+  return data;
+}
+export async function prestamosPorTipo() {
+  const { data } = await apiClient.get('/reportes/prestamos-por-tipo');
+  return data;
+}
