@@ -49,7 +49,7 @@ export default function CuentasAbiertasCerradas() {
     return (
         <section style={{ marginTop: 32 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0 }}>Cuentas abiertas vs. cerradas</h4>
+                <h4 style={{ margin: 0 }}>Cuentas Abiertas vs. Cerradas</h4>
                 <select
                     value={meses}
                     onChange={(e) => setMeses(Number(e.target.value))}

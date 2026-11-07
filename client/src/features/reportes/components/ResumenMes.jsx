@@ -66,7 +66,7 @@ export default function ResumenMes() {
     return (
         <section style={{ marginTop: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <h4 style={{ margin: 0 }}>Préstamos del mes</h4>
+                <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                     <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">‹</button>
                     <span className="mono" style={{ fontSize: '0.85rem', minWidth: 130, textAlign: 'center' }}>

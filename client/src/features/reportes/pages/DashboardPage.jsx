@@ -34,19 +34,23 @@ export default function DashboardPage({ modo = 'panel' }) {
       {error && <div className="alert error">{error}</div>}
 
       {data && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginTop: 2 }}>
-          <div className="card">
-            <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--forest)' }}>{data.sociosTotal}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Total de socios</div>
-          </div>
-          <div className="card">
-            <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--forest)' }}>{data.totalSocios}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Socios activos</div>
-          </div>
-          <div className="card">
-            <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--danger)' }}>{data.sociosInactivos}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Socios inactivos</div>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 20, marginTop: 2 }}>
+          {puedeVerResumen && (
+            <>
+              <div className="card">
+                <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--forest)' }}>{data.sociosTotal}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Total de socios</div>
+              </div>
+              <div className="card">
+                <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--forest)' }}>{data.totalSocios}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Socios activos</div>
+              </div>
+              <div className="card">
+                <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--danger)' }}>{data.sociosInactivos}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>Socios inactivos</div>
+              </div>
+            </>
+          )}
           <div className="card">
             <div className="mono" style={{ fontSize: '1.4rem', color: 'var(--forest)' }}>RD$ {Number(data.totalAhorros).toLocaleString()}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>En cuentas de ahorro</div>

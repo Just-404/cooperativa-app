@@ -31,7 +31,7 @@ export default function PrestamosPorTipo() {
 
     return (
         <div className="card" style={{ marginTop: 20 }}>
-            <h4 style={{ marginTop: 0 }}>Préstamos por tipo</h4>
+            <h4 style={{ marginTop: 0 }}>Tipos de Préstamos Más Solicitados</h4>
             <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
                 Más usado: <b>{masUsado.nombre}</b> ({masUsado.cantidad}) ·
                 Menos usado: <b>{menosUsado.nombre}</b> ({menosUsado.cantidad})
