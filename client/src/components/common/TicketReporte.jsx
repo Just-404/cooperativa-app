@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { MessageSquareWarning } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { crearTicket } from '../../services/tickets.service';
 
-export function TicketReporte() {
+export function TicketReporte({ collapsed = false }) {
   const { user, isReady } = useAuth();
   const [mostrar, setMostrar] = useState(false);
   const [tipo, setTipo] = useState('report_problem');
@@ -48,6 +49,10 @@ export function TicketReporte() {
     setMostrar(false);
     limpiar();
   }
+
+  const etiqueta = tipo === 'forgot_password'
+    ? '¿Olvidaste tu contraseña?'
+    : 'Reportar problema';
 
   return (
     <div>
@@ -112,13 +117,17 @@ export function TicketReporte() {
 
       <button
         type="button"
-        className="btn ghost"
+        className="btn ghost sidebar-action aside-footer-btn"
         onClick={() => setMostrar(true)}
-        style={{ width: '100%', marginBottom: 0 }}
+        title={collapsed ? etiqueta : undefined}
       >
-        {tipo === 'forgot_password'
-          ? '¿Olvidaste tu contraseña?'
-          : 'Reportar problema'}
+        <MessageSquareWarning
+          className="sidebar-icon"
+          size={18}
+          strokeWidth={1.9}
+          aria-hidden="true"
+        />
+        <span className="sidebar-label">{etiqueta}</span>
       </button>
     </div>
   );

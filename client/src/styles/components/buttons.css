@@ -29,6 +29,10 @@
   color: var(--ink-soft);
 }
 
+.btn.aside-footer-btn{
+  border: none;
+}
+
 .btn.danger {
   border-color: var(--danger);
   color: var(--danger);

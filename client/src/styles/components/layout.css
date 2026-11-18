@@ -1,0 +1,327 @@
+/* ==========================================================================
+   Layout general + sidebar colapsable
+   ========================================================================== */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  margin: 10px;
+  padding: 28px 32px;
+  background: var(--paper-2);
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
+
+.app-sidebar {
+  position: sticky;
+  top: 10px;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  height: calc(100vh - 20px);
+  margin: 10px 0;
+  overflow: hidden;
+  background: var(--paper-2);
+  border-right: 2px solid var(--ledger-line);
+  transition: width 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-sidebar.is-collapsed {
+  width: 64px;
+}
+
+/* Header ------------------------------------------------------------------ */
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  margin-bottom: 12px;
+  background: #0b8948;
+  border-bottom: 1px solid var(--ledger-line);
+  transition: padding 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    gap 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--forest);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.sidebar-header .sidebar-toggle {
+  color: var(--white);
+}
+
+.sidebar-header .sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.app-topbar .sidebar-toggle:hover {
+  background: var(--hover);
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid var(--leaf);
+  outline-offset: 2px;
+}
+
+.sidebar-user {
+  min-width: 0;
+  max-width: 140px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 140ms ease;
+}
+
+.sidebar-brand {
+  display: block;
+  font-family: 'Roboto Slab', serif;
+  font-size: 0.95rem;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-name {
+  font-size: 0.78rem;
+  color: #000000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  font-size: 0.7rem;
+  color: #1d1d1d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-sidebar.is-collapsed .sidebar-header {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app-sidebar.is-collapsed .sidebar-user {
+  max-width: 0;
+  opacity: 0;
+}
+
+/* Navegación -------------------------------------------------------------- */
+
+.sidebar-nav {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  text-decoration: none;
+  color: var(--ink-soft);
+  background: transparent;
+  border-left: 3px solid transparent;
+  transition: padding 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    background 150ms ease, color 150ms ease;
+}
+
+.sidebar-link:hover {
+  color: var(--ink);
+  background: var(--hover);
+}
+
+.sidebar-link.is-active {
+  font-weight: 600;
+  color: var(--forest);
+  background: var(--card);
+  border-left-color: var(--leaf);
+}
+
+.sidebar-link:focus-visible {
+  outline: 2px solid var(--leaf);
+  outline-offset: -2px;
+}
+
+.sidebar-icon {
+  flex: none;
+}
+
+.app-sidebar.is-collapsed .sidebar-link {
+  padding-left: 19px;
+  padding-right: 0;
+}
+
+.sidebar-label {
+  min-width: 0;
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 1;
+  transition: max-width 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 140ms ease;
+}
+
+.app-sidebar.is-collapsed .sidebar-label {
+  max-width: 0;
+  opacity: 0;
+}
+
+/* Footer ------------------------------------------------------------------ */
+
+.sidebar-footer {
+  padding: 12px 14px 24px;
+  border-top: 1px solid var(--ledger-line);
+}
+
+.sidebar-divider {
+  margin: 8px 0;
+  border: none;
+  border-bottom: 1px solid var(--ledger-line);
+}
+
+.sidebar-footer .sidebar-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  transition: padding 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    gap 260ms cubic-bezier(0.4, 0, 0.2, 1), background 150ms ease;
+}
+
+.sidebar-footer .sidebar-action:hover {
+  background: var(--hover);
+}
+
+.app-sidebar.is-collapsed .sidebar-footer {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app-sidebar.is-collapsed .sidebar-footer .sidebar-action {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Móvil: topbar + drawer con overlay
+   -------------------------------------------------------------------------- */
+
+.app-topbar {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: block;
+  }
+
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--ledger-line);
+  }
+
+  .app-topbar-brand {
+    font-family: 'Roboto Slab', serif;
+    font-size: 0.95rem;
+    color: var(--forest);
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    width: 240px;
+    height: 100vh;
+    margin: 0;
+    box-shadow: 12px 0 32px rgba(0, 0, 0, 0.18);
+    transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .app-sidebar.is-collapsed {
+    width: 240px;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    display: block;
+    background: rgba(12, 30, 20, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 200ms ease, visibility 200ms ease;
+  }
+
+  .sidebar-backdrop.is-visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .app-main {
+    margin: 8px;
+    padding: 18px 16px 28px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accesibilidad: movimiento reducido
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .sidebar-header,
+  .sidebar-user,
+  .sidebar-link,
+  .sidebar-label,
+  .sidebar-footer .sidebar-action,
+  .sidebar-backdrop {
+    transition: none;
+  }
+}

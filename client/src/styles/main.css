@@ -3,6 +3,7 @@
 @import './base/global.css';
 @import './components/forms.css';
 @import './components/buttons.css';
+@import './components/layout.css';
 @import './components/data-display.css';
 @import './components/feedback.css';
 @import './components/modals.css';
