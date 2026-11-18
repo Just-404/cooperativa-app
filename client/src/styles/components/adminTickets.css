@@ -1,0 +1,145 @@
+.tickets-admin {
+  padding: 20px;
+}
+
+.tickets-admin-filtros {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.tickets-admin-filtros select,
+.tickets-admin-fechas input {
+  width: auto;
+  min-width: 180px;
+}
+
+.tickets-admin-fechas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tickets-admin-fechas label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.tickets-admin-estado-pending {
+  --ticket-color: #a9832e;
+}
+
+.tickets-admin-estado-resolved {
+  --ticket-color: #3f6b4a;
+}
+
+.tickets-admin-estado-cancelled {
+  --ticket-color: #8a3a2e;
+}
+
+.tickets-admin-lista {
+  max-height: 580px;
+  overflow: auto;
+  margin: 16px 0;
+}
+
+.tickets-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.tickets-admin-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 16px;
+  border: 2px solid var(--ticket-color, var(--border));
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.tickets-admin-card h4 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 0 15px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.tickets-admin-tipo {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.tickets-admin-persona {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.tickets-admin-fecha {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+}
+
+.tickets-admin-ver {
+  min-width: 0;
+  margin-top: 40px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+}
+
+.tickets-admin-card .tickets-admin-ver {
+  align-self: center;
+  border-color: var(--ticket-color, var(--border));
+  color: var(--ticket-color, var(--forest));
+}
+
+.tickets-admin-card .tickets-admin-ver:hover {
+  background: var(--hover);
+}
+
+.tickets-admin-vacio {
+  color: var(--ink-soft);
+}
+
+@media (max-width: 540px) {
+  .tickets-admin {
+    padding: 12px;
+  }
+
+  .tickets-admin-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
+
+  .tickets-admin-card {
+    padding: 14px;
+  }
+
+  .tickets-admin-fechas,
+  .tickets-admin-fechas label,
+  .tickets-admin-fechas input {
+    width: 100%;
+  }
+
+  .tickets-admin-fechas label {
+    justify-content: space-between;
+  }
+}
