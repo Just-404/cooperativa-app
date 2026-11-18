@@ -71,7 +71,7 @@ export default function Layout() {
           <button className="btn ghost" onClick={handleLogout} style={{ width: '100%', marginBottom: 12 }}>Cerrar sesión</button>
         </div>
       </aside>
-      <main style={{ padding: '28px 32px' }}>
+      <main style={{ padding: '28px 32px', minWidth: 0 }}>
         <Outlet />
       </main>
     </div>

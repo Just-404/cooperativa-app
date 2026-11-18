@@ -19,6 +19,11 @@ function labelEstado(estado) {
   return ESTADO_LABEL[estado] || estado;
 }
 
+function fechaLegible(fecha) {
+  const valor = new Date(fecha);
+  return Number.isNaN(valor.getTime()) ? 'No disponible' : valor.toLocaleString('es');
+}
+
 export default function TicketModal({
   ticket,
   onClose,
@@ -67,8 +72,9 @@ export default function TicketModal({
 
         <div className="ticket-modal-body">
           <p><strong>Título:</strong> {ticket.titulo}</p>
-          <p><strong>Usuario:</strong> {ticket.usuarioNombre}</p>
+          <p><strong>Usuario afectado:</strong> {ticket.usuarioNombre || 'No disponible'}</p>
           <p><strong>Tipo:</strong> {labelTipo(ticket.tipo)}</p>
+          <p><strong>Fecha del ticket:</strong> {fechaLegible(ticket.fechaCreacion)}</p>
           <p><strong>Descripción:</strong> {ticket.descripcion || 'Sin descripción'}</p>
           <p><strong>Estado actual:</strong> {labelEstado(ticket.estado)}</p>
         </div>

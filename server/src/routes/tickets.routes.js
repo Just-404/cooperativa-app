@@ -1,8 +1,9 @@
 const { Router } = require('express');
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
 const controller = require('../controllers/tickets.controller');
 const auth = require('../middlewares/auth.middleware');
 const checkRole = require('../middlewares/roles.middleware');
+const validate = require('../middlewares/validate.middleware');
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.post(
     body('tipo').isIn(['forgot_password', 'report_problem']).withMessage('Tipo de ticket inválido'),
     body('titulo').trim().notEmpty().withMessage('El título es requerido'),
     body('descripcion').trim().notEmpty().withMessage('La descripción es requerida'),
+    validate,
   ],
   controller.crearTicket
 );
@@ -23,6 +25,11 @@ router.get(
   '/',
   auth,
   checkRole('administrador'),
+  [
+    query('estado').optional().isIn(['pending', 'resolved', 'cancelled']).withMessage('Estado inválido'),
+    query('tipo').optional().isIn(['forgot_password', 'report_problem']).withMessage('Tipo de ticket inválido'),
+    validate,
+  ],
   controller.listarTickets
 );
 
@@ -31,6 +38,7 @@ router.get(
   auth,
   checkRole('administrador'),
   [param('id').isUUID().withMessage('ID de ticket inválido')],
+  validate,
   controller.obtenerTicket
 );
 
@@ -41,6 +49,7 @@ router.patch(
   [
     param('id').isUUID().withMessage('ID de ticket inválido'),
     body('estado').isIn(['pending', 'resolved', 'cancelled']).withMessage('Estado inválido'),
+    validate,
   ],
   controller.actualizarTicket
 );
@@ -50,6 +59,7 @@ router.delete(
   auth,
   checkRole('administrador'),
   [param('id').isUUID().withMessage('ID de ticket inválido')],
+  validate,
   controller.eliminarTicket
 );
 

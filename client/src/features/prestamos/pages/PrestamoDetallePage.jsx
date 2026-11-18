@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { obtener } from '../services/prestamos.service';
 import { evaluar } from '../../evaluacion/services/evaluacion.service';
@@ -30,6 +30,8 @@ export default function PrestamoDetallePage() {
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [abonoMonto, setAbonoMonto] = useState('');
+  const comentarioCardRef = useRef(null);
+  const comentarioTextareaRef = useRef(null);
 
   const puedeEvaluar = ['administrador', 'oficial_credito'].includes(user?.rol);
   const puedeAprobar = ['administrador', 'gerente'].includes(user?.rol);
@@ -58,6 +60,57 @@ export default function PrestamoDetallePage() {
   }
 
   useEffect(() => { cargar(); }, [id]);
+
+  useEffect(() => {
+    const card = comentarioCardRef.current;
+    const textarea = comentarioTextareaRef.current;
+    const contenedor = card?.parentElement;
+    if (!card || !textarea || !contenedor) return undefined;
+    if (typeof ResizeObserver === 'undefined') {
+      textarea.style.maxWidth = '100%';
+      return undefined;
+    }
+
+    function ajustarAncho() {
+      const estilos = window.getComputedStyle(card);
+      const espacioHorizontal = [
+        estilos.paddingLeft,
+        estilos.paddingRight,
+        estilos.borderLeftWidth,
+        estilos.borderRightWidth,
+      ].reduce((total, valor) => total + Number.parseFloat(valor || 0), 0);
+      const anchoMaximoCard = Math.max(
+        0,
+        Math.min(
+          contenedor.clientWidth,
+          window.innerWidth - card.getBoundingClientRect().left
+        )
+      );
+      const maximoContenido = Math.max(0, anchoMaximoCard - espacioHorizontal);
+      const anchoSolicitado = textarea.getBoundingClientRect().width;
+      const anchoContenido = Math.min(
+        maximoContenido,
+        Math.max(anchoSolicitado, 180)
+      );
+      const anchoCard = anchoContenido + espacioHorizontal;
+
+      if (anchoSolicitado > anchoContenido + 1) {
+        textarea.style.width = `${anchoContenido}px`;
+      }
+      if (Math.abs(card.getBoundingClientRect().width - anchoCard) > 1) {
+        card.style.width = `${anchoCard}px`;
+      }
+    }
+
+    const observador = new ResizeObserver(ajustarAncho);
+    observador.observe(textarea);
+    observador.observe(contenedor);
+    window.addEventListener('resize', ajustarAncho);
+    return () => {
+      observador.disconnect();
+      window.removeEventListener('resize', ajustarAncho);
+    };
+  }, [prestamo?.estado, puedeEvaluar, puedeAprobar]);
 
   async function accion(fn) {
     setError(''); setMensaje('');
@@ -158,22 +211,44 @@ export default function PrestamoDetallePage() {
       )}
 
       {prestamo.estado === 'solicitado' && puedeEvaluar && (
-        <div className="card" style={{ maxWidth: 480, marginBottom: 20 }}>
-          <label>Comentario de evaluación</label>
-          <textarea rows="2" value={comentario} onChange={(e) => setComentario(e.target.value)} style={{ marginBottom: 10 }} />
-          <button className="btn primary" onClick={() => accion(() => evaluar(id, comentario))}>Marcar como evaluado</button>
-        </div>
+        <>
+          <div ref={comentarioCardRef} className="card" style={{ width: 480, maxWidth: '100%', marginBottom: 10 }}>
+            <label>Comentario de evaluación</label>
+            <textarea
+              ref={comentarioTextareaRef}
+              rows="2"
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              style={{ marginBottom: 10, maxWidth: 'none', resize: 'both' }}
+            />
+          </div>
+          <button
+            className="btn primary"
+            style={{ marginBottom: 20 }}
+            onClick={() => accion(() => evaluar(id, comentario))}
+          >
+            Marcar como evaluado
+          </button>
+        </>
       )}
 
       {prestamo.estado === 'evaluado' && puedeAprobar && (
-        <div className="card" style={{ maxWidth: 480, marginBottom: 20 }}>
-          <label>Comentario</label>
-          <textarea rows="2" value={comentario} onChange={(e) => setComentario(e.target.value)} style={{ marginBottom: 10 }} />
-          <div style={{ display: 'flex', gap: 8 }}>
+        <>
+          <div ref={comentarioCardRef} className="card" style={{ width: 480, maxWidth: '100%', marginBottom: 10 }}>
+            <label>Comentario</label>
+            <textarea
+              ref={comentarioTextareaRef}
+              rows="2"
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              style={{ marginBottom: 10, maxWidth: 'none', resize: 'both' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             <button className="btn primary" onClick={() => accion(() => aprobar(id, prestamo.montoSolicitado, comentario))}>Aprobar</button>
             <button className="btn danger" onClick={() => accion(() => rechazar(id, comentario))}>Rechazar</button>
           </div>
-        </div>
+        </>
       )}
 
       {prestamo.estado === 'aprobado' && puedeDesembolsar && (

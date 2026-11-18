@@ -114,6 +114,7 @@ export function TicketReporte() {
         type="button"
         className="btn ghost"
         onClick={() => setMostrar(true)}
+        style={{ width: '100%', marginBottom: 0 }}
       >
         {tipo === 'forgot_password'
           ? '¿Olvidaste tu contraseña?'

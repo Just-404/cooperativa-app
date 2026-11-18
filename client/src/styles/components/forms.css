@@ -11,6 +11,11 @@ textarea {
   width: 100%;
 }
 
+textarea {
+  max-width: 100%;
+  resize: vertical;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
