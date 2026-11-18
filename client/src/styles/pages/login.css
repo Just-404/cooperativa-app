@@ -28,7 +28,7 @@
 }
 
 .login-panel {
-  background: var(--paper);
+  background: var(--paper-2);
   display: flex;
   align-items: center;
   justify-content: center;

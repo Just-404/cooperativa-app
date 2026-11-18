@@ -3,7 +3,6 @@
 }
 
 body {
-  margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
@@ -25,4 +24,8 @@ h4 {
 
 a {
   color: var(--forest);
+}
+
+.ledger{
+  background-color: #fff;
 }

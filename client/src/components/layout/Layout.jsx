@@ -28,8 +28,9 @@ export default function Layout() {
     <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: '100vh' }}>
       <aside style={{
         background: 'var(--paper-2)',
-        borderRight: '1px solid var(--ledger-line)',
-        padding: '18px 0',
+        borderRight: '2px solid var(--ledger-line)',
+        padding: '0',
+        margin: '10px 0px',
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
@@ -37,10 +38,10 @@ export default function Layout() {
         height: '100vh',
         overflowY: 'auto',
       }}>
-        <div style={{ padding: '0 18px 18px', borderBottom: '1px solid var(--ledger-line)', marginBottom: 12 }}>
-          <strong style={{ fontFamily: "'Roboto Slab', serif", color: 'var(--forest)' }}>CoopAhorros</strong>
-          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>{user?.nombre}</div>
-          <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--moss)', marginBottom: 0 }}>{user?.rol}</div>
+        <div style={{ padding: '10px 18px 18px', borderBottom: '1px solid var(--ledger-line)', marginBottom: 12, background: '#0b8948' }}>
+          <strong style={{ fontFamily: "'Roboto Slab', serif", color: '#ffffff' }}>CoopAhorros</strong>
+          <div style={{ fontSize: '0.78rem', color: '#000000' }}>{user?.nombre}</div>
+          <div className="mono" style={{ fontSize: '0.7rem', color: '#1d1d1d', marginBottom: 0 }}>{user?.rol}</div>
 
         </div>
         <nav style={{ flex: 1, overflowY: 'auto' }}>
@@ -71,7 +72,7 @@ export default function Layout() {
           <button className="btn ghost" onClick={handleLogout} style={{ width: '100%', marginBottom: 12 }}>Cerrar sesión</button>
         </div>
       </aside>
-      <main style={{ padding: '28px 32px', minWidth: 0 }}>
+      <main style={{ padding: '28px 32px', margin: '10px', minWidth: 0, background: 'var(--paper-2)' }}>
         <Outlet />
       </main>
     </div>
