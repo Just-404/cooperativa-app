@@ -87,8 +87,10 @@ export default function UsuariosRolesPage() {
       .map(({ u }) => u);
   }, [indexados, busqueda, rolFiltro, estadoFiltro]);
 
-  const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
-    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, rolFiltro, estadoFiltro] });
+  const {
+    visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total,
+    porPagina, setPorPagina, opciones,
+  } = usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, rolFiltro, estadoFiltro] });
 
   const hayFiltros = busqueda.trim() !== '' || rolFiltro !== '' || estadoFiltro !== '';
   const editandoAdminActual =
@@ -316,6 +318,9 @@ export default function UsuariosRolesPage() {
         desde={desde}
         hasta={hasta}
         total={total}
+        porPagina={porPagina}
+        opcionesPorPagina={opciones}
+        onCambiarPorPagina={setPorPagina}
       />
 
       {confirmacion && (

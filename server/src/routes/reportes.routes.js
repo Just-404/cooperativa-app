@@ -10,5 +10,7 @@ router.get('/resumen', auth, controller.resumen);
 router.get('/prestamos-por-estado', auth, puedeVerDetalle, controller.prestamosPorEstado);
 router.get('/prestamos-del-mes', auth, puedeVerDetalle, controller.prestamosDelMes);
 router.get('/prestado-vs-ingresos', auth, puedeVerDetalle, controller.prestadoVsIngresos);
+router.get('/cuentas-movimiento', auth, puedeVerDetalle, controller.cuentasMovimiento);
+router.get('/prestamos-por-tipo', auth, puedeVerDetalle, controller.prestamosPorTipo);
 
 module.exports = router;

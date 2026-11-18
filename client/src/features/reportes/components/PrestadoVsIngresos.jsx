@@ -47,7 +47,7 @@ export default function PrestadoVsIngresos() {
     return (
         <section style={{ marginTop: 32 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0 }}>Prestado vs. ingresos</h4>
+                <h4 style={{ margin: 0 }}>Prestado vs. Ingresos</h4>
                 <select value={meses} onChange={(e) => setMeses(Number(e.target.value))} style={{
                     fontSize: '0.75rem',
                     padding: '2px 6px',

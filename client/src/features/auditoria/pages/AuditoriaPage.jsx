@@ -3,7 +3,7 @@ import { listar } from '../services/auditoria.service';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 
-const POR_PAGINA = 15;
+const POR_PAGINA = 10;
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -53,8 +53,11 @@ export default function AuditoriaPage() {
       .map(({ e }) => e);
   }, [indexados, busqueda, rolFiltro]);
 
-  const { visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total } =
-    usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, rolFiltro] });
+  const {
+    visibles, paginaActual, totalPaginas, setPagina, desde, hasta, total,
+    porPagina, setPorPagina, opciones,
+  } = usePaginacion(filtrados, POR_PAGINA, { reiniciarCon: [busqueda, rolFiltro] });
+
 
   const hayFiltros = busqueda.trim() !== '' || rolFiltro !== '';
 
@@ -130,6 +133,9 @@ export default function AuditoriaPage() {
         desde={desde}
         hasta={hasta}
         total={total}
+        porPagina={porPagina}
+        opcionesPorPagina={opciones}
+        onCambiarPorPagina={setPorPagina}
       />
     </div>
   );
