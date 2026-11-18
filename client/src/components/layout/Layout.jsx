@@ -10,6 +10,7 @@ import {
   ReceiptText,
   Ticket,
   UserCog,
+  UserRound,
   Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -97,20 +98,6 @@ export default function Layout() {
 
   return (
     <div className="app-shell">
-      <header className="app-topbar">
-        <button
-          type="button"
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-label="Abrir menú"
-          aria-expanded={drawerOpen}
-          aria-controls="app-sidebar"
-        >
-          <Menu size={22} strokeWidth={2} aria-hidden="true" />
-        </button>
-        <strong className="app-topbar-brand">CoopAhorros</strong>
-      </header>
-
       <div
         className={`sidebar-backdrop${drawerOpen ? ' is-visible' : ''}`}
         onClick={() => setCollapsed(true)}
@@ -133,10 +120,8 @@ export default function Layout() {
           >
             <Menu size={22} strokeWidth={2} aria-hidden="true" />
           </button>
-          <div className="sidebar-user">
+          <div className="sidebar-brand-wrap">
             <strong className="sidebar-brand">CoopAhorros</strong>
-            <div className="sidebar-user-name">{user?.nombre}</div>
-            <div className="sidebar-user-role mono">{user?.rol}</div>
           </div>
         </div>
 
@@ -177,7 +162,32 @@ export default function Layout() {
       </aside>
 
       <main className="app-main">
-        <Outlet />
+        <header className="app-content-header">
+          <button
+            type="button"
+            className="sidebar-toggle app-header-menu"
+            onClick={toggleSidebar}
+            aria-label="Abrir menú"
+            aria-expanded={drawerOpen}
+            aria-controls="app-sidebar"
+          >
+            <Menu size={22} strokeWidth={2} aria-hidden="true" />
+          </button>
+
+          <div className="app-content-user">
+            <span className="app-content-avatar" aria-hidden="true">
+              <UserRound size={18} strokeWidth={1.9} />
+            </span>
+            <div className="app-content-user-info">
+              <span className="app-content-user-name">{user?.nombre}</span>
+              <span className="app-content-user-role mono">{user?.rol}</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="app-content-body">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
