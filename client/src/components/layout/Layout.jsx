@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { to: '/reportes', label: 'Reportes', icon: ChartColumn, roles: ['administrador', 'gerente', 'auditor'] },
   { to: '/usuarios', label: 'Usuarios', icon: UserCog, roles: ['administrador'] },
   { to: '/auditoria', label: 'Auditoría', icon: ClipboardList, roles: ['administrador', 'auditor'] },
-  { to: '/tickets', label: 'Tickets', icon: Ticket, roles: ['administrador', 'gerente', 'auditor'] },
+  { to: '/tickets', label: 'Tickets', icon: Ticket, roles: ['administrador'] },
 ];
 
 const MOBILE_QUERY = '(max-width: 768px)';

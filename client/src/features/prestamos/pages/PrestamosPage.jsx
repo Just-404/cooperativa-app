@@ -23,6 +23,7 @@ export default function PrestamosPage() {
   const [form, setForm] = useState(VACIO);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const [errorSocios, setErrorSocios] = useState('');
   const [errorTipos, setErrorTipos] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -57,6 +58,7 @@ export default function PrestamosPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setMensaje('');
     if (!form.socioId) {
       setError('Selecciona un socio');
       return;
@@ -71,6 +73,7 @@ export default function PrestamosPage() {
       });
       setForm(VACIO);
       setMostrarForm(false);
+      setMensaje('La solicitud de préstamo se registró correctamente.');
       cargar();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'No se pudo registrar la solicitud');
@@ -136,7 +139,7 @@ export default function PrestamosPage() {
           </p>
         </div>
         {puedeSolicitar && (
-          <button className="btn primary" onClick={() => { setError(''); setMostrarForm(true); }}>
+          <button className="btn primary" onClick={() => { setError(''); setMensaje(''); setMostrarForm(true); }}>
             Nueva solicitud
           </button>
         )}
@@ -208,6 +211,7 @@ export default function PrestamosPage() {
       )}
 
       {errorLista && <div className="alert error" role="alert">{errorLista}</div>}
+      {mensaje && <div className="alert success" role="status">{mensaje}</div>}
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
         <input

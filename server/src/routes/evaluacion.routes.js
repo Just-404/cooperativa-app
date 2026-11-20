@@ -11,7 +11,12 @@ const router = Router();
 router.post(
   '/:id/evaluar',
   auth, checkRole('administrador', 'oficial_credito'),
-  [body('comentario').notEmpty().withMessage('El comentario de evaluación es requerido')],
+  [
+    body('comentario')
+      .notEmpty().withMessage('El comentario de evaluación es requerido')
+      .bail()
+      .isLength({ max: 2000 }).withMessage('El comentario de evaluación no puede superar los 2,000 caracteres'),
+  ],
   validate,
   auditoria('evaluar_prestamo', 'prestamo'),
   controller.evaluar

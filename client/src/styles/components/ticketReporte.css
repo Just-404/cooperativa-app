@@ -22,13 +22,14 @@
 }
 
 .ticket-reporte-header {
+  display: flow-root;
   margin: -24px 0 16px;
   padding: 0 0 16px;
   border-bottom: 1px solid var(--border);
 }
 
 .ticket-reporte-header h3 {
-  margin: 0;
+  margin: 20px 0 0;
   font-size: 1.25rem;
   color: var(--forest);
 }
@@ -68,6 +69,12 @@
 .ticket-reporte-field textarea:focus {
   outline: none;
   border-color: var(--forest);
+}
+
+.ticket-reporte-field input[readonly] {
+  background: var(--hover);
+  color: var(--ink-soft);
+  cursor: default;
 }
 
 .ticket-reporte-actions {
@@ -115,5 +122,9 @@
   .ticket-reporte-modal {
     width: min(100%, 90%);
     padding: 16px;
+  }
+
+  .ticket-reporte-header {
+    margin-top: -16px;
   }
 }

@@ -30,7 +30,7 @@ export default function PrestamosPorTipo() {
     const conDatos = data.filter((d) => d.cantidad > 0);
 
     return (
-        <div className="card" style={{ marginTop: 20 }}>
+        <div className="card">
             <h4 style={{ marginTop: 0 }}>Tipos de Préstamos Más Solicitados</h4>
             <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
                 Más usado: <b>{masUsado.nombre}</b> ({masUsado.cantidad}) ·

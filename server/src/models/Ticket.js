@@ -13,7 +13,7 @@ const Ticket = sequelize.define('Ticket', {
     allowNull: false,
   },
   titulo: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(45),
     allowNull: false,
   },
   descripcion: {

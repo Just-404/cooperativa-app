@@ -64,7 +64,7 @@ export default function ResumenMes() {
     const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
 
     return (
-        <section style={{ marginTop: 32 }}>
+        <section>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>

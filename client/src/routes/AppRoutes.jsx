@@ -41,7 +41,7 @@ function AppRoutes() {
               <Route path="/auditoria" element={<AuditoriaPage />} />
             </Route>
 
-            <Route element={<ProtectedRoute roles={['administrador', 'gerente', 'auditor']} />}>
+            <Route element={<ProtectedRoute roles={['administrador']} />}>
               <Route path="/tickets" element={<AdminTicketsPage />} />
             </Route>
           </Route>

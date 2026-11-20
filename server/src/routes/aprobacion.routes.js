@@ -12,7 +12,12 @@ const soloGerente = checkRole('administrador', 'gerente');
 router.post(
   '/:id/aprobar',
   auth, soloGerente,
-  [body('montoAprobado').optional().isFloat({ gt: 0 })],
+  [
+    body('montoAprobado').optional().isFloat({ gt: 0 }),
+    body('comentario')
+      .optional()
+      .isLength({ max: 2000 }).withMessage('El comentario no puede superar los 2,000 caracteres'),
+  ],
   validate,
   auditoria('aprobar_prestamo', 'prestamo'),
   controller.aprobar
@@ -21,7 +26,12 @@ router.post(
 router.post(
   '/:id/rechazar',
   auth, soloGerente,
-  [body('comentario').notEmpty().withMessage('El motivo del rechazo es requerido')],
+  [
+    body('comentario')
+      .notEmpty().withMessage('El motivo del rechazo es requerido')
+      .bail()
+      .isLength({ max: 2000 }).withMessage('El comentario no puede superar los 2,000 caracteres'),
+  ],
   validate,
   auditoria('rechazar_prestamo', 'prestamo'),
   controller.rechazar

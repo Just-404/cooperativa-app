@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { formatearDocumentoSocio } from '../../../utils/formatoSocio.js';
 
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -118,7 +119,7 @@ export default function SocioSelect({ socios, value, onChange }) {
               }}
             >
               {s.nombre} {s.apellido}
-              {s.documento && <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>{s.documento}</span>}
+              {s.documento && <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>{formatearDocumentoSocio(s.documento)}</span>}
             </li>
           ))}
           {resultados.length === 0 && (

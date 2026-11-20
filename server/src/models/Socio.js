@@ -3,8 +3,8 @@ const sequelize = require('../config/db');
 
 // Expresiones regulares para validación
 const EXP = {
-  // Cédula dominicana: 8 dígitos o formato 001-1234567-8
-  cedulaDominicana: /^(?:[0-9]{8}|[0-9]{3}-[0-9]{7}-[0-9])$/,
+  // Cédula dominicana: 11 dígitos o formato 001-1234567-8
+  cedulaDominicana: /^(?:[0-9]{11}|[0-9]{3}-[0-9]{7}-[0-9])$/,
   // Teléfono: 000-000-0000 o equivalencias internacionales: +XX-000-000-0000 o +XX 000 000 0000
   telefono: /^(?:\+\d{1,3}-)?\d{3}-\d{3}-\d{4}$|^(?:\+\d{1,3}\s)?\d{3}\s\d{3}\s\d{4}$|^\d{10}$|^\d{3}\s\d{3}\s\d{4}$/,
   // Edad: mínimo 18 años, máximo 90 años
@@ -61,7 +61,7 @@ const Socio = sequelize.define('Socio', {
     validate: {
       isCedula(value) {
         if (!EXP.cedulaDominicana.test(value)) {
-          throw new Error('Formato de cédula dominicana inválido. Use: 00000000 o 001-1234567-8');
+          throw new Error('Formato de cédula dominicana inválido. Use: 00000000000 o 001-1234567-8');
         }
       },
     },
