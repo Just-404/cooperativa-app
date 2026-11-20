@@ -8,6 +8,7 @@ import Paginacion from '../../../components/common/Paginacion.jsx';
 import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
 import usePaginacion from '../../../hooks/usePaginacion';
 import { useAuth } from '../../../context/AuthContext.jsx';
+import { formatearDocumentoSocio, formatearTelefonoSocio } from '../../../utils/formatoSocio.js';
 
 const POR_PAGINA = 10;
 const FORM_VACIO = {
@@ -240,9 +241,9 @@ export default function SocioDetallePage() {
         <h4 id="datos-socio-titulo">Información personal</h4>
         <dl className="socio-personal-grid">
           <div><dt>Nombre completo</dt><dd>{socio.nombre} {socio.apellido}</dd></div>
-          <div><dt>Documento</dt><dd className="mono">{socio.documento}</dd></div>
+          <div><dt>Documento</dt><dd className="mono">{formatearDocumentoSocio(socio.documento)}</dd></div>
           <div><dt>Email</dt><dd>{socio.email || '—'}</dd></div>
-          <div><dt>Teléfono</dt><dd>{socio.telefono || '—'}</dd></div>
+          <div><dt>Teléfono</dt><dd>{socio.telefono ? formatearTelefonoSocio(socio.telefono) : '—'}</dd></div>
           <div><dt>Dirección</dt><dd>{socio.direccion || '—'}</dd></div>
           <div><dt>Fecha de nacimiento</dt><dd>{fechaLegible(socio.fechaNacimiento)}</dd></div>
         </dl>

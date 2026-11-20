@@ -13,8 +13,14 @@ router.post(
   [
     auth,
     body('tipo').isIn(['forgot_password', 'report_problem']).withMessage('Tipo de ticket inválido'),
-    body('titulo').trim().notEmpty().withMessage('El título es requerido'),
-    body('descripcion').trim().notEmpty().withMessage('La descripción es requerida'),
+    body('titulo')
+      .trim()
+      .notEmpty().withMessage('El título es requerido')
+      .isLength({ max: 45 }).withMessage('El título no puede superar los 45 caracteres'),
+    body('descripcion')
+      .trim()
+      .notEmpty().withMessage('La descripción es requerida')
+      .isLength({ max: 2000 }).withMessage('La descripción no puede superar los 2000 caracteres'),
     validate,
   ],
   controller.crearTicket

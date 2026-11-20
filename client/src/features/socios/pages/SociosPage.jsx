@@ -5,10 +5,11 @@ import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
+import { formatearDocumentoSocio } from '../../../utils/formatoSocio.js';
 
 // Expresiones regulares para validación de cliente
 const EXP = {
-  cedulaDominicana: /^(?:[0-9]{8}|[0-9]{3}-[0-9]{7}-[0-9])$/,
+  cedulaDominicana: /^(?:[0-9]{11}|[0-9]{3}-[0-9]{7}-[0-9])$/,
   telefono: /^(?:\+\d{1,3}-)?\d{3}-\d{3}-\d{4}$|^(?:\+\d{1,3}\s)?\d{3}\s\d{3}\s\d{4}$|^\d{10}$|^\d{3}\s\d{3}\s\d{4}$/,
   // Validar edad: mínimo 18 años, máximo 90 años
   edadMinima: 18,
@@ -82,6 +83,7 @@ export default function SociosPage() {
   const [form, setForm] = useState(VACIO);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
   const [cargandoLista, setCargandoLista] = useState(true);
   const [errorLista, setErrorLista] = useState('');
@@ -104,6 +106,7 @@ export default function SociosPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setMensaje('');
     setCargando(true);
 
     // Validaciones en cliente
@@ -113,7 +116,7 @@ export default function SociosPage() {
     // Validar documento (cédula dominicana)
     if (!EXP.cedulaDominicana.test(form.documento)) {
       valid = false;
-      mensajeError = 'Formato de cédula dominicana inválido. Use: 00000000 o 001-1234567-8';
+      mensajeError = 'Formato de cédula dominicana inválido. Use: 00000000000 o 001-1234567-8';
     }
 
     // Validar email
@@ -151,6 +154,7 @@ export default function SociosPage() {
       await crear(form);
       setForm(VACIO);
       setMostrarForm(false);
+      setMensaje('El socio se registró correctamente.');
       cargar();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'No se pudo registrar el socio');
@@ -230,11 +234,13 @@ export default function SociosPage() {
           </p>
         </div>
         {puedeCrear && (
-          <button className="btn primary" onClick={() => { setError(''); setMostrarForm(true); }}>
+          <button className="btn primary" onClick={() => { setError(''); setMensaje(''); setMostrarForm(true); }}>
             Nuevo socio
           </button>
         )}
       </div>
+
+      {mensaje && <div className="alert success" role="status">{mensaje}</div>}
 
       {mostrarForm && (
         <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) cerrarFormulario(); }}>
@@ -255,7 +261,7 @@ export default function SociosPage() {
                 <label htmlFor="socio-documento">Documento (cédula)</label>
                 <input id="socio-documento" value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} required />
                 <small style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
-                  Formato: 00000000 o 001-1234567-8
+                  Formato: 00000000000 o 001-1234567-8
                 </small>
               </div>
               <div className="field">
@@ -342,7 +348,7 @@ export default function SociosPage() {
           {visibles.map((s) => (
             <tr key={s.id}>
               <td>{s.nombre} {s.apellido}</td>
-              <td className="mono">{s.documento}</td>
+              <td className="mono">{formatearDocumentoSocio(s.documento)}</td>
               <td>{s.email || '—'}</td>
               <td className="mono">{s.scoring ?? '—'}</td>
               <td><EstadoTag estado={s.estado} /></td>

@@ -17,6 +17,8 @@ const PASOS = [
   { estado: 'cerrado', label: 'Cuotas / pago' },
 ];
 
+const ANCHO_MINIMO_COMENTARIO = 432;
+
 
 export default function PrestamoDetallePage() {
   const { id } = useParams();
@@ -66,35 +68,35 @@ export default function PrestamoDetallePage() {
     const textarea = comentarioTextareaRef.current;
     const contenedor = card?.parentElement;
     if (!card || !textarea || !contenedor) return undefined;
-    if (typeof ResizeObserver === 'undefined') {
-      textarea.style.maxWidth = '100%';
-      return undefined;
-    }
 
     function ajustarAncho() {
       const estilos = window.getComputedStyle(card);
+      const estilosContenedor = window.getComputedStyle(contenedor);
       const espacioHorizontal = [
         estilos.paddingLeft,
         estilos.paddingRight,
         estilos.borderLeftWidth,
         estilos.borderRightWidth,
       ].reduce((total, valor) => total + Number.parseFloat(valor || 0), 0);
-      const anchoMaximoCard = Math.max(
-        0,
-        Math.min(
-          contenedor.clientWidth,
-          window.innerWidth - card.getBoundingClientRect().left
-        )
+      const limiteDerecho = Math.min(
+        contenedor.getBoundingClientRect().right
+          - Number.parseFloat(estilosContenedor.borderRightWidth || 0)
+          - Number.parseFloat(estilosContenedor.paddingRight || 0),
+        window.innerWidth
       );
+      const anchoMaximoCard = Math.max(0, limiteDerecho - card.getBoundingClientRect().left);
       const maximoContenido = Math.max(0, anchoMaximoCard - espacioHorizontal);
       const anchoSolicitado = textarea.getBoundingClientRect().width;
+      const minimoContenido = Math.min(ANCHO_MINIMO_COMENTARIO, maximoContenido);
       const anchoContenido = Math.min(
         maximoContenido,
-        Math.max(anchoSolicitado, 180)
+        Math.max(anchoSolicitado, minimoContenido)
       );
       const anchoCard = anchoContenido + espacioHorizontal;
 
-      if (anchoSolicitado > anchoContenido + 1) {
+      textarea.style.maxWidth = `${maximoContenido}px`;
+      textarea.style.minWidth = `${minimoContenido}px`;
+      if (Math.abs(anchoSolicitado - anchoContenido) > 1) {
         textarea.style.width = `${anchoContenido}px`;
       }
       if (Math.abs(card.getBoundingClientRect().width - anchoCard) > 1) {
@@ -102,12 +104,21 @@ export default function PrestamoDetallePage() {
       }
     }
 
-    const observador = new ResizeObserver(ajustarAncho);
-    observador.observe(textarea);
-    observador.observe(contenedor);
+    const observador = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(ajustarAncho);
+    observador?.observe(textarea);
+    observador?.observe(contenedor);
+    if (!observador) {
+      textarea.addEventListener('pointerup', ajustarAncho);
+      textarea.addEventListener('mouseup', ajustarAncho);
+    }
     window.addEventListener('resize', ajustarAncho);
+    ajustarAncho();
     return () => {
-      observador.disconnect();
+      observador?.disconnect();
+      textarea.removeEventListener('pointerup', ajustarAncho);
+      textarea.removeEventListener('mouseup', ajustarAncho);
       window.removeEventListener('resize', ajustarAncho);
     };
   }, [prestamo?.estado, puedeEvaluar, puedeAprobar]);
@@ -218,9 +229,14 @@ export default function PrestamoDetallePage() {
               ref={comentarioTextareaRef}
               rows="2"
               value={comentario}
+              maxLength={2000}
+              placeholder="Describe el análisis y las observaciones de la evaluación."
               onChange={(e) => setComentario(e.target.value)}
-              style={{ marginBottom: 10, maxWidth: 'none', resize: 'both' }}
+              style={{ marginBottom: 10, resize: 'both' }}
             />
+            <small className="character-counter" aria-live="polite">
+              {comentario.length}/2000
+            </small>
           </div>
           <button
             className="btn primary"
@@ -240,9 +256,14 @@ export default function PrestamoDetallePage() {
               ref={comentarioTextareaRef}
               rows="2"
               value={comentario}
+              maxLength={2000}
+              placeholder="Agrega comentarios sobre la decisión de aprobación o rechazo."
               onChange={(e) => setComentario(e.target.value)}
-              style={{ marginBottom: 10, maxWidth: 'none', resize: 'both' }}
+              style={{ marginBottom: 10, resize: 'both' }}
             />
+            <small className="character-counter" aria-live="polite">
+              {comentario.length}/2000
+            </small>
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             <button className="btn primary" onClick={() => accion(() => aprobar(id, prestamo.montoSolicitado, comentario))}>Aprobar</button>

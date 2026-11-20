@@ -32,7 +32,7 @@ export default function LoginPage() {
         <aside
           className="login-hero"
           style={{
-            backgroundImage: `linear-gradient(rgb(28 43 31 / 45%), rgb(28 43 31 / 45%)), url(${fondoLogin})`,
+            backgroundImage: `linear-gradient(180deg, rgb(28 43 31 / 55%), rgb(28 43 31 / 68%)), url(${fondoLogin})`,
           }}
         >
           <div className="login-hero-text">

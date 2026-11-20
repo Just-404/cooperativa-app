@@ -1,5 +1,30 @@
 const { Socio, ScoringCrediticio, CuentaAhorro, sequelize } = require('../models');
 
+function esDuplicadoDocumento(error) {
+  if (error.name !== 'SequelizeUniqueConstraintError') return false;
+
+  const campos = [
+    ...(error.errors || []).map((detalle) => detalle.path),
+    ...Object.keys(error.fields || {}),
+    error.parent?.constraint,
+    error.original?.constraint,
+  ].filter(Boolean);
+
+  return campos.some((campo) =>
+    campo === 'documento' || /(?:^|_)documento(?:_|$)/i.test(campo)
+  );
+}
+
+function traducirErrorDocumentoDuplicado(error) {
+  if (!esDuplicadoDocumento(error)) return error;
+
+  const errorAmigable = new Error(
+    'La cédula ingresada ya está registrada para otro socio. Verifica el número e intenta nuevamente.'
+  );
+  errorAmigable.status = 409;
+  return errorAmigable;
+}
+
 async function listar() {
   const lista = await Socio.findAll({ order: [['createdAt', 'DESC']] });
 
@@ -34,7 +59,11 @@ async function obtener(id) {
 }
 
 async function crear(datos) {
-  return Socio.create(datos);
+  try {
+    return await Socio.create(datos);
+  } catch (error) {
+    throw traducirErrorDocumentoDuplicado(error);
+  }
 }
 
 async function actualizar(id, datos) {
@@ -64,7 +93,11 @@ async function actualizar(id, datos) {
       .filter((campo) => datos[campo] !== undefined)
       .map((campo) => [campo, datos[campo]])
   );
-  return socio.update(cambios);
+  try {
+    return await socio.update(cambios);
+  } catch (error) {
+    throw traducirErrorDocumentoDuplicado(error);
+  }
 }
 
 async function eliminar(id) {

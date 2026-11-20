@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MessageSquareWarning } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { crearTicket } from '../../services/tickets.service';
@@ -9,40 +10,53 @@ export function TicketReporte({ collapsed = false }) {
   const [tipo, setTipo] = useState('report_problem');
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [nombreUsuario, setNombreUsuario] = useState('');
   const [exito, setExito] = useState(false);
   const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const LIMITE_TITULO = 45;
+  const LIMITE_DESCRIPCION = 2000;
+  const nombreUsuario = user?.nombre || '';
 
   if (!isReady) return null;
 
   function limpiar() {
     setTitulo('');
     setDescripcion('');
-    setNombreUsuario('');
     setError('');
     setExito(false);
     setMostrar(false);
   }
 
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault();
-    if (!titulo || !descripcion || !nombreUsuario) {
+    if (enviando || exito) return;
+    if (!titulo.trim() || !descripcion.trim() || !nombreUsuario) {
       setError('Por favor completa todos los campos');
+      return;
+    }
+    if (titulo.trim().length > LIMITE_TITULO) {
+      setError(`El título no puede superar los ${LIMITE_TITULO} caracteres`);
+      return;
+    }
+    if (descripcion.trim().length > LIMITE_DESCRIPCION) {
+      setError(`La descripción no puede superar los ${LIMITE_DESCRIPCION} caracteres`);
       return;
     }
 
     setError('');
-    crearTicket(tipo, titulo, descripcion, nombreUsuario)
-      .then(() => {
-        setExito(true);
-        setTimeout(() => {
-          limpiar();
-          setMostrar(false);
-        }, 3000);
-      })
-      .catch((err) => {
-        setError(err.response?.data?.error?.message || 'Error al crear el ticket');
-      });
+    setEnviando(true);
+    try {
+      await crearTicket(tipo, titulo.trim(), descripcion.trim());
+      setExito(true);
+      setTimeout(() => {
+        limpiar();
+        setMostrar(false);
+      }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'Error al crear el ticket');
+    } finally {
+      setEnviando(false);
+    }
   }
 
   function cerrar() {
@@ -56,7 +70,7 @@ export function TicketReporte({ collapsed = false }) {
 
   return (
     <div>
-      {mostrar && (
+      {mostrar && createPortal(
         <div className="ticket-reporte-backdrop" onMouseDown={(e) => {
           if (e.target === e.currentTarget) cerrar();
         }}>
@@ -75,44 +89,55 @@ export function TicketReporte({ collapsed = false }) {
                 <label>Nombre de usuario</label>
                 <input
                   value={nombreUsuario}
-                  onChange={(e) => setNombreUsuario(e.target.value)}
-                  placeholder="Tu nombre de usuario"
+                  readOnly
+                  aria-readonly="true"
                   required
                 />
               </div>
 
               <div className="ticket-reporte-field">
-                <label>Título</label>
+                <label htmlFor="ticket-titulo">Título</label>
                 <input
+                  id="ticket-titulo"
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
                   placeholder="Breve descripción del problema"
+                  maxLength={LIMITE_TITULO}
                   required
                 />
+                <small className="character-counter" aria-live="polite">
+                  {titulo.length}/{LIMITE_TITULO}
+                </small>
               </div>
 
               <div className="ticket-reporte-field">
-                <label>Descripción</label>
+                <label htmlFor="ticket-descripcion">Descripción</label>
                 <textarea
+                  id="ticket-descripcion"
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                   rows={3}
                   placeholder="Detalla el problema o qué sucedió"
+                  maxLength={LIMITE_DESCRIPCION}
                   required
                 ></textarea>
+                <small className="character-counter" aria-live="polite">
+                  {descripcion.length}/{LIMITE_DESCRIPCION}
+                </small>
               </div>
 
               <div className="ticket-reporte-actions">
                 <button type="button" className="ticket-reporte-btn-cancelar" onClick={cerrar}>
                   Cancelar
                 </button>
-                <button type="submit" className="ticket-reporte-btn-enviar">
-                  Enviar ticket
+                <button type="submit" className="ticket-reporte-btn-enviar" disabled={enviando || exito}>
+                  {enviando ? 'Enviando...' : exito ? 'Enviado' : 'Enviar ticket'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <button

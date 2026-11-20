@@ -1,11 +1,10 @@
 import apiClient from './apiClient';
 
-export async function crearTicket(tipo, titulo, descripcion, usuarioNombre) {
+export async function crearTicket(tipo, titulo, descripcion) {
   const { data } = await apiClient.post('/tickets', {
     tipo,
     titulo,
     descripcion,
-    usuarioNombre,
   });
   return data;
 }

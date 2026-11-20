@@ -58,6 +58,7 @@
 
 .tickets-admin-card {
   display: flex;
+  height: 276px;
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
@@ -70,40 +71,53 @@
 
 .tickets-admin-card h4 {
   display: -webkit-box;
+  flex: 0 0 4.1rem;
+  height: 4.1rem;
   overflow: hidden;
-  margin: 0 0 15px;
+  margin: 0 0 12px;
   color: var(--ink);
   font-size: 0.95rem;
   line-height: 1.35;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
 }
 
 .tickets-admin-tipo {
+  flex: 0 0 1.15rem;
   margin: 0 0 8px;
   color: var(--ink-soft);
   font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .tickets-admin-persona {
+  display: -webkit-box;
+  flex: 0 0 2.35rem;
+  height: 2.35rem;
+  overflow: hidden;
   margin: 0 0 8px;
   color: var(--ink-soft);
   font-size: 0.82rem;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .tickets-admin-fecha {
+  flex: 0 0 1.1rem;
   margin: 0;
   color: var(--text-tertiary);
   font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .tickets-admin-ver {
   min-width: 0;
-  margin-top: 40px;
+  margin-top: auto;
   padding: 5px 12px;
-  font-size: 0.78rem;
+  font-size: .78rem;
 }
 
 .tickets-admin-card .tickets-admin-ver {

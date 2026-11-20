@@ -34,3 +34,10 @@ label {
 .field {
   margin-bottom: 14px;
 }
+
+.character-counter {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  text-align: right;
+}

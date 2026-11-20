@@ -39,6 +39,7 @@ export default function AdminTicketsPage() {
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
   const [errorOperacion, setErrorOperacion] = useState('');
+  const [mensajeOperacion, setMensajeOperacion] = useState('');
   const [filtro, setFiltro] = useState({
     estado: '',
     tipo: '',
@@ -137,10 +138,12 @@ export default function AdminTicketsPage() {
   }
 
   async function guardarEstado(id, nuevoEstado) {
+    setErrorOperacion('');
+    setMensajeOperacion('');
     try {
       await actualizarTicket(id, nuevoEstado);
       setTicketSeleccionado(null);
-      setErrorOperacion('');
+      setMensajeOperacion('El estado del ticket se actualizó correctamente.');
       await cargarTickets();
     } catch (err) {
       console.error('Error al actualizar el ticket:', err);
@@ -149,10 +152,12 @@ export default function AdminTicketsPage() {
   }
 
   async function handleEliminar(id) {
+    setErrorOperacion('');
+    setMensajeOperacion('');
     try {
       await eliminarTicket(id);
       setTicketSeleccionado(null);
-      setErrorOperacion('');
+      setMensajeOperacion('El ticket se eliminó correctamente.');
       await cargarTickets();
     } catch (err) {
       console.error('Error al eliminar el ticket:', err);
@@ -268,6 +273,7 @@ export default function AdminTicketsPage() {
         </div>
       )}
       {errorOperacion && <div className="alert error" role="alert">{errorOperacion}</div>}
+      {mensajeOperacion && <div className="alert success" role="status">{mensajeOperacion}</div>}
 
       <div className="tickets-admin-lista">
         {cargando ? (

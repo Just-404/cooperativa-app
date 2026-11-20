@@ -47,7 +47,7 @@ export default function CuentasAbiertasCerradas() {
     }, [meses]);
 
     return (
-        <section style={{ marginTop: 32 }}>
+        <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h4 style={{ margin: 0 }}>Cuentas Abiertas vs. Cerradas</h4>
                 <select

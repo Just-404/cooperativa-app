@@ -29,6 +29,7 @@ export default function UsuariosRolesPage() {
   const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [confirmacion, setConfirmacion] = useState(null);
   const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
   const [cargandoLista, setCargandoLista] = useState(true);
   const [busqueda, setBusqueda] = useState('');
@@ -48,12 +49,15 @@ export default function UsuariosRolesPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setMensaje('');
     setCargando(true);
     try {
       if (usuarioEditando) {
         await actualizar(usuarioEditando.id, form);
+        setMensaje('El usuario se actualizó correctamente.');
       } else {
         await crear(form);
+        setMensaje('El usuario se creó correctamente.');
       }
       setForm(VACIO);
       setMostrarForm(false);
@@ -105,11 +109,13 @@ export default function UsuariosRolesPage() {
   function cerrarFormulario() {
     setForm(VACIO);
     setError('');
+    setMensaje('');
     setMostrarForm(false);
     setUsuarioEditando(null);
   }
 
   function editarUsuario(usuario) {
+    setMensaje('');
     if (!usuario.activo) {
       setError('No se puede editar un usuario desactivado. Actívalo primero.');
       return;
@@ -126,6 +132,7 @@ export default function UsuariosRolesPage() {
   }
 
   function solicitarCambioEstado(usuario) {
+    setMensaje('');
     if (usuario.id === usuarioActual?.id && usuario.activo) {
       setError('No puedes desactivar tu propio usuario.');
       return;
@@ -147,8 +154,10 @@ export default function UsuariosRolesPage() {
     if (!confirmacion) return;
     setCargando(true);
     setError('');
+    setMensaje('');
     try {
       await cambiarEstado(confirmacion.usuario.id, confirmacion.activo);
+      setMensaje(`El usuario se ${confirmacion.activo ? 'activó' : 'desactivó'} correctamente.`);
       setConfirmacion(null);
       await cargar();
     } catch (err) {
@@ -168,7 +177,7 @@ export default function UsuariosRolesPage() {
             {hayFiltros ? `${filtrados.length} de ${usuarios.length} usuarios` : `${usuarios.length} registrados`}
           </p>
         </div>
-        <button className="btn primary" onClick={() => { setUsuarioEditando(null); setForm(VACIO); setError(''); setMostrarForm(true); }}>
+        <button className="btn primary" onClick={() => { setUsuarioEditando(null); setForm(VACIO); setError(''); setMensaje(''); setMostrarForm(true); }}>
           Nuevo usuario
         </button>
       </div>
@@ -227,6 +236,7 @@ export default function UsuariosRolesPage() {
 
       {errorLista && <div className="alert error" role="alert">{errorLista}</div>}
       {error && !mostrarForm && <div className="alert error" role="alert">{error}</div>}
+      {mensaje && <div className="alert success" role="status">{mensaje}</div>}
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
