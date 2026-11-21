@@ -1,6 +1,15 @@
 const { Socio, CuentaAhorro, Prestamo, Cuota, Pago, TipoPrestamo } = require('../models');
 const { Op, fn, col } = require('sequelize');
 
+function normalizarMes(anio, mes) {
+  const hoy = new Date();
+  anio = Number(anio);
+  mes = Number(mes);
+  if (!Number.isInteger(anio) || anio < 2000 || anio > 2100) anio = hoy.getFullYear();
+  if (!Number.isInteger(mes) || mes < 1 || mes > 12) mes = hoy.getMonth() + 1;
+  return { anio, mes };
+}
+
 async function resumenGeneral() {
   const [sociosPorEstado, totalAhorros, prestamosVigentes, cuotasEnMora] = await Promise.all([
     Socio.findAll({
@@ -34,10 +43,12 @@ async function prestamosPorEstado() {
   return resultados;
 }
 
-async function prestamosDelMes(anio, mes) {
+async function prestamosDelMes(anioParam, mesParam) {
   const hoy = new Date();
-  anio = Number(anio) || hoy.getFullYear();
-  mes = Number(mes) || hoy.getMonth() + 1; // 1-12
+  let anio = Number(anioParam);
+  let mes = Number(mesParam);
+  if (!Number.isInteger(anio) || anio < 2000 || anio > 2100) anio = hoy.getFullYear();
+  if (!Number.isInteger(mes) || mes < 1 || mes > 12) mes = hoy.getMonth() + 1;
 
   const desde = new Date(anio, mes - 1, 1);
   const hasta = new Date(anio, mes, 1);

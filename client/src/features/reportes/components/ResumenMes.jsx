@@ -7,6 +7,13 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
 const mesAnterior = ({ anio, mes }) =>
     mes === 1 ? { anio: anio - 1, mes: 12 } : { anio, mes: mes - 1 };
 
+const aValor = ({ anio, mes }) => `${anio}-${String(mes).padStart(2, '0')}`;
+
+const deValor = (valor) => {
+    const [anio, mes] = valor.split('-').map(Number);
+    return { anio, mes };
+};
+
 function Variacion({ actual, previo, invertir = false }) {
     if (previo == null) return null;
     const dif = actual - previo;
@@ -53,6 +60,12 @@ export default function ResumenMes() {
         });
 
     const esMesActual = periodo.anio === hoy.getFullYear() && periodo.mes === hoy.getMonth() + 1;
+    const maxValor = aValor({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
+
+    const onCambiarMes = (e) => {
+        if (!e.target.value) return; // el usuario borró el campo
+        setPeriodo(deValor(e.target.value));
+    };
 
     const tarjetas = [
         { k: 'solicitados', titulo: 'Solicitados', color: 'var(--ink)' },
@@ -69,9 +82,15 @@ export default function ResumenMes() {
                 <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                     <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">‹</button>
-                    <span className="mono" style={{ fontSize: '0.85rem', minWidth: 130, textAlign: 'center' }}>
-                        {MESES[periodo.mes - 1]} {periodo.anio}
-                    </span>
+                    <input
+                        type="month"
+                        className="mono"
+                        value={aValor(periodo)}
+                        max={maxValor}
+                        onChange={onCambiarMes}
+                        aria-label="Seleccionar mes"
+                        style={{ fontSize: '0.85rem' }}
+                    />
                     <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente">›</button>
                 </div>
             </div>
