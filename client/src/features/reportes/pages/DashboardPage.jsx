@@ -31,6 +31,7 @@ import ResumenMes from '../components/ResumenMes.jsx';
 import PrestadoVsIngresos from '../components/PrestadoVsIngresos.jsx';
 import CuentasAbiertasCerradas from '../components/CuentasAbiertasCerradas.jsx';
 import PrestamosPorTipo from '../components/PrestamosPorTipo.jsx';
+import TotalSocios from '../components/TotalSocios.jsx';
 
 const ETIQUETAS_ROL = {
   administrador: 'Administrador',
@@ -509,11 +510,9 @@ export default function DashboardPage({ modo = 'panel' }) {
         <ResumenGeneral data={sections.resumen} />
       )}
 
-      {esReportes && (
-        <ResumenGeneral data={sections.resumen} />
-      )}
       {esReportes && puedeVerReportes && (
         <>
+          <TotalSocios data={sections.resumen} />
           <ResumenMes />
           <CuentasAbiertasCerradas />
           <PrestadoVsIngresos />
