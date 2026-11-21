@@ -1,4 +1,8 @@
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
@@ -58,4 +62,41 @@
 .btn:disabled {
   opacity: 0.75;
   cursor: not-allowed;
+}
+
+.btn svg {
+  flex: none;
+}
+
+/* Botón compacto con icono y texto (tablas de configuración). */
+.btn.btn-icon {
+  padding: 5px 9px;
+  font-size: 0.78rem;
+}
+
+/* Enlaces de acción dentro de tablas. */
+.link-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.link-accion svg {
+  flex: none;
+}
+
+/* Botones personalizados que no usan la clase .btn. */
+.ticket-reporte-btn-cancelar,
+.ticket-reporte-btn-enviar,
+.ticket-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.resumen-mes-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

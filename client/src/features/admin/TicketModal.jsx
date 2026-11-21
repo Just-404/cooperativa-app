@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Save, Trash2, X } from 'lucide-react';
 
 const TIPO_LABEL = {
   forgot_password: 'Recuperar contraseña',
@@ -66,7 +67,7 @@ export default function TicketModal({
             onClick={onClose}
             aria-label="Cerrar modal"
           >
-            ×
+            <X size={18} aria-hidden="true" />
           </button>
         </header>
 
@@ -99,21 +100,21 @@ export default function TicketModal({
             className="btn secondary"
             onClick={onClose}
           >
-            Cerrar
+            <X size={16} aria-hidden="true" /> Cerrar
           </button>
           <button
             type="button"
             className="btn danger"
             onClick={handleEliminar}
           >
-            Eliminar ticket
+            <Trash2 size={16} aria-hidden="true" /> Eliminar ticket
           </button>
           <button
             type="button"
             className="btn primary"
             onClick={handleSave}
           >
-            Guardar cambios
+            <Save size={16} aria-hidden="true" /> Guardar cambios
           </button>
         </div>
       </section>

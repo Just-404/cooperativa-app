@@ -1,3 +1,5 @@
+import { Check, X } from 'lucide-react';
+
 export default function ConfirmacionModal({
   titulo,
   mensaje,
@@ -17,15 +19,15 @@ export default function ConfirmacionModal({
         <div className="socio-modal-actions">
           {confirmarPrimero && (
             <button className={`btn ${peligro ? 'danger' : 'primary'}`} type="button" onClick={onConfirmar} disabled={procesando}>
-              {procesando ? 'Procesando…' : confirmarTexto}
+              <Check size={16} aria-hidden="true" /> {procesando ? 'Procesando…' : confirmarTexto}
             </button>
           )}
           <button className="btn secondary" type="button" onClick={onCancelar} disabled={procesando}>
-            {cancelarTexto}
+            <X size={16} aria-hidden="true" /> {cancelarTexto}
           </button>
           {!confirmarPrimero && (
             <button className={`btn ${peligro ? 'danger' : 'primary'}`} type="button" onClick={onConfirmar} disabled={procesando}>
-              {procesando ? 'Procesando…' : confirmarTexto}
+              <Check size={16} aria-hidden="true" /> {procesando ? 'Procesando…' : confirmarTexto}
             </button>
           )}
         </div>

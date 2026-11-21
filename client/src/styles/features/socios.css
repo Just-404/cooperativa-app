@@ -52,6 +52,16 @@
   margin-top: 24px;
 }
 
+.socio-mora-section {
+  margin-top: 24px;
+}
+
+.socio-mora-section .socio-section-heading p {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
 .socio-section-heading {
   display: flex;
   justify-content: space-between;

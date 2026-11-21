@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { Repeat } from 'lucide-react';
 import { formatearDocumentoSocio } from '../../../utils/formatoSocio.js';
 
 const normalizar = (t) =>
@@ -77,7 +78,9 @@ export default function SocioSelect({ socios, value, onChange }) {
       {seleccionado ? (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input readOnly value={`${seleccionado.nombre} ${seleccionado.apellido}`} />
-          <button type="button" className="btn" onClick={limpiar}>Cambiar</button>
+          <button type="button" className="btn" onClick={limpiar}>
+            <Repeat size={15} aria-hidden="true" /> Cambiar
+          </button>
         </div>
       ) : (
         <input

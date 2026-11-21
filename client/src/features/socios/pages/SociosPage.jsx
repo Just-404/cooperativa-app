@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Eye, FilterX, UserPlus, X } from 'lucide-react';
 import { listar, crear } from '../services/socios.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
@@ -26,32 +27,6 @@ function calcularEdadCliente(fechaNacimiento) {
     edad--;
   }
   return edad;
-}
-
-// Helper: validar si una fecha es un día laborable (no fin de semana ni feriado dominicano)
-function esDiaLaborableCliente(dia) {
-  const diaSemana = dia.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
-  if (diaSemana === 0 || diaSemana === 6) return false; // fin de semana
-
-  // Feriados oficiales de República Dominicana
-  const mes = dia.getMonth(); // 0-11
-  const diaMes = dia.getDate();
-
-  const feriados = {
-    '01-06': 'Día de los Reyes',     // 6 de enero
-    '02-27': 'Día de la Independencia', // 27 de febrero
-    '04-16': 'Día de la Libertad',    // 16 de abril
-    '05-01': 'Día del Trabajo',       // 1 de mayo
-    '08-15': 'Día de la Altagracia',  // 15 de agosto
-    '11-03': 'Día de la Constitución',// 3 de noviembre
-    '12-25': 'Navidad',               // 25 de diciembre
-    '12-31': 'Año Nuevo',             // 31 de diciembre
-  };
-
-  const clave = `${mes + 1}-${diaMes.toString().padStart(2, '0')}`;
-  if (feriados[clave]) return false; // es feriado
-
-  return true;
 }
 
 const POR_PAGINA = 10;
@@ -235,7 +210,7 @@ export default function SociosPage() {
         </div>
         {puedeCrear && (
           <button className="btn primary" onClick={() => { setError(''); setMensaje(''); setMostrarForm(true); }}>
-            Nuevo socio
+            <UserPlus size={16} aria-hidden="true" /> Nuevo socio
           </button>
         )}
       </div>
@@ -291,9 +266,11 @@ export default function SociosPage() {
               </div>
             </div>
             <div className="socio-modal-actions">
-              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>Cancelar</button>
+              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>
+                <X size={16} aria-hidden="true" /> Cancelar
+              </button>
               <button className="btn primary" type="submit" disabled={cargando}>
-                {cargando ? 'Guardando…' : 'Registrar socio'}
+                <UserPlus size={16} aria-hidden="true" /> {cargando ? 'Guardando…' : 'Registrar socio'}
               </button>
             </div>
           </form>
@@ -335,7 +312,7 @@ export default function SociosPage() {
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
-            Limpiar
+            <FilterX size={16} aria-hidden="true" /> Limpiar
           </button>
         )}
       </div>
@@ -352,7 +329,7 @@ export default function SociosPage() {
               <td>{s.email || '—'}</td>
               <td className="mono">{s.scoring ?? '—'}</td>
               <td><EstadoTag estado={s.estado} /></td>
-              <td><Link to={`/socios/${s.id}`}>Ver</Link></td>
+              <td><Link className="link-accion" to={`/socios/${s.id}`}><Eye size={15} aria-hidden="true" /> Ver</Link></td>
             </tr>
           ))}
           {visibles.length === 0 && (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Send } from 'lucide-react';
 import { recuperarContrasena } from '../services/auth.service';
 
 export default function RecuperarContrasenaPage() {
@@ -48,7 +49,7 @@ export default function RecuperarContrasenaPage() {
                 El administrador ha sido notificado y restablecerá tu contraseña.
               </div>
               <Link to="/login" className="btn primary" style={{ marginTop: 16 }}>
-                Volver al inicio de sesión
+                <ArrowLeft size={16} aria-hidden="true" /> Volver al inicio de sesión
               </Link>
             </div>
           ) : (
@@ -74,7 +75,7 @@ export default function RecuperarContrasenaPage() {
                 type="submit"
                 disabled={cargando}
               >
-                {cargando ? 'Enviando…' : 'Enviar solicitud'}
+                <Send size={16} aria-hidden="true" /> {cargando ? 'Enviando…' : 'Enviar solicitud'}
               </button>
 
               <p style={{ marginTop: 16, textAlign: 'center' }}>

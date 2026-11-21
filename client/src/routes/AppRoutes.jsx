@@ -14,6 +14,7 @@ import CuotasPagosPage from '../features/cuotas-pagos/pages/CuotasPagosPage.jsx'
 import UsuariosRolesPage from '../features/usuarios-roles/pages/UsuariosRolesPage.jsx';
 import AuditoriaPage from '../features/auditoria/pages/AuditoriaPage.jsx';
 import AdminTicketsPage from '../features/admin/AdminTicketsPage.jsx';
+import ConfiguracionPage from '../features/configuracion/pages/ConfiguracionPage.jsx';
 
 function AppRoutes() {
   return (
@@ -43,6 +44,10 @@ function AppRoutes() {
 
             <Route element={<ProtectedRoute roles={['administrador']} />}>
               <Route path="/tickets" element={<AdminTicketsPage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute roles={['administrador', 'gerente']} />}>
+              <Route path="/configuracion" element={<ConfiguracionPage />} />
             </Route>
           </Route>
         </Route>

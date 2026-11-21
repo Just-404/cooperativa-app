@@ -2,13 +2,16 @@ const { Cuota, Prestamo } = require('../models');
 const {
   aISO,
   calcularFechaVencimiento,
+  calendarioPorDefecto,
 } = require('../utils/feriados');
 
 // Genera el plan de pagos con amortización francesa (cuota fija, interés sobre saldo pendiente)
+// `options.calendario` permite usar el calendario configurable de Configuración.
 async function generarCuotas(prestamo, options = {}) {
   const monto = Number(prestamo.montoAprobado);
   const plazo = prestamo.plazoMeses;
   const tasaMensual = Number(prestamo.tasaInteresAnual) / 100 / 12;
+  const calendario = options.calendario || calendarioPorDefecto;
 
   // Fórmula de la cuota fija francesa: C = P * i / (1 - (1 + i)^-n)
   const cuotaFija = tasaMensual > 0
@@ -31,7 +34,7 @@ async function generarCuotas(prestamo, options = {}) {
     }
 
     // Fecha de vencimiento: base + i meses, sin caer en fin de semana ni feriado.
-    const fechaVencimiento = calcularFechaVencimiento(fechaBase, i, fechaAnterior);
+    const fechaVencimiento = calcularFechaVencimiento(fechaBase, i, fechaAnterior, calendario);
     fechaAnterior = fechaVencimiento;
 
     cuotas.push({
@@ -58,7 +61,9 @@ async function listarPorPrestamo(prestamoId) {
 // a partir de su fecha de desembolso, moviendo las que caen en fin de semana o
 // feriado al siguiente día laborable. Las cuotas pagadas o vencidas no se
 // modifican (son historial), pero se usan como referencia para mantener el orden.
-async function recalcularFechasCuotas(prestamoId) {
+//
+// options.dryRun => no escribe, solo devuelve los cambios que se aplicarían.
+async function recalcularFechasCuotas(prestamoId, options = {}) {
   const prestamo = await Prestamo.findByPk(prestamoId);
   if (!prestamo) {
     const err = new Error('Préstamo no encontrado');
@@ -66,15 +71,18 @@ async function recalcularFechasCuotas(prestamoId) {
     throw err;
   }
 
+  const calendario = options.calendario || calendarioPorDefecto;
   const fechaBase = aISO(prestamo.fechaDesembolso || prestamo.fechaSolicitud || new Date());
 
   const cuotas = await Cuota.findAll({
     where: { prestamoId },
     order: [['numeroCuota', 'ASC']],
+    transaction: options.transaction,
   });
 
   let actualizadas = 0;
   let fechaAnterior = null;
+  const cambios = [];
 
   for (const cuota of cuotas) {
     const fechaActual = aISO(cuota.fechaVencimiento);
@@ -85,17 +93,26 @@ async function recalcularFechasCuotas(prestamoId) {
       continue;
     }
 
-    const fechaVencimiento = calcularFechaVencimiento(fechaBase, cuota.numeroCuota, fechaAnterior);
+    const fechaVencimiento = calcularFechaVencimiento(fechaBase, cuota.numeroCuota, fechaAnterior, calendario);
 
     if (fechaActual !== fechaVencimiento) {
-      await cuota.update({ fechaVencimiento });
+      cambios.push({
+        cuotaId: cuota.id,
+        prestamoId,
+        numeroCuota: cuota.numeroCuota,
+        fechaAnterior: fechaActual,
+        fechaNueva: fechaVencimiento,
+      });
+      if (!options.dryRun) {
+        await cuota.update({ fechaVencimiento }, { transaction: options.transaction });
+      }
       actualizadas++;
     }
 
     fechaAnterior = fechaVencimiento;
   }
 
-  return { cuotasActualizadas: actualizadas, fechaBase };
+  return { cuotasActualizadas: actualizadas, fechaBase, cambios };
 }
 
 module.exports = { generarCuotas, listarPorPrestamo, recalcularFechasCuotas };

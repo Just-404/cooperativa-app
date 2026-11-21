@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { prestamosDelMes } from '../services/reportes.service';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
@@ -67,12 +68,16 @@ export default function ResumenMes() {
         <section>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                    <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">‹</button>
+                <div className="resumen-mes-nav" style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+                    <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">
+                        <ChevronLeft size={16} aria-hidden="true" />
+                    </button>
                     <span className="mono" style={{ fontSize: '0.85rem', minWidth: 130, textAlign: 'center' }}>
                         {MESES[periodo.mes - 1]} {periodo.anio}
                     </span>
-                    <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente">›</button>
+                    <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente">
+                        <ChevronRight size={16} aria-hidden="true" />
+                    </button>
                 </div>
             </div>
 
