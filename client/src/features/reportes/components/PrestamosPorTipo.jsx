@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { prestamosPorTipo } from '../services/reportes.service';
+import BotonDescarga from './BotonDescarga';
 
 const COLORES = ['#2f6f4f', '#c9a227', '#3a6ea5', '#b3402f', '#7a5195', '#4f9d9d'];
 
@@ -19,6 +20,7 @@ function useEsMovil(maxAncho = 600) {
 }
 
 export default function PrestamosPorTipo() {
+    const graficaRef = useRef(null);
     const [data, setData] = useState([]);
     const esMovil = useEsMovil();
 
@@ -31,13 +33,34 @@ export default function PrestamosPorTipo() {
 
     return (
         <div className="card">
-            <h4 style={{ marginTop: 0 }}>Tipos de Préstamos Más Solicitados</h4>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+            }}>
+                <h4 style={{ margin: 0 }}>Tipos de Préstamos Más Solicitados</h4>
+
+                <BotonDescarga
+                    archivo="prestamos-por-tipo"
+                    titulo="Préstamos por Tipo"
+                    periodo="-"
+                    columnas={[
+                        { header: 'Tipo', key: 'nombre' },
+                        { header: 'Cantidad', key: 'cantidad' },
+                    ]}
+                    filas={data}
+                    grafica={graficaRef}
+                />
+            </div>
+
             <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
                 Más usado: <b>{masUsado.nombre}</b> ({masUsado.cantidad}) ·
                 Menos usado: <b>{menosUsado.nombre}</b> ({menosUsado.cantidad})
             </p>
 
-            <div style={{ width: '100%', height: esMovil ? 280 : 320 }}>
+            <div ref={graficaRef} style={{ width: '100%', height: esMovil ? 280 : 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie

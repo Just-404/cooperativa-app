@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { prestamosDelMes } from '../services/reportes.service';
+import BotonDescarga from './BotonDescarga';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
     'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -75,23 +76,45 @@ export default function ResumenMes() {
 
     const resueltos = actual ? actual.aprobados + actual.rechazados : 0;
     const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
+    const altoControl = { height: 26, fontSize: '0.75rem', padding: '0 8px', width: 'auto', minWidth: 0 };
 
     return (
         <section>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                    <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">‹</button>
-                    <input
-                        type="month"
-                        className="mono"
-                        value={aValor(periodo)}
-                        max={maxValor}
-                        onChange={onCambiarMes}
-                        aria-label="Seleccionar mes"
-                        style={{ fontSize: '0.85rem' }}
+
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginLeft: 'auto' }}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior" style={altoControl}>‹</button>
+                        <input
+                            type="month"
+                            className="mono"
+                            value={aValor(periodo)}
+                            max={maxValor}
+                            onChange={onCambiarMes}
+                            aria-label="Seleccionar mes"
+                            style={altoControl}
+                        />
+                        <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente" style={altoControl}>›</button>
+                    </div>
+
+                    <span aria-hidden="true" style={{ width: 1, height: 18, background: 'currentColor', opacity: 0.2 }} />
+
+                    <BotonDescarga
+                        archivo="resumen-mes"
+                        titulo="Resumen del Mes"
+                        periodo={`${MESES[periodo.mes - 1]} ${periodo.anio}`}
+                        columnas={[
+                            { header: 'Concepto', key: 'concepto' },
+                            { header: 'Cantidad', key: 'cantidad' },
+                        ]}
+                        filas={actual ? [
+                            { concepto: 'Solicitados', cantidad: actual.solicitados },
+                            { concepto: 'Aprobados', cantidad: actual.aprobados },
+                            { concepto: 'Rechazados', cantidad: actual.rechazados },
+                        ] : []}
                     />
-                    <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente">›</button>
                 </div>
             </div>
 

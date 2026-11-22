@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer,
 } from 'recharts';
 import { cuentasMovimiento } from '../services/reportes.service';
+import BotonDescarga from './BotonDescarga';
 
 const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -13,6 +14,7 @@ const PERIODOS = [
 ];
 
 export default function CuentasAbiertasCerradas() {
+    const graficaRef = useRef(null);
     const [datos, setDatos] = useState([]);
     const [error, setError] = useState('');
     const [meses, setMeses] = useState(6);
@@ -48,23 +50,46 @@ export default function CuentasAbiertasCerradas() {
 
     return (
         <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+            }}>
                 <h4 style={{ margin: 0 }}>Cuentas Abiertas vs. Cerradas</h4>
-                <select
-                    value={meses}
-                    onChange={(e) => setMeses(Number(e.target.value))}
-                    style={{ fontSize: '0.75rem', padding: '2px 6px', height: 26, width: 'auto', minWidth: 0 }}
-                >
-                    {PERIODOS.map((p) => (
-                        <option key={p.valor} value={p.valor}>{p.etiqueta}</option>
-                    ))}
-                </select>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <select
+                        value={meses}
+                        onChange={(e) => setMeses(Number(e.target.value))}
+                        style={{ fontSize: '0.75rem', padding: '2px 6px', height: 26, width: 'auto', minWidth: 0 }}
+                    >
+                        {PERIODOS.map((p) => (
+                            <option key={p.valor} value={p.valor}>{p.etiqueta}</option>
+                        ))}
+                    </select>
+                    
+                    <span aria-hidden="true" style={{ width: 1, height: 18, background: 'currentColor', opacity: 0.2 }} />
+                    <BotonDescarga
+                        archivo="cuentas-abiertas-cerradas"
+                        titulo="Cuentas Abiertas vs. Cerradas"
+                        periodo={PERIODOS.find((p) => p.valor === meses).etiqueta}
+                        columnas={[
+                            { header: 'Mes', key: 'nombre' },
+                            { header: 'Abiertas', key: 'Abiertas' },
+                            { header: 'Cerradas', key: 'Cerradas' },
+                        ]}
+                        filas={datos}
+                        grafica={graficaRef}
+                    />
+                </div>
             </div>
 
             {error && <div className="alert error">{error}</div>}
 
             {!error && (
-                <div className="card" style={{ height: 320, opacity: cargando ? 0.6 : 1 }}>
+                <div className="card" ref={graficaRef} style={{ height: 320, opacity: cargando ? 0.6 : 1 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={datos} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
