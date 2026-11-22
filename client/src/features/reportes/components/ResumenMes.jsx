@@ -78,13 +78,25 @@ export default function ResumenMes() {
     const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
     const altoControl = { height: 26, fontSize: '0.75rem', padding: '0 8px', width: 'auto', minWidth: 0 };
 
+    const mesPrevio = mesAnterior(periodo);
+
+    const filasDescarga = actual ? [
+        ...tarjetas.map(({ k, titulo }) => ({
+            concepto: titulo,
+            cantidad: actual[k],
+            anterior: previo?.[k] ?? '',
+            variacion: previo ? actual[k] - previo[k] : '',
+        })),
+        { concepto: 'Resueltos (aprobados + rechazados)', cantidad: resueltos, anterior: '', variacion: ''},
+        { concepto: 'Tasa de aprobación (%)', cantidad: tasa, anterior: '', variacion: ''},
+    ] : [];
+
     return (
         <section>
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
 
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginLeft: 'auto' }}>
-                    
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior" style={altoControl}>‹</button>
                         <input
@@ -108,12 +120,10 @@ export default function ResumenMes() {
                         columnas={[
                             { header: 'Concepto', key: 'concepto' },
                             { header: 'Cantidad', key: 'cantidad' },
+                            { header: `Mes anterior (${MESES[mesPrevio.mes - 1]} ${mesPrevio.anio})`, key: 'anterior' },
+                            { header: 'Variación', key: 'variacion' },
                         ]}
-                        filas={actual ? [
-                            { concepto: 'Solicitados', cantidad: actual.solicitados },
-                            { concepto: 'Aprobados', cantidad: actual.aprobados },
-                            { concepto: 'Rechazados', cantidad: actual.rechazados },
-                        ] : []}
+                        filas={filasDescarga}
                     />
                 </div>
             </div>

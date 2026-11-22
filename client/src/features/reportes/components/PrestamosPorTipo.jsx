@@ -30,6 +30,7 @@ export default function PrestamosPorTipo() {
     const masUsado = data[0];
     const menosUsado = data[data.length - 1];
     const conDatos = data.filter((d) => d.cantidad > 0);
+    const total = conDatos.reduce((s, d) => s + Number(d.cantidad || 0), 0);
 
     return (
         <div className="card">
@@ -50,40 +51,45 @@ export default function PrestamosPorTipo() {
                         { header: 'Tipo', key: 'nombre' },
                         { header: 'Cantidad', key: 'cantidad' },
                     ]}
-                    filas={data}
+                    filas={[...data, { nombre: 'Total', cantidad: total }]}
                     grafica={graficaRef}
                 />
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
-                Más usado: <b>{masUsado.nombre}</b> ({masUsado.cantidad}) ·
-                Menos usado: <b>{menosUsado.nombre}</b> ({menosUsado.cantidad})
-            </p>
+            <div ref={graficaRef}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
+                    Más usado: <b>{masUsado.nombre}</b> ({masUsado.cantidad}) ·
+                    Menos usado: <b>{menosUsado.nombre}</b> ({menosUsado.cantidad}) ·
+                    Total: <b>{total}</b>
+                </p>
 
-            <div ref={graficaRef} style={{ width: '100%', height: esMovil ? 280 : 320 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={conDatos}
-                            dataKey="cantidad"
-                            nameKey="nombre"
-                            cx="50%"
-                            cy={esMovil ? '45%' : '50%'}
-                            outerRadius={esMovil ? '65%' : '75%'}
-                            label={esMovil ? false : ({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                            labelLine={!esMovil}
-                        >
-                            {conDatos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
-                        </Pie>
-                        <Tooltip />
-                        <Legend
-                            verticalAlign={esMovil ? 'bottom' : 'middle'}
-                            align={esMovil ? 'center' : 'right'}
-                            layout={esMovil ? 'horizontal' : 'vertical'}
-                            wrapperStyle={{ fontSize: '0.8rem' }}
-                        />
-                    </PieChart>
-                </ResponsiveContainer>
+                <div style={{ width: '100%', height: esMovil ? 280 : 320 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={conDatos}
+                                dataKey="cantidad"
+                                nameKey="nombre"
+                                cx="50%"
+                                cy={esMovil ? '45%' : '50%'}
+                                outerRadius={esMovil ? '65%' : '75%'}
+                                label={({ value, percent }) =>
+                                    esMovil ? value : `${value} (${(percent * 100).toFixed(0)}%)`
+                                }
+                                labelLine={!esMovil}
+                            >
+                                {conDatos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
+                            </Pie>
+                            <Tooltip />
+                            <Legend
+                                verticalAlign={esMovil ? 'bottom' : 'middle'}
+                                align={esMovil ? 'center' : 'right'}
+                                layout={esMovil ? 'horizontal' : 'vertical'}
+                                wrapperStyle={{ fontSize: '0.8rem' }}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );

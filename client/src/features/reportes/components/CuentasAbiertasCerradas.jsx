@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import {
-    BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer,
+    BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer, LabelList
 } from 'recharts';
 import { cuentasMovimiento } from '../services/reportes.service';
 import BotonDescarga from './BotonDescarga';
@@ -48,6 +48,10 @@ export default function CuentasAbiertasCerradas() {
         return () => { cancelado = true; };
     }, [meses]);
 
+    const totalAbiertas = datos.reduce((s, d) => s + Number(d.Abiertas || 0), 0);
+    const totalCerradas = datos.reduce((s, d) => s + Number(d.Cerradas || 0), 0);
+    const neto = totalAbiertas - totalCerradas;
+
     return (
         <section>
             <div style={{
@@ -69,7 +73,7 @@ export default function CuentasAbiertasCerradas() {
                             <option key={p.valor} value={p.valor}>{p.etiqueta}</option>
                         ))}
                     </select>
-                    
+
                     <span aria-hidden="true" style={{ width: 1, height: 18, background: 'currentColor', opacity: 0.2 }} />
                     <BotonDescarga
                         archivo="cuentas-abiertas-cerradas"
@@ -80,7 +84,7 @@ export default function CuentasAbiertasCerradas() {
                             { header: 'Abiertas', key: 'Abiertas' },
                             { header: 'Cerradas', key: 'Cerradas' },
                         ]}
-                        filas={datos}
+                        filas={datos.length ? [...datos, { nombre: 'Total', Abiertas: totalAbiertas, Cerradas: totalCerradas }] : []}
                         grafica={graficaRef}
                     />
                 </div>
@@ -89,18 +93,30 @@ export default function CuentasAbiertasCerradas() {
             {error && <div className="alert error">{error}</div>}
 
             {!error && (
-                <div className="card" ref={graficaRef} style={{ height: 320, opacity: cargando ? 0.6 : 1 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={datos} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
-                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="Abiertas" fill="#3f7d4e" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="Cerradas" fill="#a94442" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="card" ref={graficaRef} style={{ opacity: cargando ? 0.6 : 1 }}>
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', marginBottom: 8 }}>
+                        <span>Total abiertas: <b style={{ color: '#3f7d4e' }}>{totalAbiertas}</b></span>
+                        <span>Total cerradas: <b style={{ color: '#a94442' }}>{totalCerradas}</b></span>
+                        <span>Neto: <b>{neto > 0 ? `+${neto}` : neto}</b></span>
+                    </div>
+
+                    <div style={{ height: 280 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={datos} margin={{ top: 20, right: 8, left: 8, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="Abiertas" fill="#3f7d4e" radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="Abiertas" position="top" fontSize={11} formatter={(v) => v || ''} />
+                                </Bar>
+                                <Bar dataKey="Cerradas" fill="#a94442" radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="Cerradas" position="top" fontSize={11} formatter={(v) => v || ''} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             )}
         </section>

@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-    BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer,
+    BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer, LabelList
 } from 'recharts';
 import { prestadoVsIngresos } from '../services/reportes.service';
 import BotonDescarga from './BotonDescarga';
 
 const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const fmt = (n) => `RD$ ${Number(n).toLocaleString()}`;
+const compacto = (v) => {
+    const n = Number(v || 0);
+    if (!n) return '';
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${Math.round(n / 1_000)}k`;
+    return n;
+};
 
 const PERIODOS = [
     { valor: 3, etiqueta: 'Últimos 3 meses' },
@@ -46,6 +53,9 @@ export default function PrestadoVsIngresos() {
         return () => { cancelado = true; };
     }, [meses]);
 
+    const totalPrestado = datos.reduce((s, d) => s + Number(d.Prestado || 0), 0);
+    const totalIngresos = datos.reduce((s, d) => s + Number(d.Ingresos || 0), 0);
+
     return (
         <section>
             <div style={{
@@ -78,7 +88,7 @@ export default function PrestadoVsIngresos() {
                             { header: 'Prestado (RD$)', key: 'Prestado', moneda: true },
                             { header: 'Ingresos (RD$)', key: 'Ingresos', moneda: true },
                         ]}
-                        filas={datos}
+                        filas={datos.length ? [...datos, { nombre: 'Total', Prestado: totalPrestado, Ingresos: totalIngresos }] : []}
                         grafica={graficaRef}
                     />
                 </div>
@@ -87,21 +97,32 @@ export default function PrestadoVsIngresos() {
             {error && <div className="alert error">{error}</div>}
 
             {!error && (
-                <div className="card" ref={graficaRef} style={{ height: 320, opacity: cargando ? 0.6 : 1 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={datos} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
-                            <YAxis
-                                tick={{ fontSize: 12 }}
-                                tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)}
-                            />
-                            <Tooltip formatter={(v) => fmt(v)} />
-                            <Legend />
-                            <Bar dataKey="Prestado" fill="#a94442" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="Ingresos" fill="#3f7d4e" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="card" ref={graficaRef} style={{ opacity: cargando ? 0.6 : 1 }}>
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', marginBottom: 8 }}>
+                        <span>Total prestado: <b style={{ color: '#a94442' }}>{fmt(totalPrestado)}</b></span>
+                        <span>Total ingresos: <b style={{ color: '#3f7d4e' }}>{fmt(totalIngresos)}</b></span>
+                    </div>
+
+                    <div style={{ height: 280 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={datos} margin={{ top: 20, right: 8, left: 8, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
+                                <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)}
+                                />
+                                <Tooltip formatter={(v) => fmt(v)} />
+                                <Legend />
+                                <Bar dataKey="Prestado" fill="#a94442" radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="Prestado" position="top" fontSize={10} formatter={compacto} />
+                                </Bar>
+                                <Bar dataKey="Ingresos" fill="#3f7d4e" radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="Ingresos" position="top" fontSize={10} formatter={compacto} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             )}
         </section>
