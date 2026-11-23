@@ -38,6 +38,27 @@
   display: none;
 }
 
+.app-header-settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  color: var(--forest);
+  background: transparent;
+  border: 1px solid var(--ledger-line);
+  border-radius: 50%;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app-header-settings:hover,
+.app-header-settings:focus-visible {
+  color: var(--forest);
+  background: #e4efdf;
+}
+
 .app-content-user {
   display: flex;
   align-items: center;

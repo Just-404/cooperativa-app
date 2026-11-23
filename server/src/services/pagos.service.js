@@ -1,43 +1,98 @@
 const { sequelize, Cuota, Pago, Prestamo } = require('../models');
-const { aISO, esDiaLaborable, diferenciaDias } = require('../utils/feriados');
+const { aISO, diferenciaDias } = require('../utils/feriados');
+const { calcularMontoMora, round6 } = require('../utils/mora');
+const configuracion = require('./configuracion.service');
 
-// Tasa de mora diaria: 0.1% sobre el monto de la cuota vencida
-// Se puede ajustar según políticas de la cooperativa
-const TASA_MORA_DIARIA = 0.001; // 0.1% diario
-
-// Calcular mora de una cuota vencida
-function calcularMoraDeCuota(cuota) {
-  if (cuota.estado === 'pagada') return 0;
-
-  const vencimiento = aISO(cuota.fechaVencimiento);
-  const diasVencidos = diferenciaDias(vencimiento, aISO(new Date()));
-
-  if (diasVencidos <= 0) return 0;
-
-  // Si el vencimiento cayó en fin de semana o feriado se concede un día de gracia
-  const diasConMora = esDiaLaborable(vencimiento) ? diasVencidos : Math.max(0, diasVencidos - 1);
-
-  return Math.round(Number(cuota.montoTotal) * TASA_MORA_DIARIA * diasConMora * 100) / 100;
+// Resuelve la tasa de una cuota: si ya se volvió vencida conserva su snapshot;
+// si todavía no, se toma la tasa vigente en su fecha de vencimiento.
+function tasaParaCuota(cuota) {
+  const snapshot = cuota.tasaMoraAplicada == null ? null : Number(cuota.tasaMoraAplicada);
+  if (snapshot !== null && Number.isFinite(snapshot)) {
+    return { tasaDiaria: snapshot, origen: 'snapshot' };
+  }
+  const tasa = configuracion.resolverTasaParaFecha(cuota.fechaVencimiento);
+  return { tasaDiaria: Number(tasa.tasaDiaria), origen: 'vigente' };
 }
 
-// Recorre las cuotas no pagadas y recalcula la mora de las que ya pasaron su fecha,
-// marcándolas como "vencida" y actualizando el monto de mora acumulado.
-// Si una cuota marcada como vencida ya no está vencida (fecha futura), se devuelve
-// a "pendiente" y se limpia la mora.
+function detalleMoraDeCuota(cuota, hoy = null) {
+  if (cuota.estado === 'pagada') {
+    return { monto: 0, diasAtraso: 0, tasaDiaria: null, origen: null };
+  }
+
+  const fechaHoy = aISO(hoy || new Date());
+  const diasAtraso = Math.max(0, diferenciaDias(aISO(cuota.fechaVencimiento), fechaHoy));
+  if (diasAtraso === 0) {
+    return { monto: 0, diasAtraso: 0, tasaDiaria: null, origen: null };
+  }
+
+  const { tasaDiaria, origen } = tasaParaCuota(cuota);
+  const { monto } = calcularMontoMora({
+    montoTotal: cuota.montoTotal,
+    fechaVencimiento: cuota.fechaVencimiento,
+    tasaDiaria,
+    hoy: fechaHoy,
+  });
+
+  return { monto, diasAtraso, tasaDiaria, origen };
+}
+
+// Compatibilidad con llamadores que solo esperan el monto.
+function calcularMoraDeCuota(cuota, hoy = null) {
+  return detalleMoraDeCuota(cuota, hoy).monto;
+}
+
+// Recorre las cuotas no pagadas de un préstamo y actualiza su mora.
+async function actualizarMoraPrestamo(prestamoId) {
+  const cuotas = await Cuota.findAll({
+    where: { prestamoId, estado: ['pendiente', 'vencida'] },
+  });
+  const hoy = aISO(new Date());
+  let actualizadas = 0;
+
+  for (const cuota of cuotas) {
+    const { monto, tasaDiaria } = detalleMoraDeCuota(cuota, hoy);
+    const vencida = monto > 0 || cuota.estado === 'vencida';
+    const cambios = {};
+
+    if (vencida && cuota.estado !== 'vencida') cambios.estado = 'vencida';
+    if (!vencida && cuota.estado === 'vencida') cambios.estado = 'pendiente';
+    if (vencida && cuota.tasaMoraAplicada == null && tasaDiaria != null) {
+      cambios.tasaMoraAplicada = round6(tasaDiaria);
+    }
+    if (Number(cuota.montoMora) !== monto) cambios.montoMora = monto;
+
+    if (Object.keys(cambios).length > 0) {
+      await cuota.update(cambios);
+      actualizadas++;
+    }
+  }
+
+  return actualizadas;
+}
+
+// Recorre todas las cuotas no pagadas y recalcula la mora. Las cuotas vencidas
+// conservan la tasa que tenían cuando empezaron a generar mora.
 async function calcularMora() {
-  const cuotasNoPagadas = await Cuota.findAll({ where: { estado: { [sequelize.Sequelize.Op.in]: ['pendiente', 'vencida'] } } });
+  const cuotasNoPagadas = await Cuota.findAll({
+    where: { estado: { [sequelize.Sequelize.Op.in]: ['pendiente', 'vencida'] } },
+  });
+  const hoy = aISO(new Date());
   let actualizadas = 0;
 
   for (const cuota of cuotasNoPagadas) {
-    const mora = calcularMoraDeCuota(cuota);
+    const { monto, tasaDiaria } = detalleMoraDeCuota(cuota, hoy);
+    const vencida = monto > 0 || cuota.estado === 'vencida';
+    const cambios = {};
 
-    if (mora > 0) {
-      if (cuota.estado !== 'vencida' || Number(cuota.montoMora) !== mora) {
-        await cuota.update({ estado: 'vencida', montoMora: mora });
-        actualizadas++;
-      }
-    } else if (cuota.estado === 'vencida' || Number(cuota.montoMora) > 0) {
-      await cuota.update({ estado: 'pendiente', montoMora: 0 });
+    if (vencida && cuota.estado !== 'vencida') cambios.estado = 'vencida';
+    if (!vencida && cuota.estado === 'vencida') cambios.estado = 'pendiente';
+    if (vencida && cuota.tasaMoraAplicada == null && tasaDiaria != null) {
+      cambios.tasaMoraAplicada = round6(tasaDiaria);
+    }
+    if (Number(cuota.montoMora) !== monto) cambios.montoMora = monto;
+
+    if (Object.keys(cambios).length > 0) {
+      await cuota.update(cambios);
       actualizadas++;
     }
   }
@@ -73,7 +128,9 @@ async function validarCuotasAnterioresPagadas(prestamoId, fechaVencimiento, tran
   }
 }
 
-// Registrar el pago de una cuota (incluye mora si aplica)
+// Registrar el pago de una cuota (incluye mora si aplica).
+// La mora se recalcula aquí para no cobrar de menos si no se había ejecutado
+// `calcularMora` todavía. Pagar en día feriado ya no la condona.
 async function registrarPago(cuotaId, monto, usuarioId) {
   return sequelize.transaction(async (t) => {
     const cuota = await Cuota.findByPk(cuotaId, { transaction: t, lock: t.LOCK.UPDATE });
@@ -88,34 +145,30 @@ async function registrarPago(cuotaId, monto, usuarioId) {
       throw err;
     }
 
-    // Validar cuotas anteriores pagadas
     await validarCuotasAnterioresPagadas(cuota.prestamoId, cuota.fechaVencimiento, t);
 
-    // Calcular mora basada en la fecha de vencimiento y días laborables
-    const mora = cuota.estado === 'vencida' ? Number(cuota.montoMora) : 0;
-
-    // Verificar si el pago se realiza en un día no laborable - si es así, no aplicar mora
-    const fechaPago = new Date();
-    const esPagoFeriado = !esDiaLaborable(aISO(fechaPago));
-
-    const totalEsperado = esPagoFeriado ? Number(cuota.montoTotal) : Number(cuota.montoTotal) + mora;
+    const { monto: mora, tasaDiaria } = detalleMoraDeCuota(cuota);
+    const totalEsperado = Math.round((Number(cuota.montoTotal) + mora) * 100) / 100;
 
     if (Number(monto) < totalEsperado) {
-      const err = new Error(`El monto debe cubrir el total de la cuota${esPagoFeriado ? ' (día feriado, sin mora)' : ''} más la mora (${totalEsperado})`);
+      const err = new Error(`El monto debe cubrir la cuota más la mora (${totalEsperado})`);
       err.status = 400;
       throw err;
     }
 
-    // Si el pago es en feriado, se descuenta la mora
-    const moraAplicar = esPagoFeriado ? 0 : mora;
-
-    await cuota.update({ estado: 'pagada' }, { transaction: t });
+    const tasaAplicar = mora > 0 && tasaDiaria != null ? round6(tasaDiaria) : null;
+    await cuota.update({
+      estado: 'pagada',
+      montoMora: mora,
+      tasaMoraAplicada: tasaAplicar || cuota.tasaMoraAplicada,
+    }, { transaction: t });
 
     const pago = await Pago.create({
       cuotaId,
       usuarioId,
       monto,
-      moraCobrada: moraAplicar,
+      moraCobrada: mora,
+      tasaMoraAplicada: tasaAplicar,
     }, { transaction: t });
 
     // Si todas las cuotas del préstamo están pagas, se cierra el préstamo
@@ -146,7 +199,6 @@ async function registrarAbonoCapital(prestamoId, monto, usuarioId) {
       throw err;
     }
 
-    // Obtener cuotas pendientes/vencidas ordenadas
     const cuotasPendientes = await Cuota.findAll({
       where: { prestamoId, estado: ['pendiente', 'vencida'] },
       order: [['numeroCuota', 'ASC']],
@@ -161,7 +213,6 @@ async function registrarAbonoCapital(prestamoId, monto, usuarioId) {
 
     let montoRestante = Number(monto);
 
-    // Aplicar abono a las cuotas futuras (reduce capital de cada cuota)
     for (const cuota of cuotasPendientes) {
       if (montoRestante <= 0) break;
 
@@ -178,7 +229,6 @@ async function registrarAbonoCapital(prestamoId, monto, usuarioId) {
       montoRestante = Math.round((montoRestante - reduccion) * 100) / 100;
     }
 
-    // Registrar el abono como un pago sin cuotaId
     const pago = await Pago.create({
       cuotaId: null,
       usuarioId,
@@ -187,7 +237,6 @@ async function registrarAbonoCapital(prestamoId, monto, usuarioId) {
       tipo: 'abono_capital',
     }, { transaction: t });
 
-    // Si el préstamo ya estaba cerrado y se abre de nuevo, o verificar cierre
     const cuotasQuedan = await Cuota.count({
       where: { prestamoId, estado: ['pendiente', 'vencida'] },
       transaction: t,
@@ -204,4 +253,13 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
-module.exports = { listarEnMora, registrarPago, calcularMora, registrarAbonoCapital };
+module.exports = {
+  listarEnMora,
+  registrarPago,
+  calcularMora,
+  registrarAbonoCapital,
+  calcularMoraDeCuota,
+  detalleMoraDeCuota,
+  actualizarMoraPrestamo,
+  round2,
+};

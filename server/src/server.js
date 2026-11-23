@@ -3,6 +3,7 @@ const env = require('./config/env');
 const { sequelize } = require('./models');
 const pagos = require('./services/pagos.service');
 const { QueryTypes } = require('sequelize');
+const configuracion = require('./services/configuracion.service');
 
 async function alinearLongitudTituloTickets() {
   const tablas = await sequelize.query(
@@ -30,6 +31,11 @@ async function start() {
     await alinearLongitudTituloTickets();
     await sequelize.sync({ alter: env.nodeEnv !== 'production' });
     console.log('Conexión a la base de datos establecida');
+
+    // Inicializa configuración (días no laborables, feriados del año, tasa de mora)
+    // y su caché antes de cualquier cálculo de fechas o mora.
+    await configuracion.inicializar();
+    console.log('Configuración de calendario y mora inicializada');
 
     // Calcular mora automáticamente al iniciar: actualiza cuotas vencidas
     // con su monto de mora y las marca como 'vencida'

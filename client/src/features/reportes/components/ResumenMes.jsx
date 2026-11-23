@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { prestamosDelMes } from '../services/reportes.service';
 import BotonDescarga from './BotonDescarga';
 
@@ -77,6 +78,7 @@ export default function ResumenMes() {
     const resueltos = actual ? actual.aprobados + actual.rechazados : 0;
     const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
     const altoControl = { height: 26, fontSize: '0.75rem', padding: '0 8px', width: 'auto', minWidth: 0 };
+    const botonFlecha = { ...altoControl, display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
     const mesPrevio = mesAnterior(periodo);
 
@@ -87,8 +89,8 @@ export default function ResumenMes() {
             anterior: previo?.[k] ?? '',
             variacion: previo ? actual[k] - previo[k] : '',
         })),
-        { concepto: 'Resueltos (aprobados + rechazados)', cantidad: resueltos, anterior: '', variacion: ''},
-        { concepto: 'Tasa de aprobación (%)', cantidad: tasa, anterior: '', variacion: ''},
+        { concepto: 'Resueltos (aprobados + rechazados)', cantidad: resueltos, anterior: '', variacion: '', resaltar: true },
+        { concepto: 'Tasa de aprobación (%)', cantidad: tasa, anterior: '', variacion: '', resaltar: true },
     ] : [];
 
     return (
@@ -98,7 +100,10 @@ export default function ResumenMes() {
 
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginLeft: 'auto' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior" style={altoControl}>‹</button>
+                        <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior" style={botonFlecha}>
+                            <ChevronLeft size={14} aria-hidden="true" />
+                        </button>
+
                         <input
                             type="month"
                             className="mono"
@@ -108,7 +113,16 @@ export default function ResumenMes() {
                             aria-label="Seleccionar mes"
                             style={altoControl}
                         />
-                        <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente" style={altoControl}>›</button>
+
+                        <button
+                            type="button"
+                            onClick={() => mover(1)}
+                            disabled={esMesActual}
+                            aria-label="Mes siguiente"
+                            style={botonFlecha}
+                        >
+                            <ChevronRight size={14} aria-hidden="true" />
+                        </button>
                     </div>
 
                     <span aria-hidden="true" style={{ width: 1, height: 18, background: 'currentColor', opacity: 0.2 }} />

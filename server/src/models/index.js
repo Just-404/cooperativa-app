@@ -11,6 +11,9 @@ const Pago = require('./Pago');
 const Auditoria = require('./Auditoria');
 const ScoringCrediticio = require('./ScoringCrediticio');
 const Ticket = require('./Ticket');
+const Feriado = require('./Feriado');
+const Configuracion = require('./Configuracion');
+const TasaMora = require('./TasaMora');
 
 // Socio <-> CuentaAhorro
 Socio.hasMany(CuentaAhorro, { foreignKey: 'socioId', as: 'cuentas' });
@@ -49,6 +52,10 @@ Auditoria.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
 Socio.hasMany(ScoringCrediticio, { foreignKey: 'socioId', as: 'scoring' });
 ScoringCrediticio.belongsTo(Socio, { foreignKey: 'socioId', as: 'socio' });
 
+// Configuración <-> Usuario
+Configuracion.belongsTo(Usuario, { foreignKey: 'actualizadoPorId', as: 'actualizadoPor' });
+TasaMora.belongsTo(Usuario, { foreignKey: 'creadoPorId', as: 'creadoPor' });
+
 module.exports = {
   sequelize,
   Usuario,
@@ -62,4 +69,7 @@ module.exports = {
   Auditoria,
   ScoringCrediticio,
   Ticket,
+  Feriado,
+  Configuracion,
+  TasaMora,
 };

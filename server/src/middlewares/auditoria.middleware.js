@@ -9,6 +9,9 @@ const {
   Usuario,
   Ticket,
   TipoPrestamo,
+  Feriado,
+  Configuracion,
+  TasaMora,
 } = require('../models');
 const auditoriaService = require('../services/auditoria.service');
 
@@ -24,6 +27,9 @@ const MODELOS_POR_ENTIDAD = {
   tipo_prestamo: TipoPrestamo,
   ticket: Ticket,
   usuario: Usuario,
+  feriado: Feriado,
+  configuracion: Configuracion,
+  tasa_mora: TasaMora,
 };
 
 const ENTIDAD_POR_ACCION = {
@@ -38,6 +44,8 @@ const ACCIONES_DE_ACTUALIZACION = new Set([
   'desembolsar_prestamo',
   'cerrar_cuenta',
   'recalcular_fechas_cuotas',
+  'recalcular_fechas_global',
+  'restaurar_feriados',
 ]);
 
 function sanitizar(valor, vistos = new WeakSet()) {
@@ -82,6 +90,7 @@ function idDeSolicitud(req) {
     || req.params?.prestamoId
     || req.params?.socioId
     || req.params?.cuotaId
+    || (req.body?.anio ? String(req.body.anio) : null)
     || null;
 }
 
@@ -102,6 +111,12 @@ async function obtenerEstado(modelo, id, accion) {
   if (!modelo || !id) return null;
   if (accion === 'recalcular_fechas_cuotas') {
     return modelo.findAll({ where: { prestamoId: id }, order: [['numeroCuota', 'ASC']] });
+  }
+  if (accion === 'recalcular_fechas_global') {
+    return modelo.findAll({ where: { estado: 'pendiente' }, order: [['numeroCuota', 'ASC']] });
+  }
+  if (accion === 'restaurar_feriados') {
+    return modelo.findAll({ where: { anio: id }, order: [['fecha', 'ASC']] });
   }
   return modelo.findByPk(id);
 }
@@ -291,7 +306,8 @@ function registrarAlFinal(req, res, next, contexto) {
     const usuarioId = req.user?.id || aPlano(cuerpoRespuesta)?.usuario?.id;
     if (!usuarioId) return;
 
-    const idRespuesta = idDeRespuesta(cuerpoRespuesta);
+    const usarIdRespuesta = !['restaurar_feriados', 'recalcular_fechas_global'].includes(contexto.accion);
+    const idRespuesta = usarIdRespuesta ? idDeRespuesta(cuerpoRespuesta) : null;
     const entidadId = idRespuesta || contexto.idPrevio;
 
     Promise.all([

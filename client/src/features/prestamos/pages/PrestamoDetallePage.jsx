@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Banknote,
+  Check,
+  CircleDollarSign,
+  ClipboardCheck,
+  Coins,
+  RefreshCw,
+  X,
+} from 'lucide-react';
 import { obtener } from '../services/prestamos.service';
 import { evaluar } from '../../evaluacion/services/evaluacion.service';
 import { aprobar, rechazar } from '../../aprobacion/services/aprobacion.service';
@@ -188,7 +198,9 @@ export default function PrestamoDetallePage() {
 
   return (
     <div>
-      <Link to="/prestamos" style={{ fontSize: '0.82rem' }}>← Volver a préstamos</Link>
+      <Link className="link-accion" to="/prestamos" style={{ fontSize: '0.82rem' }}>
+        <ArrowLeft size={15} aria-hidden="true" /> Volver a préstamos
+      </Link>
       <h3 style={{ marginTop: 10 }}>
         {prestamo.socio?.nombre} {prestamo.socio?.apellido} — {prestamo.tipoPrestamo?.nombre}
       </h3>
@@ -243,7 +255,7 @@ export default function PrestamoDetallePage() {
             style={{ marginBottom: 20 }}
             onClick={() => accion(() => evaluar(id, comentario))}
           >
-            Marcar como evaluado
+            <ClipboardCheck size={16} aria-hidden="true" /> Marcar como evaluado
           </button>
         </>
       )}
@@ -266,8 +278,12 @@ export default function PrestamoDetallePage() {
             </small>
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <button className="btn primary" onClick={() => accion(() => aprobar(id, prestamo.montoSolicitado, comentario))}>Aprobar</button>
-            <button className="btn danger" onClick={() => accion(() => rechazar(id, comentario))}>Rechazar</button>
+            <button className="btn primary" onClick={() => accion(() => aprobar(id, prestamo.montoSolicitado, comentario))}>
+              <Check size={16} aria-hidden="true" /> Aprobar
+            </button>
+            <button className="btn danger" onClick={() => accion(() => rechazar(id, comentario))}>
+              <X size={16} aria-hidden="true" /> Rechazar
+            </button>
           </div>
         </>
       )}
@@ -275,7 +291,9 @@ export default function PrestamoDetallePage() {
       {prestamo.estado === 'aprobado' && puedeDesembolsar && (
         <div className="card" style={{ maxWidth: 480, marginBottom: 20 }}>
           <p style={{ marginTop: 0 }}>Monto aprobado: <span className="mono">RD$ {Number(prestamo.montoAprobado).toLocaleString()}</span></p>
-          <button className="btn primary" onClick={() => accion(() => desembolsar(id))}>Desembolsar y generar cuotas</button>
+          <button className="btn primary" onClick={() => accion(() => desembolsar(id))}>
+            <Banknote size={16} aria-hidden="true" /> Desembolsar y generar cuotas
+          </button>
         </div>
       )}
 
@@ -296,7 +314,9 @@ export default function PrestamoDetallePage() {
                     onChange={(e) => setAbonoMonto(e.target.value)}
                     style={{ flex: 1 }}
                   />
-                  <button className="btn primary" onClick={handleAbonoCapital}>Aplicar abono</button>
+                  <button className="btn primary" onClick={handleAbonoCapital}>
+                    <Coins size={16} aria-hidden="true" /> Aplicar abono
+                  </button>
                 </div>
                 <small style={{ color: 'var(--ink-soft)' }}>Reduce el capital de las cuotas pendientes en orden.</small>
               </div>
@@ -325,7 +345,7 @@ export default function PrestamoDetallePage() {
                 onClick={handleRecalcularFechas}
                 disabled={prestamo.estado !== 'desembolsado' && prestamo.estado !== 'cerrado'}
               >
-                Recalcular fechas de vencimiento
+                <RefreshCw size={16} aria-hidden="true" /> Recalcular fechas de vencimiento
               </button>
               <small style={{ color: 'var(--ink-soft)' }}>Ajusta feriados y fines de semana</small>
             </div>
@@ -346,7 +366,14 @@ export default function PrestamoDetallePage() {
                     </td>
                     <td className="mono">{Number(c.montoCapital).toLocaleString()}</td>
                     <td className="mono">{Number(c.montoInteres).toLocaleString()}</td>
-                    <td className="mono">{Number(c.montoMora || 0).toLocaleString()}</td>
+                    <td className="mono">
+                      {Number(c.montoMora || 0).toLocaleString()}
+                      {c.tasaMoraAplicada != null && (
+                        <small style={{ display: 'block', color: 'var(--ink-soft)' }}>
+                          {(Number(c.tasaMoraAplicada) * 100).toFixed(3)}% diario
+                        </small>
+                      )}
+                    </td>
                     <td className="mono">{total.toLocaleString()}</td>
                     <td><EstadoTag estado={c.estado} /></td>
                     <td>
@@ -357,6 +384,7 @@ export default function PrestamoDetallePage() {
                           disabled={c.bloqueada}
                           title={c.bloqueada ? 'Debe pagar las cuotas anteriores primero' : ''}
                         >
+                          <CircleDollarSign size={16} aria-hidden="true" />
                           {c.bloqueada ? 'Bloqueada' : 'Registrar pago'}
                         </button>
                       )}

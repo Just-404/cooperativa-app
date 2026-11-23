@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Eye, FilterX } from 'lucide-react';
 import { listarEnMora } from '../services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import usePaginacion from '../../../hooks/usePaginacion';
@@ -118,7 +119,7 @@ export default function CuotasPagosPage() {
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
-            Limpiar
+            <FilterX size={16} aria-hidden="true" /> Limpiar
           </button>
         )}
       </div>
@@ -127,7 +128,7 @@ export default function CuotasPagosPage() {
         <thead>
           <tr>
             <th>Prestamo #</th><th>Socio</th><th>Cuota #</th><th>Vencimiento</th><th>Atraso</th>
-            <th>Monto</th><th>Mora</th><th>Estado</th><th></th>
+            <th>Monto</th><th>Mora</th><th>Tasa aplicada</th><th>Estado</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -140,13 +141,22 @@ export default function CuotasPagosPage() {
               <td>{dias} {dias === 1 ? 'día' : 'días'}</td>
               <td className="mono">{Number(c.montoTotal).toLocaleString()}</td>
               <td className="mono">{Number(c.montoMora || 0).toLocaleString()}</td>
+              <td className="mono">
+                {c.tasaMoraAplicada != null
+                  ? `${(Number(c.tasaMoraAplicada) * 100).toFixed(3)}% diario`
+                  : '—'}
+              </td>
               <td><EstadoTag estado={c.estado} /></td>
-              <td><Link to={`/prestamos/${c.prestamo?.id}`}>Ver préstamo</Link></td>
+              <td>
+                <Link className="link-accion" to={`/prestamos/${c.prestamo?.id}`}>
+                  <Eye size={15} aria-hidden="true" /> Ver préstamo
+                </Link>
+              </td>
             </tr>
           ))}
           {visibles.length === 0 && (
             <tr>
-              <td colSpan="8" style={{ color: 'var(--ink-soft)' }}>
+              <td colSpan="10" style={{ color: 'var(--ink-soft)' }}>
                 {cargandoLista
                   ? 'Cargando…'
                   : cuotas.length === 0

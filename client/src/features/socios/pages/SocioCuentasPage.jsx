@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Lock, Minus, Plus, Power } from 'lucide-react';
 import {
   abrir,
   cambiarEstado,
@@ -172,7 +173,9 @@ export default function SocioCuentasPage() {
   if (!socio) {
     return (
       <div>
-        <Link to={`/socios/${id}`}>← Volver al socio</Link>
+        <Link className="link-accion" to={`/socios/${id}`}>
+          <ArrowLeft size={15} aria-hidden="true" /> Volver al socio
+        </Link>
         {error && <div className="alert error" role="alert">{error}</div>}
       </div>
     );
@@ -180,7 +183,9 @@ export default function SocioCuentasPage() {
 
   return (
     <div>
-      <Link to={`/socios/${id}`} style={{ fontSize: '0.82rem' }}>← Volver al socio</Link>
+      <Link className="link-accion" to={`/socios/${id}`} style={{ fontSize: '0.82rem' }}>
+        <ArrowLeft size={15} aria-hidden="true" /> Volver al socio
+      </Link>
       <div className="socio-detail-heading">
         <div>
           <h3>Cuentas de {socio.nombre} {socio.apellido}</h3>
@@ -196,7 +201,7 @@ export default function SocioCuentasPage() {
             disabled={socio.estado !== 'activo'}
             title={socio.estado !== 'activo' ? 'Activa al socio antes de abrir una cuenta' : undefined}
           >
-            Abrir cuenta de ahorro
+            <Plus size={16} aria-hidden="true" /> Abrir cuenta de ahorro
           </button>
         )}
       </div>
@@ -252,24 +257,28 @@ export default function SocioCuentasPage() {
                       value={montos[cuenta.id] || ''}
                       onChange={(e) => setMontos({ ...montos, [cuenta.id]: e.target.value })}
                     />
-                    <button className="btn primary" type="button" onClick={() => solicitarOperacion(cuenta, 'deposito')}>Depositar</button>
-                    <button className="btn secondary" type="button" onClick={() => solicitarOperacion(cuenta, 'retiro')}>Retirar</button>
+                    <button className="btn primary" type="button" onClick={() => solicitarOperacion(cuenta, 'deposito')}>
+                      <Plus size={15} aria-hidden="true" /> Depositar
+                    </button>
+                    <button className="btn secondary" type="button" onClick={() => solicitarOperacion(cuenta, 'retiro')}>
+                      <Minus size={15} aria-hidden="true" /> Retirar
+                    </button>
                   </div>
                 )}
                 {puedeGestionar && !cerrada && (
                   <div className="account-management-actions">
                     {cuenta.estado === 'inactiva' && socio.estado === 'activo' && (
                       <button className="btn secondary" type="button" onClick={() => solicitarCambioEstado(cuenta)}>
-                        Activar cuenta
+                        <Power size={15} aria-hidden="true" /> Activar cuenta
                       </button>
                     )}
                     {cuenta.estado === 'inactiva' ? (
                       <button className="btn danger" type="button" onClick={() => solicitarCierre(cuenta)}>
-                        Cerrar cuenta
+                        <Lock size={15} aria-hidden="true" /> Cerrar cuenta
                       </button>
                     ) : socio.estado === 'activo' && (
                       <button className="btn danger" type="button" onClick={() => solicitarCambioEstado(cuenta)}>
-                        Desactivar cuenta
+                        <Power size={15} aria-hidden="true" /> Desactivar cuenta
                       </button>
                     )}
                   </div>

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Calculator, Eye, Pencil, Save, UserCheck, UserX, Wallet, X } from 'lucide-react';
 import { actualizar, cambiarEstado, obtener } from '../services/socios.service';
 import { calcular, obtenerPorSocio } from '../../scoring/services/scoring.service';
-import axios from 'axios';
+import { listarEnMora } from '../../cuotas-pagos/services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
@@ -51,7 +52,7 @@ export default function SocioDetallePage() {
   const [form, setForm] = useState(FORM_VACIO);
   const [formInicial, setFormInicial] = useState(FORM_VACIO);
   const [confirmacion, setConfirmacion] = useState(null);
-  const [moraInfo, setMoraInfo] = useState(null); // Información de mora
+  const [moraInfo, setMoraInfo] = useState([]); // Cuotas vencidas de este socio
 
   const puedeGestionar = ['administrador', 'oficial_credito'].includes(user?.rol);
   const puedeCalcularScoring = ['administrador', 'oficial_credito', 'cajero', 'gerente'].includes(user?.rol);
@@ -60,7 +61,7 @@ export default function SocioDetallePage() {
   async function cargar() {
     setCargando(true);
     setError('');
-    setMoraInfo(null); // Reset Mora info
+    setMoraInfo([]);
     try {
       const datosSocio = await obtener(id);
       setSocio(datosSocio);
@@ -70,17 +71,15 @@ export default function SocioDetallePage() {
       } catch {
         setErrorScoring('No se pudo cargar el historial de scoring.');
       }
-      // Cargar información de Mora usando axios directamente
+      // El endpoint devuelve todas las cuotas vencidas con su préstamo y socio.
       try {
-        const { data } = await axios.get('/api/pagos/mora');
-        // Filtrar mora solo para este socio
-        const socioMora = data.find(c => c.documento === socio.documento || (c.socio && c.socio.documento === socio.documento));
-        if (socioMora) {
-          setMoraInfo(socioMora);
-        }
-      } catch (moraErr) {
-        console.error('Error cargando Mora:', moraErr.message);
-        // No mostramos error en UI, solo en consola
+        const cuotasEnMora = await listarEnMora();
+        setMoraInfo(cuotasEnMora.filter((cuota) => (
+          cuota.prestamo?.socio?.id === datosSocio.id
+          || cuota.prestamo?.socio?.documento === datosSocio.documento
+        )));
+      } catch {
+        // La mora es información complementaria: no bloquea la ficha del socio.
       }
     } catch (err) {
       setError(err.response?.data?.error?.message || 'No se pudo cargar la información del socio.');
@@ -190,20 +189,23 @@ export default function SocioDetallePage() {
   if (!socio) {
     return (
       <div>
-        <Link to="/socios">← Volver a socios</Link>
+        <Link className="link-accion" to="/socios"><ArrowLeft size={15} aria-hidden="true" /> Volver a socios</Link>
         {error && <div className="alert error" role="alert">{error}</div>}
       </div>
     );
   }
 
-  // Calcular total de mora para este socio desde los datos de Mora
-  const totalMoraSocio = moraInfo
-    ? MoraInfo.reduce((acc, cuota) => acc + (cuota.montoMora || 0), 0)
-    : 0;
+  // Total de mora de las cuotas vencidas de este socio.
+  const totalMoraSocio = moraInfo.reduce(
+    (acc, cuota) => acc + Number(cuota.montoMora || 0),
+    0
+  );
 
   return (
     <div>
-      <Link to="/socios" style={{ fontSize: '0.82rem' }}>← Volver a socios</Link>
+      <Link className="link-accion" to="/socios" style={{ fontSize: '0.82rem' }}>
+        <ArrowLeft size={15} aria-hidden="true" /> Volver a socios
+      </Link>
       <div className="socio-detail-heading">
         <div>
           <h3>{socio.nombre} {socio.apellido}</h3>
@@ -219,18 +221,23 @@ export default function SocioDetallePage() {
                 disabled={socio.estado !== 'activo'}
                 title={socio.estado !== 'activo' ? 'Activa el socio antes de editarlo' : undefined}
               >
-                Editar socio
+                <Pencil size={16} aria-hidden="true" /> Editar socio
               </button>
               <button
                 className={`btn ${socio.estado === 'activo' ? 'danger' : 'primary'}`}
                 type="button"
                 onClick={solicitarEstadoSocio}
               >
+                {socio.estado === 'activo'
+                  ? <UserX size={16} aria-hidden="true" />
+                  : <UserCheck size={16} aria-hidden="true" />}
                 {socio.estado === 'activo' ? 'Desactivar socio' : 'Activar socio'}
               </button>
             </>
           )}
-          <Link className="btn primary socio-button-link" to={`/socios/${id}/cuentas`}>Cuentas del socio</Link>
+          <Link className="btn primary socio-button-link" to={`/socios/${id}/cuentas`}>
+            <Wallet size={16} aria-hidden="true" /> Cuentas del socio
+          </Link>
         </div>
       </div>
 
@@ -248,52 +255,64 @@ export default function SocioDetallePage() {
           <div><dt>Fecha de nacimiento</dt><dd>{fechaLegible(socio.fechaNacimiento)}</dd></div>
         </dl>
         
-        {/* Nueva sección: Información de Mora */}
-        {moraInfo && moraInfo.length > 0 && (
-          <section className="card socio-mora-section" aria-labelledby="mora-titulo">
-            <div className="socio-section-heading">
-              <h4 id="mora-titulo">🔔 Cuotas con Mora</h4>
-              <p style={{ color: 'var(--danger)', fontSize: '0.875rem', margin: '0.5rem 0' }}>
-                {moraInfo.length} cuotas vencidas con mora acumulada
+        <section className="socio-mora-section" aria-labelledby="mora-titulo">
+          <div className="socio-section-heading">
+            <h4 id="mora-titulo">Cuotas con mora</h4>
+            {moraInfo.length > 0 && (
+              <p>
+                {moraInfo.length} cuota(s) vencida(s) · Total: <strong>{formatoMonto(totalMoraSocio)}</strong>
               </p>
+            )}
+          </div>
+          {moraInfo.length > 0 ? (
+            <div className="config-table-wrap">
+              <table className="ledger config-table">
+                <thead>
+                  <tr>
+                    <th>Cuota</th>
+                    <th>Vencimiento</th>
+                    <th>Monto</th>
+                    <th>Mora</th>
+                    <th>Tasa aplicada</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {moraInfo.map((cuota) => (
+                    <tr key={cuota.id}>
+                      <td>{cuota.numeroCuota}</td>
+                      <td className="mono">{fechaLegible(cuota.fechaVencimiento?.slice(0, 10))}</td>
+                      <td className="mono">{formatoMonto(cuota.montoTotal)}</td>
+                      <td className="mono">{formatoMonto(cuota.montoMora)}</td>
+                      <td className="mono">
+                        {cuota.tasaMoraAplicada != null
+                          ? `${(Number(cuota.tasaMoraAplicada) * 100).toFixed(3)}% diario`
+                          : '—'}
+                      </td>
+                      <td>
+                        <Link
+                          className="link-accion"
+                          to={`/prestamos/${cuota.prestamo?.id}`}
+                        >
+                          <Eye size={15} aria-hidden="true" /> Ver préstamo
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div style={{ 
-              background: 'rgba(255, 80, 80, 0.05)', 
-              borderRadius: '4px', 
-              padding: '12px', 
-              marginTop: '12px'
-            }}>
-              <p style={{ 
-                color: 'var(--danger)', 
-                fontWeight: 'bold', 
-                margin: '0 0 8px 0',
-                fontSize: '0.9rem'
-              }}>
-                Mora Total: {formatoMonto(totalMoraSocio)}
-              </p>
-              <p style={{ 
-                color: 'var(--ink-soft)', 
-                fontSize: '0.75rem',
-                margin: '0'
-              }}>
-                {moraInfo.length} cuotas vencidas del mes pasado. Mora diaria 0.1% sobre cuota vencida.
-              </p>
-            </div>
-          </section>
-        )}
-
-        {!moraInfo || moraInfo.length === 0 && (
-          <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
-            Sin cuotas en mora
-          </p>
-        )}
+          ) : (
+            <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem' }}>Sin cuotas en mora.</p>
+          )}
+        </section>
 
         <section className="socio-scoring-section" aria-labelledby="scoring-titulo">
           <div className="socio-section-heading">
             <h4 id="scoring-titulo">Scoring crediticio</h4>
             {puedeCalcularScoring && (
               <button className="btn secondary" type="button" onClick={solicitarCalculoScoring}>
-                Calcular scoring
+                <Calculator size={16} aria-hidden="true" /> Calcular scoring
               </button>
             )}
           </div>
@@ -358,8 +377,12 @@ export default function SocioDetallePage() {
               </div>
             </div>
             <div className="socio-modal-actions">
-              <button className="btn secondary" type="button" onClick={cancelarEdicion} disabled={procesando}>Cancelar</button>
-              <button className="btn primary" type="submit" disabled={procesando}>Guardar cambios</button>
+              <button className="btn secondary" type="button" onClick={cancelarEdicion} disabled={procesando}>
+                <X size={16} aria-hidden="true" /> Cancelar
+              </button>
+              <button className="btn primary" type="submit" disabled={procesando}>
+                <Save size={16} aria-hidden="true" /> Guardar cambios
+              </button>
             </div>
           </form>
         </div>

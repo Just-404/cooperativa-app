@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Eye, FilterX, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { listarTickets, actualizarTicket, eliminarTicket } from '../../services/tickets.service';
 import usePaginacion from '../../hooks/usePaginacion.js';
@@ -254,7 +255,7 @@ export default function AdminTicketsPage() {
               fechaHasta: '',
             })}
           >
-            Limpiar filtros
+            <FilterX size={16} aria-hidden="true" /> Limpiar filtros
           </button>
         )}
       </div>
@@ -268,7 +269,7 @@ export default function AdminTicketsPage() {
         <div className="alert error" role="alert">
           {errorCarga}
           <button type="button" className="btn ghost" onClick={cargarTickets}>
-            Reintentar
+            <RefreshCw size={16} aria-hidden="true" /> Reintentar
           </button>
         </div>
       )}
@@ -308,7 +309,7 @@ export default function AdminTicketsPage() {
                   onClick={() => setTicketSeleccionado(ticket)}
                   aria-label={`Ver ticket: ${ticket.titulo}`}
                 >
-                  Ver
+                  <Eye size={16} aria-hidden="true" /> Ver
                 </button>
               </article>
             ))}

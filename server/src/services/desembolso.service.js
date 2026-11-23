@@ -1,6 +1,7 @@
 const { sequelize } = require('../models');
 const prestamosService = require('./prestamos.service');
 const cuotasService = require('./cuotas.service');
+const configuracion = require('./configuracion.service');
 
 async function desembolsar(prestamoId) {
   const prestamo = await prestamosService.obtener(prestamoId);
@@ -16,7 +17,10 @@ async function desembolsar(prestamoId) {
       { estado: 'desembolsado', fechaDesembolso: new Date() },
       { transaction: t }
     );
-    await cuotasService.generarCuotas(prestamo, { transaction: t });
+    await cuotasService.generarCuotas(prestamo, {
+      transaction: t,
+      calendario: configuracion.calendarioSeguro(),
+    });
     return prestamo;
   });
 }

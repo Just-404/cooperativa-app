@@ -17,6 +17,8 @@ services:
     build: ./server
     restart: unless-stopped
     env_file: ./server/.env
+    environment:
+      TZ: America/Santo_Domingo
     ports:
       - "4000:4000"
     depends_on:

@@ -6,6 +6,7 @@ const Pago = sequelize.define('Pago', {
   cuotaId: { type: DataTypes.UUID, allowNull: true },
   monto: { type: DataTypes.DECIMAL(14, 2), allowNull: false },
   moraCobrada: { type: DataTypes.DECIMAL(14, 2), defaultValue: 0 },
+  tasaMoraAplicada: { type: DataTypes.DECIMAL(8, 6), allowNull: true },
   tipo: { type: DataTypes.ENUM('cuota', 'abono_capital'), defaultValue: 'cuota' },
   fechaPago: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, { tableName: 'pagos' });

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Eye, FilePlus, FilterX, Send, X } from 'lucide-react';
 import { listar, solicitar, listarTipos } from '../services/prestamos.service';
 import { listar as listarSocios } from '../../socios/services/socios.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
@@ -140,7 +141,7 @@ export default function PrestamosPage() {
         </div>
         {puedeSolicitar && (
           <button className="btn primary" onClick={() => { setError(''); setMensaje(''); setMostrarForm(true); }}>
-            Nueva solicitud
+            <FilePlus size={16} aria-hidden="true" /> Nueva solicitud
           </button>
         )}
       </div>
@@ -201,9 +202,11 @@ export default function PrestamosPage() {
               </div>
             </div>
             <div className="socio-modal-actions">
-              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>Cancelar</button>
+              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>
+                <X size={16} aria-hidden="true" /> Cancelar
+              </button>
               <button className="btn primary" type="submit" disabled={cargando}>
-                {cargando ? 'Enviando…' : 'Solicitar préstamo'}
+                <Send size={16} aria-hidden="true" /> {cargando ? 'Enviando…' : 'Solicitar préstamo'}
               </button>
             </div>
           </form>
@@ -233,7 +236,7 @@ export default function PrestamosPage() {
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
-            Limpiar
+            <FilterX size={16} aria-hidden="true" /> Limpiar
           </button>
         )}
       </div>
@@ -247,7 +250,7 @@ export default function PrestamosPage() {
               <td>{p.tipoPrestamo?.nombre}</td>
               <td className="mono">RD$ {Number(p.montoSolicitado).toLocaleString()}</td>
               <td><EstadoTag estado={p.estado} /></td>
-              <td><Link to={`/prestamos/${p.id}`}>Ver</Link></td>
+              <td><Link className="link-accion" to={`/prestamos/${p.id}`}><Eye size={15} aria-hidden="true" /> Ver</Link></td>
             </tr>
           ))}
           {visibles.length === 0 && (

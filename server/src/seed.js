@@ -1,7 +1,12 @@
 const { sequelize, Usuario, TipoPrestamo, Socio, Prestamo, Cuota } = require('./models');
+const configuracion = require('./services/configuracion.service');
 
 async function seed() {
   await sequelize.sync({ force: true });
+  await configuracion.inicializar();
+  const anioActual = new Date().getFullYear();
+  await configuracion.asegurarFeriadosDeAnio(anioActual);
+  console.log('Configuración inicial y calendario de feriados creados.');
 
   // Crear socios de prueba
   const sociosData = [

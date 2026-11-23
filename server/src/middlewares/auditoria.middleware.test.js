@@ -9,6 +9,9 @@ jest.mock('../models', () => ({
   Usuario: { findByPk: jest.fn(), findAll: jest.fn() },
   Ticket: { findByPk: jest.fn(), findAll: jest.fn() },
   TipoPrestamo: { findByPk: jest.fn(), findAll: jest.fn() },
+  Feriado: { findByPk: jest.fn(), findAll: jest.fn() },
+  Configuracion: { findByPk: jest.fn(), findAll: jest.fn() },
+  TasaMora: { findByPk: jest.fn(), findAll: jest.fn() },
 }));
 jest.mock('../services/auditoria.service', () => ({
   registrar: jest.fn().mockResolvedValue(undefined),
@@ -165,4 +168,34 @@ test('mantiene el estado anterior en una eliminación y marca el posterior como 
   expect(detalle.operacion).toBe('eliminar');
   expect(detalle.antes).toMatchObject({ nombre: 'Socio' });
   expect(detalle.despues).toBeNull();
+});
+
+test('audita la restauración de feriados usando el año como identificador', async () => {
+  modelos.Feriado.findAll
+    .mockResolvedValueOnce([{ id: 'feriado-1', anio: 2026, nombre: 'Año Nuevo' }])
+    .mockResolvedValueOnce([
+      { id: 'feriado-1', anio: 2026, nombre: 'Año Nuevo' },
+      { id: 'feriado-2', anio: 2026, nombre: 'Independencia' },
+    ]);
+  const req = {
+    method: 'POST',
+    params: {},
+    body: { anio: 2026 },
+    user: { id: 'admin-1' },
+  };
+  const res = crearRespuesta();
+  const next = jest.fn();
+
+  auditoria('restaurar_feriados', 'feriado')(req, res, next);
+  await esperarOperacionesPendientes();
+  res.json({ anio: 2026, restaurados: 2 });
+  res.terminar();
+  await esperarOperacionesPendientes();
+
+  const evento = auditoriaService.registrar.mock.calls[0][0];
+  const detalle = JSON.parse(evento.detalle);
+  expect(evento.entidadId).toBe('2026');
+  expect(detalle.operacion).toBe('actualizar');
+  expect(detalle.antes).toHaveLength(1);
+  expect(detalle.despues).toHaveLength(2);
 });

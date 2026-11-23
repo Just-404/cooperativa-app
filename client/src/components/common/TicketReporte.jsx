@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageSquareWarning } from 'lucide-react';
+import { MessageSquareWarning, Send, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { crearTicket } from '../../services/tickets.service';
 
@@ -128,9 +128,10 @@ export function TicketReporte({ collapsed = false }) {
 
               <div className="ticket-reporte-actions">
                 <button type="button" className="ticket-reporte-btn-cancelar" onClick={cerrar}>
-                  Cancelar
+                  <X size={15} aria-hidden="true" /> Cancelar
                 </button>
                 <button type="submit" className="ticket-reporte-btn-enviar" disabled={enviando || exito}>
+                  <Send size={15} aria-hidden="true" />
                   {enviando ? 'Enviando...' : exito ? 'Enviado' : 'Enviar ticket'}
                 </button>
               </div>

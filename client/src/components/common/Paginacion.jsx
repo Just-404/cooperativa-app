@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 // Devuelve [1, '…', 4, 5, 6, '…', 12] según la página actual.
 function ventana(actual, total, vecinos = 1) {
   const paginas = new Set([1, total]);
@@ -67,7 +69,7 @@ export default function Paginacion({
           disabled={paginaActual === 1}
           aria-label="Página anterior"
         >
-          ‹<span className="pag-txt"> Anterior</span>
+          <ChevronLeft size={15} aria-hidden="true" /><span className="pag-txt"> Anterior</span>
         </button>
 
         {ventana(paginaActual, totalPaginas).map((p, i) =>
@@ -99,7 +101,7 @@ export default function Paginacion({
           disabled={paginaActual === totalPaginas}
           aria-label="Página siguiente"
         >
-          <span className="pag-txt">Siguiente </span>›
+          <span className="pag-txt">Siguiente </span><ChevronRight size={15} aria-hidden="true" />
         </button>
       </div>
     </nav>

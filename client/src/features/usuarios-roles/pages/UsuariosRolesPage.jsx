@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { FilterX, Pencil, Save, UserCheck, UserPlus, UserX, X } from 'lucide-react';
 import { listar, crear, actualizar, cambiarEstado } from '../services/usuarios-roles.service';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
@@ -178,7 +179,7 @@ export default function UsuariosRolesPage() {
           </p>
         </div>
         <button className="btn primary" onClick={() => { setUsuarioEditando(null); setForm(VACIO); setError(''); setMensaje(''); setMostrarForm(true); }}>
-          Nuevo usuario
+          <UserPlus size={16} aria-hidden="true" /> Nuevo usuario
         </button>
       </div>
 
@@ -225,8 +226,11 @@ export default function UsuariosRolesPage() {
               {editandoAdminActual && <small>No puedes cambiar el rol de tu propio usuario administrador.</small>}
             </div>
             <div className="socio-modal-actions">
-              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>Cancelar</button>
+              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>
+                <X size={16} aria-hidden="true" /> Cancelar
+              </button>
               <button className="btn primary" type="submit" disabled={cargando}>
+                <Save size={16} aria-hidden="true" />
                 {cargando ? 'Guardando…' : usuarioEditando ? 'Guardar cambios' : 'Crear usuario'}
               </button>
             </div>
@@ -269,7 +273,7 @@ export default function UsuariosRolesPage() {
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
-            Limpiar
+            <FilterX size={16} aria-hidden="true" /> Limpiar
           </button>
         )}
       </div>
@@ -292,7 +296,7 @@ export default function UsuariosRolesPage() {
                     disabled={!u.activo}
                     title={!u.activo ? 'Activa el usuario antes de editarlo' : undefined}
                   >
-                    Editar
+                    <Pencil size={15} aria-hidden="true" /> Editar
                   </button>
                   {!(u.id === usuarioActual?.id && u.activo) && (
                     <button
@@ -300,6 +304,9 @@ export default function UsuariosRolesPage() {
                       type="button"
                       onClick={() => solicitarCambioEstado(u)}
                     >
+                      {u.activo
+                        ? <UserX size={15} aria-hidden="true" />
+                        : <UserCheck size={15} aria-hidden="true" />}
                       {u.activo ? 'Desactivar' : 'Activar'}
                     </button>
                   )}

@@ -18,5 +18,6 @@ router.use('/auditoria', require('./auditoria.routes'));
 router.use('/reportes', require('./reportes.routes'));
 router.use('/scoring', require('./scoring.routes'));
 router.use('/tickets', require('./tickets.routes'));
+router.use('/configuracion', require('./configuracion.routes'));
 
 module.exports = router;

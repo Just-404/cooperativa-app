@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   ChartColumn,
   ClipboardList,
@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   ReceiptText,
+  Settings,
   Ticket,
   UserCog,
   UserRound,
@@ -173,6 +174,17 @@ export default function Layout() {
           >
             <Menu size={22} strokeWidth={2} aria-hidden="true" />
           </button>
+
+          {(user?.rol === 'administrador' || user?.rol === 'gerente') && (
+            <Link
+              to="/configuracion"
+              className="app-header-settings icon-button"
+              aria-label="Configuración"
+              title="Configuración"
+            >
+              <Settings size={20} strokeWidth={1.9} aria-hidden="true" />
+            </Link>
+          )}
 
           <div className="app-content-user">
             <span className="app-content-avatar" aria-hidden="true">

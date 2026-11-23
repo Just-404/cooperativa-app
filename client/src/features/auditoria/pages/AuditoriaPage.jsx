@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Eye, FilterX, X } from 'lucide-react';
 import { listar } from '../services/auditoria.service';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
@@ -202,7 +203,7 @@ export default function AuditoriaPage() {
         </select>
         {hayFiltros && (
           <button type="button" className="btn ghost" onClick={limpiarFiltros}>
-            Limpiar
+            <FilterX size={16} aria-hidden="true" /> Limpiar
           </button>
         )}
       </div>
@@ -224,7 +225,7 @@ export default function AuditoriaPage() {
               </td>
               <td>
                 <button className="btn secondary" type="button" onClick={() => setEventoSeleccionado(e)}>
-                  Ver
+                  <Eye size={15} aria-hidden="true" /> Ver
                 </button>
               </td>
             </tr>
@@ -274,7 +275,7 @@ export default function AuditoriaPage() {
                 type="button"
                 onClick={() => setEventoSeleccionado(null)}
               >
-                Cerrar
+                <X size={16} aria-hidden="true" /> Cerrar
               </button>
             </header>
             <p className="socio-modal-description">

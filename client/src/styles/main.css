@@ -12,6 +12,7 @@
 @import './components/adminTickets.css';
 @import './features/socios.css';
 @import './features/cuentas.css';
+@import './features/configuracion.css';
 @import './utilities/accessibility.css';
 @import './components/pagination.css';
 @import './pages/login.css';
