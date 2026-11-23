@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Activity,
   ArrowUpRight,
   ClipboardList,
   HandCoins,
-  TicketCheck,
-  Users,
+  Search,
 } from 'lucide-react';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -26,11 +23,17 @@ import { listar as listarAuditoria } from '../../auditoria/services/auditoria.se
 import { listar as listarUsuarios } from '../../usuarios-roles/services/usuarios-roles.service';
 import { listar as listarPrestamos } from '../../prestamos/services/prestamos.service';
 import { listarTickets } from '../../../services/tickets.service';
-import { resumen } from '../services/reportes.service';
+import { resumen, prestamosPorEstado as listarPrestamosPorEstado } from '../services/reportes.service';
 import ResumenMes from '../components/ResumenMes.jsx';
 import PrestadoVsIngresos from '../components/PrestadoVsIngresos.jsx';
 import CuentasAbiertasCerradas from '../components/CuentasAbiertasCerradas.jsx';
 import PrestamosPorTipo from '../components/PrestamosPorTipo.jsx';
+import KpiCard from '../components/KpiCard.jsx';
+import PanelCard from '../components/PanelCard.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import ChartSkeleton from '../components/ChartSkeleton.jsx';
+import AtencionCard from '../components/AtencionCard.jsx';
+import { COLORES_GRAFICOS } from '../../../utils/coloresGraficos.js';
 
 const ETIQUETAS_ROL = {
   administrador: 'Administrador',
@@ -38,6 +41,14 @@ const ETIQUETAS_ROL = {
   oficial_credito: 'Oficial de Crédito',
   gerente: 'Gerente',
   auditor: 'Auditor',
+};
+
+const DESCRIPCIONES_ROL = {
+  administrador: 'Control general de usuarios, operaciones y actividad de la cooperativa.',
+  cajero: 'Accesos rápidos y cifras útiles para la atención diaria en caja.',
+  oficial_credito: 'Seguimiento de solicitudes, evaluación y cartera de crédito.',
+  gerente: 'Solicitudes evaluadas que requieren decisión y seguimiento de cartera.',
+  auditor: 'Actividad reciente y reportes para supervisar las operaciones.',
 };
 
 const ETIQUETAS_ESTADO_PRESTAMO = {
@@ -63,10 +74,12 @@ const ETIQUETAS_ACCION = {
 };
 
 const ESTADOS_TICKET = [
-  { estado: 'pending', etiqueta: 'Pendientes', color: '#b88b2d' },
-  { estado: 'resolved', etiqueta: 'Resueltos', color: '#3f7d4e' },
-  { estado: 'cancelled', etiqueta: 'Cancelados', color: '#a94442' },
+  { estado: 'pending', etiqueta: 'Pendientes', color: COLORES_GRAFICOS.advertencia },
+  { estado: 'resolved', etiqueta: 'Resueltos', color: COLORES_GRAFICOS.principal },
+  { estado: 'cancelled', etiqueta: 'Cancelados', color: COLORES_GRAFICOS.negativo },
 ];
+
+const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 function mensajeError(error, fallback) {
   return error?.response?.data?.error?.message || fallback;
@@ -84,344 +97,655 @@ function formatoMoneda(valor) {
   }).format(Number(valor || 0));
 }
 
-function PanelCabecera({ titulo, descripcion, enlace, textoEnlace }) {
-  return (
-    <div className="dashboard-section-heading">
-      <div>
-        <h2>{titulo}</h2>
-        {descripcion && <p>{descripcion}</p>}
-      </div>
-      {enlace && (
-        <Link className="dashboard-text-link" to={enlace}>
-          {textoEnlace}
-          <ArrowUpRight size={16} aria-hidden="true" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function TarjetaIndicador({ icono: Icono, etiqueta, valor, detalle, tono = '' }) {
-  return (
-    <article className={`dashboard-stat${tono ? ` dashboard-stat-${tono}` : ''}`}>
-      <span className="dashboard-stat-icon" aria-hidden="true">
-        <Icono size={20} strokeWidth={1.8} />
-      </span>
-      <div className="dashboard-stat-copy">
-        <span className="dashboard-stat-label">{etiqueta}</span>
-        <strong className="dashboard-stat-value">{valor}</strong>
-        {detalle && <span className="dashboard-stat-detail">{detalle}</span>}
-      </div>
-    </article>
-  );
+function etiquetaAccion(accion) {
+  return ETIQUETAS_ACCION[accion] || String(accion || 'otra').replace(/_/g, ' ');
 }
 
 function ErrorSeccion({ error }) {
-  return error ? <p className="dashboard-inline-error" role="alert">{error}</p> : null;
+  return error ? <EmptyState error>{error}</EmptyState> : null;
 }
 
-function GraficoBarras({ datos, descripcion, color, anchoEtiqueta = 150 }) {
-  if (!datos.some((fila) => fila.cantidad > 0)) {
-    return <p className="dashboard-chart-empty">No hay datos para mostrar todavía.</p>;
+function GraficoBarras({
+  datos,
+  descripcion,
+  color = COLORES_GRAFICOS.principal,
+  anchoEtiqueta = 150,
+  mensajeVacio = 'No hay datos para mostrar todavía.',
+  cargando = false,
+}) {
+  if (cargando) return <ChartSkeleton />;
+
+  const filas = datos.filter((fila) => Number(fila.cantidad) > 0);
+  if (!filas.length) return <EmptyState>{mensajeVacio}</EmptyState>;
+
+  if (filas.length < 3) {
+    return (
+      <ul className="dashboard-compact-values" aria-label={descripcion}>
+        {filas.map((fila) => (
+          <li key={fila.etiqueta}>
+            <span>{fila.etiqueta}</span>
+            <strong>{formatoNumero(fila.cantidad)}</strong>
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   return (
     <div className="dashboard-chart" role="img" aria-label={descripcion}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={datos}
+          data={filas}
           layout="vertical"
-          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+          margin={{ top: 4, right: 12, left: 0, bottom: 4 }}
         >
-          <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-          <XAxis
-            type="number"
-            allowDecimals={false}
-            tick={{ fontSize: 11, fill: '#4B5A4C' }}
-            axisLine={false}
-            tickLine={false}
-          />
+          <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} />
           <YAxis
             type="category"
             dataKey="etiqueta"
             width={anchoEtiqueta}
-            tick={{ fontSize: 11, fill: '#4B5A4C' }}
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip
-            cursor={{ fill: '#eef3e9' }}
-            formatter={(valor) => [formatoNumero(valor), 'Cantidad']}
-          />
-          <Bar dataKey="cantidad" fill={color} radius={[0, 5, 5, 0]} maxBarSize={28} />
+          <Tooltip formatter={(valor) => [formatoNumero(valor), 'Cantidad']} />
+          <Bar dataKey="cantidad" fill={color} radius={[0, 5, 5, 0]} maxBarSize={26} />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-function ResumenGeneral({ data }) {
-  if (!data) return null;
+function GraficoTendencia({ datos, descripcion, mensajeVacio, cargando = false }) {
+  if (cargando) return <ChartSkeleton />;
+
+  const puntosConDatos = datos.filter((fila) => Number(fila.cantidad) > 0);
+  if (!puntosConDatos.length) {
+    return <EmptyState>{mensajeVacio || 'No hay actividad para el periodo seleccionado.'}</EmptyState>;
+  }
+
+  if (puntosConDatos.length < 3) {
+    return (
+      <ul className="dashboard-compact-values" aria-label={descripcion}>
+        {puntosConDatos.map((fila) => (
+          <li key={fila.etiqueta}>
+            <span>{fila.etiqueta}</span>
+            <strong>{formatoNumero(fila.cantidad)}</strong>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
-    <section className="dashboard-general" aria-label="Resumen general">
-      <TarjetaIndicador icono={Users} etiqueta="Total de socios" valor={formatoNumero(data.sociosTotal)} />
-      <TarjetaIndicador icono={Users} etiqueta="Socios activos" valor={formatoNumero(data.totalSocios)} />
-      <TarjetaIndicador
-        icono={Users}
-        etiqueta="Socios inactivos"
-        valor={formatoNumero(data.sociosInactivos)}
-        tono={data.sociosInactivos > 0 ? 'warning' : ''}
-      />
-      <TarjetaIndicador
-        icono={HandCoins}
-        etiqueta="Préstamos vigentes"
-        valor={formatoNumero(data.prestamosVigentes)}
-      />
-      <TarjetaIndicador
-        icono={ClipboardList}
-        etiqueta="Cuotas en mora"
-        valor={formatoNumero(data.cuotasEnMora)}
-        tono={data.cuotasEnMora > 0 ? 'warning' : ''}
-      />
-      <TarjetaIndicador
-        icono={HandCoins}
-        etiqueta="Ahorros administrados"
-        valor={formatoMoneda(data.totalAhorros)}
-      />
-    </section>
+    <div className="dashboard-chart" role="img" aria-label={descripcion}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={datos} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis dataKey="etiqueta" axisLine={false} tickLine={false} />
+          <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
+          <Tooltip formatter={(valor) => [formatoNumero(valor), 'Cantidad']} />
+          <Area
+            type="monotone"
+            dataKey="cantidad"
+            stroke={COLORES_GRAFICOS.principal}
+            fill={COLORES_GRAFICOS.positivo}
+            fillOpacity={0.2}
+            strokeWidth={2}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
-function PanelAdministrador({ data, errors }) {
+function GraficoTickets({ datos, cargando }) {
+  if (cargando) return <ChartSkeleton />;
+  const conActividad = datos.filter((item) => item.cantidad > 0);
+
+  if (conActividad.length < 3) {
+    if (!conActividad.length) return <EmptyState>No hay tickets registrados todavía.</EmptyState>;
+    return (
+      <ul className="dashboard-compact-values" aria-label="Tickets por estado">
+        {conActividad.map((item) => (
+          <li key={item.estado}>
+            <span>{item.etiqueta}</span>
+            <strong>{formatoNumero(item.cantidad)}</strong>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  const apilados = Object.fromEntries(datos.map((item) => [item.estado, item.cantidad]));
+  return (
+    <div className="dashboard-chart dashboard-chart-short" role="img" aria-label="Tickets por estado en una barra apilada">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={[{ etiqueta: 'Tickets', ...apilados }]} layout="vertical" margin={{ top: 12, right: 12, left: 0, bottom: 12 }}>
+          <XAxis type="number" hide />
+          <YAxis type="category" dataKey="etiqueta" hide />
+          <Tooltip formatter={(valor) => [formatoNumero(valor), 'Tickets']} />
+          <Legend />
+          {datos.map((item) => (
+            <Bar
+              key={item.estado}
+              dataKey={item.estado}
+              name={item.etiqueta}
+              stackId="tickets"
+              fill={item.color}
+              radius={item.estado === conActividad[conActividad.length - 1].estado ? [0, 5, 5, 0] : 0}
+            />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function ListaCompacta({ datos, ariaLabel }) {
+  const filas = datos.filter((fila) => fila.cantidad > 0);
+  if (!filas.length) return <EmptyState>No hay datos para mostrar todavía.</EmptyState>;
+  return (
+    <ul className="dashboard-compact-values" aria-label={ariaLabel}>
+      {filas.map((fila) => (
+        <li key={fila.etiqueta}>
+          <span>{fila.etiqueta}</span>
+          <strong>{formatoNumero(fila.cantidad)}</strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PanelAdministrador({ data, errors, cargando }) {
   const usuarios = data.usuarios || [];
   const auditoria = data.auditoria || [];
-  const ticketsPendientes = data.tickets?.filter((ticket) => ticket.estado === 'pending') || [];
+  const tickets = data.tickets || [];
+  const prestamos = data.prestamos || [];
+  const ticketsPendientes = tickets.filter((ticket) => ticket.estado === 'pending').length;
+  const aprobadosPorDesembolsar = prestamos.filter((prestamo) => prestamo.estado === 'aprobado').length;
+  const usuariosActivos = usuarios.filter((usuario) => usuario.activo === true).length;
+
   const usuariosPorRol = useMemo(() => {
     const conteo = new Map();
-    usuarios.forEach((usuario) => {
-      conteo.set(usuario.rol, (conteo.get(usuario.rol) || 0) + 1);
-    });
-    return Object.entries(ETIQUETAS_ROL).map(([rol, etiqueta]) => ({
-      rol,
-      etiqueta,
-      cantidad: conteo.get(rol) || 0,
-    }));
+    usuarios.forEach((usuario) => conteo.set(usuario.rol, (conteo.get(usuario.rol) || 0) + 1));
+    return Object.entries(ETIQUETAS_ROL)
+      .map(([rol, etiqueta]) => ({ rol, etiqueta, cantidad: conteo.get(rol) || 0 }))
+      .filter((fila) => fila.cantidad > 0);
   }, [usuarios]);
+
   const actividadPorTipo = useMemo(() => {
     const conteo = new Map();
     auditoria.forEach((evento) => {
       const accion = evento.accion || 'otra';
       conteo.set(accion, (conteo.get(accion) || 0) + 1);
     });
-    return Array.from(conteo, ([accion, cantidad]) => ({
-      etiqueta: ETIQUETAS_ACCION[accion] || String(accion).replace(/_/g, ' '),
-      cantidad,
-    }))
+    return Array.from(conteo, ([accion, cantidad]) => ({ etiqueta: etiquetaAccion(accion), cantidad }))
       .sort((a, b) => b.cantidad - a.cantidad || a.etiqueta.localeCompare(b.etiqueta, 'es'))
-      .slice(0, 6);
+      .slice(0, 5);
   }, [auditoria]);
+
   const ticketsPorEstado = ESTADOS_TICKET.map(({ estado, etiqueta, color }) => ({
     estado,
     etiqueta,
     color,
-    cantidad: data.tickets?.filter((ticket) => ticket.estado === estado).length || 0,
+    cantidad: tickets.filter((ticket) => ticket.estado === estado).length,
   }));
+  const prestamosPorEstado = (data.prestamosEstado || []).map((fila) => ({
+    etiqueta: ETIQUETAS_ESTADO_PRESTAMO[fila.estado] || fila.estado,
+    cantidad: Number(fila.total),
+  }));
+  const resumen = data.resumen;
 
   return (
     <>
-      <section className="dashboard-stats" aria-label="Indicadores de administración">
-        <TarjetaIndicador
-          icono={TicketCheck}
-          etiqueta="Tickets pendientes"
-          valor={errors.tickets ? '—' : formatoNumero(ticketsPendientes.length)}
-          tono={ticketsPendientes.length > 0 ? 'warning' : ''}
-        />
-        <TarjetaIndicador
-          icono={Users}
-          etiqueta="Usuarios registrados"
-          valor={errors.usuarios ? '—' : formatoNumero(usuarios.length)}
-        />
-        <TarjetaIndicador
-          icono={Activity}
-          etiqueta="Tipos de movimiento"
-          valor={errors.auditoria ? '—' : formatoNumero(actividadPorTipo.length)}
-          detalle="Categorías recientes de auditoría"
-        />
-      </section>
-
-      <div className="dashboard-chart-grid">
-        <section className="dashboard-panel">
-          <PanelCabecera
-            titulo="Usuarios del sistema"
-            descripcion="Cantidad de cuentas registradas por rol."
-            enlace="/usuarios"
-            textoEnlace="Administrar usuarios"
-          />
-          <ErrorSeccion error={errors.usuarios} />
-          {!errors.usuarios && (
-            <GraficoBarras
-              datos={usuariosPorRol}
-              descripcion="Cantidad de usuarios registrados por rol"
-              color="#3f7d4e"
-              anchoEtiqueta={138}
-            />
-          )}
-        </section>
-
-        <section className="dashboard-panel">
-          <PanelCabecera
-            titulo="Últimos movimientos"
-            descripcion="Tipos de actividad en los registros recientes."
-            enlace="/auditoria"
-            textoEnlace="Ver auditoría"
-          />
-          <ErrorSeccion error={errors.auditoria} />
-          {!errors.auditoria && (
-            <GraficoBarras
-              datos={actividadPorTipo}
-              descripcion="Cantidad de movimientos recientes por tipo de actividad"
-              color="#527b9a"
-              anchoEtiqueta={150}
-            />
-          )}
-        </section>
-      </div>
-
-      <section className="dashboard-panel">
-        <PanelCabecera
-          titulo="Estado de los tickets"
-          descripcion="Distribución de las solicitudes de atención registradas."
-          enlace="/tickets"
-          textoEnlace="Gestionar tickets"
-        />
-        <ErrorSeccion error={errors.tickets} />
-        {!errors.tickets && (
-          <div className="dashboard-ticket-chart" role="img" aria-label="Tickets por estado">
-            {data.tickets?.length ? (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={ticketsPorEstado}
-                      dataKey="cantidad"
-                      nameKey="etiqueta"
-                      innerRadius="48%"
-                      outerRadius="72%"
-                      paddingAngle={3}
-                      stroke="none"
-                    >
-                      {ticketsPorEstado.map((item) => (
-                        <Cell key={item.estado} fill={item.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(valor) => [formatoNumero(valor), 'Tickets']} />
-                    <Legend
-                      verticalAlign="bottom"
-                      iconType="circle"
-                      wrapperStyle={{ fontSize: '0.78rem', paddingTop: 8 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <p className="dashboard-ticket-total">
-                  {formatoNumero(data.tickets.length)}
-                  <span>tickets</span>
-                </p>
-              </>
-            ) : (
-              <p className="dashboard-chart-empty">No hay tickets registrados todavía.</p>
+      <section className="dashboard-attention" aria-labelledby="dashboard-attention-title">
+        <div className="dashboard-section-heading">
+          <div>
+            <h2 id="dashboard-attention-title">Requiere atención</h2>
+            <p>Alertas que pueden requerir una acción hoy.</p>
+          </div>
+        </div>
+        {cargando ? (
+          <div className="dashboard-attention-loading" aria-label="Cargando alertas">
+            <span className="dashboard-skeleton" />
+            <span className="dashboard-skeleton" />
+            <span className="dashboard-skeleton" />
+          </div>
+        ) : errors.tickets || errors.resumen || errors.prestamos ? (
+          <ErrorSeccion error={errors.tickets || errors.resumen || errors.prestamos} />
+        ) : (
+          <div className="dashboard-attention-grid">
+            {ticketsPendientes > 0 && <AtencionCard href="/tickets" etiqueta="Tickets pendientes" cantidad={ticketsPendientes} />}
+            {Number(resumen?.cuotasEnMora) > 0 && <AtencionCard href="/pagos" etiqueta="Cuotas en mora" cantidad={formatoNumero(resumen.cuotasEnMora)} />}
+            {aprobadosPorDesembolsar > 0 && <AtencionCard href="/prestamos" etiqueta="Aprobados por desembolsar" cantidad={aprobadosPorDesembolsar} />}
+            {!ticketsPendientes && !Number(resumen?.cuotasEnMora) && !aprobadosPorDesembolsar && (
+              <EmptyState>Todo al día.</EmptyState>
             )}
           </div>
         )}
       </section>
+
+      <section className="dashboard-kpi-grid" aria-label="Cifras clave de administración">
+        <KpiCard
+          etiqueta="Ahorros administrados"
+          valor={errors.resumen ? '—' : formatoMoneda(resumen?.totalAhorros)}
+          href="/socios"
+          destacado
+          cargando={cargando}
+        />
+        <KpiCard
+          etiqueta="Socios activos"
+          valor={errors.resumen ? '—' : formatoNumero(resumen?.totalSocios)}
+          detalle={errors.resumen ? 'No se pudo cargar' : `${formatoNumero(resumen?.sociosInactivos)} inactivos`}
+          href="/socios"
+          cargando={cargando}
+        />
+        <KpiCard
+          etiqueta="Préstamos vigentes"
+          valor={errors.resumen ? '—' : formatoNumero(resumen?.prestamosVigentes)}
+          href="/prestamos"
+          cargando={cargando}
+        />
+        <KpiCard
+          etiqueta="Usuarios activos"
+          valor={errors.usuarios ? '—' : formatoNumero(usuariosActivos)}
+          href="/usuarios"
+          cargando={cargando}
+        />
+      </section>
+
+      <div className="dashboard-chart-grid dashboard-admin-main">
+        <PrestadoVsIngresos />
+        <PanelCard
+          titulo="Préstamos por estado"
+          descripcion="Distribución de solicitudes y cartera."
+          enlace="/prestamos"
+          textoEnlace="Ver préstamos"
+        >
+          <ErrorSeccion error={errors.prestamosEstado} />
+          {!errors.prestamosEstado && (
+            <GraficoBarras
+              datos={prestamosPorEstado}
+              descripcion="Cantidad de préstamos por estado"
+              cargando={cargando}
+            />
+          )}
+        </PanelCard>
+      </div>
+
+      <div className="dashboard-secondary-grid">
+        <PanelCard titulo="Tickets por estado" enlace="/tickets" textoEnlace="Ver tickets">
+          <ErrorSeccion error={errors.tickets} />
+          {!errors.tickets && <GraficoTickets datos={ticketsPorEstado} cargando={cargando} />}
+        </PanelCard>
+        <PanelCard
+          titulo="Usuarios por rol"
+          enlace="/usuarios"
+          textoEnlace="Administrar usuarios"
+        >
+          <ErrorSeccion error={errors.usuarios} />
+          {!errors.usuarios && (
+            <GraficoBarras
+              datos={usuariosPorRol}
+              descripcion="Usuarios activos agrupados por rol"
+              anchoEtiqueta={138}
+              cargando={cargando}
+            />
+          )}
+        </PanelCard>
+        <PanelCard
+          titulo="Actividad reciente"
+          descripcion="Tipos de acción más frecuentes en los registros recientes."
+          enlace="/auditoria"
+          textoEnlace="Ver auditoría"
+        >
+          <ErrorSeccion error={errors.auditoria} />
+          {!errors.auditoria && (
+            <GraficoBarras
+              datos={actividadPorTipo}
+              descripcion="Cinco tipos de actividad más frecuentes"
+              cargando={cargando}
+            />
+          )}
+        </PanelCard>
+      </div>
     </>
   );
 }
 
-function PanelOficialCredito({ data, errors }) {
-  const prestamos = data.prestamos || [];
-  const pendientes = prestamos.filter((prestamo) =>
-    ['solicitado', 'en_evaluacion', 'evaluado'].includes(prestamo.estado)
+function fechaCorta(valor) {
+  if (!valor) return 'Fecha no disponible';
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.valueOf())
+    ? 'Fecha no disponible'
+    : fecha.toLocaleDateString('es-DO', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function PanelPrestamosRevision({ prestamos, error, cargando }) {
+  const pendientes = prestamos
+    .filter((prestamo) => prestamo.estado === 'evaluado')
+    .slice(0, 5);
+
+  return (
+    <PanelCard
+      titulo="Préstamos para revisión"
+      descripcion="Solicitudes evaluadas que esperan decisión de gerencia."
+      enlace="/prestamos"
+      textoEnlace="Ver todas"
+    >
+      <ErrorSeccion error={error} />
+      {cargando && !error && <ChartSkeleton />}
+      {!cargando && !error && (pendientes.length ? (
+        <ul className="dashboard-review-list">
+          {pendientes.map((prestamo) => (
+            <li key={prestamo.id}>
+              <span>
+                <strong>
+                  {[prestamo.socio?.nombre, prestamo.socio?.apellido].filter(Boolean).join(' ') || 'Socio no disponible'}
+                </strong>
+                <small>
+                  {formatoMoneda(prestamo.montoSolicitado)} · {fechaCorta(prestamo.fechaSolicitud)}
+                </small>
+              </span>
+              <Link className="dashboard-text-link" to={`/prestamos/${prestamo.id}`}>
+                Revisar <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState>No hay préstamos pendientes de decisión.</EmptyState>
+      ))}
+    </PanelCard>
   );
-  const porDesembolsar = prestamos.filter((prestamo) => prestamo.estado === 'aprobado');
-  const prestamosPorEstado = Object.entries(ETIQUETAS_ESTADO_PRESTAMO).map(([estado, etiqueta]) => ({
+}
+
+function mesesSolicitud(prestamos) {
+  const hoy = new Date();
+  const meses = Array.from({ length: 6 }, (_, index) => {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - 5 + index, 1);
+    const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    return {
+      clave,
+      etiqueta: `${MESES_CORTO[fecha.getMonth()]} ${String(fecha.getFullYear()).slice(-2)}`,
+      cantidad: 0,
+    };
+  });
+  const porMes = new Map(meses.map((mes) => [mes.clave, mes]));
+
+  prestamos.forEach((prestamo) => {
+    const fecha = new Date(prestamo.fechaSolicitud);
+    if (Number.isNaN(fecha.valueOf())) return;
+    const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    const mes = porMes.get(clave);
+    if (mes) mes.cantidad += 1;
+  });
+
+  return meses.map(({ etiqueta, cantidad }) => ({ etiqueta, cantidad }));
+}
+
+function actividadAuditoriaPorFecha(eventos) {
+  const hoy = new Date();
+  const dias = Array.from({ length: 7 }, (_, index) => {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6 + index);
+    const clave = [
+      fecha.getFullYear(),
+      String(fecha.getMonth() + 1).padStart(2, '0'),
+      String(fecha.getDate()).padStart(2, '0'),
+    ].join('-');
+    return {
+      clave,
+      etiqueta: fecha.toLocaleDateString('es-DO', { day: 'numeric', month: 'short' }),
+      cantidad: 0,
+    };
+  });
+  const porFecha = new Map(dias.map((dia) => [dia.clave, dia]));
+
+  eventos.forEach((evento) => {
+    const fecha = new Date(evento.fecha);
+    if (Number.isNaN(fecha.valueOf())) return;
+    const clave = [
+      fecha.getFullYear(),
+      String(fecha.getMonth() + 1).padStart(2, '0'),
+      String(fecha.getDate()).padStart(2, '0'),
+    ].join('-');
+    const dia = porFecha.get(clave);
+    if (dia) dia.cantidad += 1;
+  });
+
+  return dias.map(({ etiqueta, cantidad }) => ({ etiqueta, cantidad }));
+}
+
+function PipelinePrestamos({ prestamos }) {
+  const etapas = [
+    { estado: 'solicitado', etiqueta: 'Solicitado' },
+    { estado: 'en_evaluacion', etiqueta: 'En evaluación' },
+    { estado: 'evaluado', etiqueta: 'Evaluado' },
+    { estado: 'aprobado', etiqueta: 'Aprobado' },
+    { estado: 'desembolsado', etiqueta: 'Desembolsado' },
+  ];
+  return (
+    <ol className="dashboard-pipeline" aria-label="Etapas del pipeline de préstamos">
+      {etapas.map((etapa, index) => (
+        <li key={etapa.estado}>
+          <span className="dashboard-pipeline-index">{index + 1}</span>
+          <span>{etapa.etiqueta}</span>
+          <strong>{formatoNumero(prestamos.filter((prestamo) => prestamo.estado === etapa.estado).length)}</strong>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function PanelOficialCredito({ data, errors, cargando }) {
+  const prestamos = data.prestamos || [];
+  const porEvaluar = prestamos.filter((prestamo) =>
+    ['solicitado', 'en_evaluacion'].includes(prestamo.estado)
+  ).length;
+  const evaluados = prestamos.filter((prestamo) => prestamo.estado === 'evaluado').length;
+  const porDesembolsar = prestamos.filter((prestamo) => prestamo.estado === 'aprobado').length;
+  const solicitudesPorMes = useMemo(() => mesesSolicitud(prestamos), [prestamos]);
+
+  return (
+    <>
+      <section className="dashboard-kpi-grid dashboard-kpi-grid-three" aria-label="Indicadores de crédito">
+        <KpiCard etiqueta="Por evaluar" valor={errors.prestamos ? '—' : formatoNumero(porEvaluar)} href="/prestamos" destacado cargando={cargando} />
+        <KpiCard etiqueta="Evaluados para decisión" valor={errors.prestamos ? '—' : formatoNumero(evaluados)} href="/prestamos" cargando={cargando} />
+        <KpiCard etiqueta="Aprobados por desembolsar" valor={errors.prestamos ? '—' : formatoNumero(porDesembolsar)} href="/prestamos" cargando={cargando} />
+      </section>
+      <div className="dashboard-chart-grid dashboard-official-grid">
+        <PanelCard titulo="Pipeline de préstamos" descripcion="Solicitudes según su etapa actual." enlace="/prestamos" textoEnlace="Ver préstamos">
+          <ErrorSeccion error={errors.prestamos} />
+          {!errors.prestamos && (
+            cargando ? <ChartSkeleton /> : <PipelinePrestamos prestamos={prestamos} />
+          )}
+        </PanelCard>
+        <PanelCard titulo="Solicitudes en el tiempo" descripcion="Solicitudes recibidas durante los últimos seis meses.">
+          <ErrorSeccion error={errors.prestamos} />
+          {!errors.prestamos && (
+            <GraficoTendencia
+              datos={solicitudesPorMes}
+              descripcion="Evolución mensual de las solicitudes de préstamo"
+              mensajeVacio="No hay solicitudes en los últimos seis meses."
+              cargando={cargando}
+            />
+          )}
+        </PanelCard>
+      </div>
+    </>
+  );
+}
+
+function PanelCajero({ data, errors, cargando }) {
+  const prestamos = data.prestamos || [];
+  const porDesembolsar = prestamos.filter((prestamo) => prestamo.estado === 'aprobado').length;
+  const estadosPrestamo = Object.entries(ETIQUETAS_ESTADO_PRESTAMO).map(([estado, etiqueta]) => ({
     etiqueta,
     cantidad: prestamos.filter((prestamo) => prestamo.estado === estado).length,
   }));
 
   return (
     <>
-      <section className="dashboard-stats" aria-label="Indicadores de crédito">
-        <TarjetaIndicador
-          icono={ClipboardList}
-          etiqueta="Solicitudes por revisar"
-          valor={errors.prestamos ? '—' : formatoNumero(pendientes.length)}
-          tono={pendientes.length > 0 ? 'warning' : ''}
-        />
-        <TarjetaIndicador
-          icono={HandCoins}
-          etiqueta="Aprobados por desembolsar"
-          valor={errors.prestamos ? '—' : formatoNumero(porDesembolsar.length)}
-        />
-        {data.resumen && (
-          <TarjetaIndicador
-            icono={HandCoins}
-            etiqueta="Préstamos vigentes"
-            valor={formatoNumero(data.resumen.prestamosVigentes)}
-          />
-        )}
-      </section>
-
-      <section className="dashboard-panel">
-        <PanelCabecera
-          titulo="Préstamos por estado"
-          descripcion="Distribución de la cartera y solicitudes en curso."
-          enlace="/prestamos"
-          textoEnlace="Ver préstamos"
-        />
-        <ErrorSeccion error={errors.prestamos} />
-        {!errors.prestamos && (
-          <GraficoBarras
-            datos={prestamosPorEstado}
-            descripcion="Cantidad de préstamos por estado"
-            color="#3f7d4e"
-          />
-        )}
-      </section>
-
-      {data.resumen && <ResumenGeneral data={data.resumen} />}
-    </>
-  );
-}
-
-function PanelCajero({ data }) {
-  return (
-    <>
-      {data.resumen && <ResumenGeneral data={data.resumen} />}
-      <section className="dashboard-panel">
-        <PanelCabecera
-          titulo="Operaciones de caja"
-          descripcion="Accesos directos a las tareas frecuentes de atención."
-        />
+      <PanelCard titulo="Accesos rápidos" descripcion="Tareas frecuentes de atención en caja.">
         <div className="dashboard-quick-links">
           <Link to="/pagos" className="dashboard-quick-link">
-            <span className="dashboard-stat-icon" aria-hidden="true"><HandCoins size={20} /></span>
+            <HandCoins size={22} aria-hidden="true" />
             <span><strong>Registrar o consultar pagos</strong><small>Gestionar cuotas y abonos de préstamos</small></span>
             <ArrowUpRight size={17} aria-hidden="true" />
           </Link>
           <Link to="/socios" className="dashboard-quick-link">
-            <span className="dashboard-stat-icon" aria-hidden="true"><Users size={20} /></span>
+            <Search size={22} aria-hidden="true" />
             <span><strong>Buscar un socio</strong><small>Consultar sus datos y cuentas</small></span>
             <ArrowUpRight size={17} aria-hidden="true" />
           </Link>
           <Link to="/prestamos" className="dashboard-quick-link">
-            <span className="dashboard-stat-icon" aria-hidden="true"><ClipboardList size={20} /></span>
+            <ClipboardList size={22} aria-hidden="true" />
             <span><strong>Consultar préstamos</strong><small>Revisar el estado de las solicitudes</small></span>
             <ArrowUpRight size={17} aria-hidden="true" />
           </Link>
         </div>
+      </PanelCard>
+      <section className="dashboard-kpi-grid dashboard-kpi-grid-two" aria-label="Indicadores de caja">
+        <KpiCard
+          etiqueta="Cuotas en mora"
+          valor={errors.resumen ? '—' : formatoNumero(data.resumen?.cuotasEnMora)}
+          href="/pagos"
+          destacado={Number(data.resumen?.cuotasEnMora) > 0}
+          alerta={Number(data.resumen?.cuotasEnMora) > 0}
+          cargando={cargando}
+        />
+        <KpiCard
+          etiqueta="Aprobados por desembolsar"
+          valor={errors.prestamos ? '—' : formatoNumero(porDesembolsar)}
+          href="/prestamos"
+          cargando={cargando}
+        />
       </section>
+      {errors.prestamos && <EmptyState error>{errors.prestamos}</EmptyState>}
+      {!errors.prestamos && estadosPrestamo.filter((fila) => fila.cantidad > 0).length >= 3 && (
+        <PanelCard titulo="Préstamos por estado" enlace="/prestamos" textoEnlace="Ver préstamos">
+          <GraficoBarras
+            datos={estadosPrestamo}
+            descripcion="Préstamos agrupados por estado"
+            cargando={cargando}
+          />
+        </PanelCard>
+      )}
     </>
+  );
+}
+
+function PanelGerente({ data, errors, cargando }) {
+  const prestamos = data.prestamos || [];
+  const pendientesDecision = prestamos.filter((prestamo) => prestamo.estado === 'evaluado').length;
+  const aprobados = prestamos.filter((prestamo) => prestamo.estado === 'aprobado').length;
+  const prestamosPorEstado = (data.prestamosEstado || []).map((fila) => ({
+    etiqueta: ETIQUETAS_ESTADO_PRESTAMO[fila.estado] || fila.estado,
+    cantidad: Number(fila.total),
+  }));
+
+  return (
+    <>
+      <section className="dashboard-kpi-grid" aria-label="Indicadores de gerencia">
+        <KpiCard etiqueta="Pendientes de decisión" valor={errors.prestamos ? '—' : formatoNumero(pendientesDecision)} detalle="Solicitudes ya evaluadas" href="/prestamos" destacado alerta={pendientesDecision > 0} cargando={cargando} />
+        <KpiCard etiqueta="Aprobados por desembolsar" valor={errors.prestamos ? '—' : formatoNumero(aprobados)} href="/prestamos" cargando={cargando} />
+        <KpiCard etiqueta="Cuotas en mora" valor={errors.resumen ? '—' : formatoNumero(data.resumen?.cuotasEnMora)} href="/pagos" alerta={Number(data.resumen?.cuotasEnMora) > 0} cargando={cargando} />
+        <KpiCard etiqueta="Préstamos vigentes" valor={errors.resumen ? '—' : formatoNumero(data.resumen?.prestamosVigentes)} href="/prestamos" cargando={cargando} />
+      </section>
+      <div className="dashboard-chart-grid dashboard-manager-grid">
+        <PanelPrestamosRevision prestamos={prestamos} error={errors.prestamos} cargando={cargando} />
+        <PanelCard titulo="Préstamos por estado" descripcion="Distribución de solicitudes y cartera." enlace="/prestamos" textoEnlace="Ver préstamos">
+          <ErrorSeccion error={errors.prestamosEstado} />
+          {!errors.prestamosEstado && (
+            <GraficoBarras datos={prestamosPorEstado} descripcion="Cantidad de préstamos por estado" cargando={cargando} />
+          )}
+        </PanelCard>
+      </div>
+    </>
+  );
+}
+
+function PanelAuditor({ data, errors, cargando }) {
+  const eventos = data.auditoria || [];
+  const actividades = useMemo(() => {
+    const conteo = new Map();
+    eventos.forEach((evento) => {
+      const accion = evento.accion || 'otra';
+      conteo.set(accion, (conteo.get(accion) || 0) + 1);
+    });
+    return Array.from(conteo, ([accion, cantidad]) => ({ etiqueta: etiquetaAccion(accion), cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad || a.etiqueta.localeCompare(b.etiqueta, 'es'))
+      .slice(0, 5);
+  }, [eventos]);
+  const actividadPorRol = useMemo(() => {
+    const conteo = new Map();
+    eventos.forEach((evento) => {
+      const rol = evento.usuario?.rol;
+      if (rol) conteo.set(rol, (conteo.get(rol) || 0) + 1);
+    });
+    return Array.from(conteo, ([rol, cantidad]) => ({
+      etiqueta: ETIQUETAS_ROL[rol] || rol,
+      cantidad,
+    })).sort((a, b) => b.cantidad - a.cantidad || a.etiqueta.localeCompare(b.etiqueta, 'es'));
+  }, [eventos]);
+  const actividadPorFecha = useMemo(() => actividadAuditoriaPorFecha(eventos), [eventos]);
+  const usuariosConActividad = new Set(eventos.map((evento) => evento.usuarioId).filter(Boolean)).size;
+
+  return (
+    <>
+      <section className="dashboard-kpi-grid dashboard-kpi-grid-three" aria-label="Indicadores de auditoría">
+        <KpiCard etiqueta="Acciones recientes" valor={errors.auditoria ? '—' : formatoNumero(eventos.length)} detalle="Hasta 200 registros recientes" href="/auditoria" destacado cargando={cargando} />
+        <KpiCard etiqueta="Usuarios con actividad" valor={errors.auditoria ? '—' : formatoNumero(usuariosConActividad)} href="/auditoria" cargando={cargando} />
+        <KpiCard etiqueta="Tipos de actividad" valor={errors.auditoria ? '—' : formatoNumero(actividades.length)} href="/auditoria" cargando={cargando} />
+      </section>
+      <div className="dashboard-chart-grid dashboard-auditor-grid">
+        <PanelCard titulo="Actividad por fecha" descripcion="Acciones registradas en cada uno de los últimos siete días." enlace="/auditoria" textoEnlace="Revisar bitácora">
+          <ErrorSeccion error={errors.auditoria} />
+          {!errors.auditoria && (
+            <GraficoTendencia
+              datos={actividadPorFecha}
+              descripcion="Cantidad de eventos de auditoría por fecha durante los últimos siete días"
+              cargando={cargando}
+            />
+          )}
+        </PanelCard>
+        <PanelCard titulo="Actividad por tipo" descripcion="Cinco tipos de acción más frecuentes." enlace="/auditoria" textoEnlace="Revisar bitácora">
+          <ErrorSeccion error={errors.auditoria} />
+          {!errors.auditoria && (
+            <GraficoBarras datos={actividades} descripcion="Acciones recientes de auditoría por tipo" cargando={cargando} />
+          )}
+        </PanelCard>
+        <PanelCard titulo="Actividad por rol" descripcion="Eventos atribuidos a cada perfil." enlace="/auditoria" textoEnlace="Revisar bitácora">
+          <ErrorSeccion error={errors.auditoria} />
+          {!errors.auditoria && (
+            <ListaCompacta datos={actividadPorRol} ariaLabel="Actividad por rol de usuario" />
+          )}
+        </PanelCard>
+      </div>
+    </>
+  );
+}
+
+function BandaResumen({ data, cargando }) {
+  const indicadores = [
+    ['Socios activos', formatoNumero(data?.totalSocios)],
+    ['Préstamos vigentes', formatoNumero(data?.prestamosVigentes)],
+    ['Cuotas en mora', formatoNumero(data?.cuotasEnMora)],
+    ['Ahorros administrados', formatoMoneda(data?.totalAhorros)],
+  ];
+  return (
+    <section className="dashboard-summary-strip" aria-label="Resumen general">
+      {indicadores.map(([etiqueta, valor]) => (
+        <div className="dashboard-summary-item" key={etiqueta}>
+          <span>{etiqueta}</span>
+          {cargando ? (
+            <span className="dashboard-skeleton dashboard-summary-skeleton" aria-hidden="true" />
+          ) : (
+            <strong>{valor}</strong>
+          )}
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -433,16 +757,31 @@ export default function DashboardPage({ modo = 'panel' }) {
 
   useEffect(() => {
     let activo = true;
-    const solicitudes = [['resumen', resumen()]];
+    const solicitudes = [];
 
-    if (modo === 'panel' && user?.rol === 'administrador') {
+    if (modo === 'reportes') {
+      solicitudes.push(['resumen', resumen()]);
+    } else if (user?.rol === 'administrador') {
       solicitudes.push(
+        ['resumen', resumen()],
         ['usuarios', listarUsuarios()],
         ['auditoria', listarAuditoria()],
-        ['tickets', listarTickets().then((respuesta) => respuesta.tickets || [])]
+        ['tickets', listarTickets().then((respuesta) => respuesta.tickets || [])],
+        ['prestamos', listarPrestamos()],
+        ['prestamosEstado', listarPrestamosPorEstado()],
       );
-    } else if (modo === 'panel' && user?.rol === 'oficial_credito') {
+    } else if (user?.rol === 'gerente') {
+      solicitudes.push(
+        ['resumen', resumen()],
+        ['prestamos', listarPrestamos()],
+        ['prestamosEstado', listarPrestamosPorEstado()],
+      );
+    } else if (user?.rol === 'oficial_credito') {
       solicitudes.push(['prestamos', listarPrestamos()]);
+    } else if (user?.rol === 'cajero') {
+      solicitudes.push(['resumen', resumen()], ['prestamos', listarPrestamos()]);
+    } else if (user?.rol === 'auditor') {
+      solicitudes.push(['auditoria', listarAuditoria()]);
     }
 
     setCargando(true);
@@ -478,46 +817,43 @@ export default function DashboardPage({ modo = 'panel' }) {
   return (
     <div className="dashboard-page">
       <header className="dashboard-welcome">
-        <div>
-          <span className="dashboard-eyebrow">{ETIQUETAS_ROL[user?.rol] || 'Cooperativa'}</span>
-          <h1>{esReportes ? 'Reportes' : esPanel ? titulo : 'Panel'}</h1>
-          {esPanel && (
-            <p>
-              {user?.rol === 'administrador' && 'Vista general de usuarios, tickets y actividad del sistema.'}
-              {user?.rol === 'oficial_credito' && 'Seguimiento de solicitudes y cartera de crédito.'}
-              {user?.rol === 'cajero' && 'Resumen operativo y accesos a las tareas de caja.'}
-              {!['administrador', 'oficial_credito', 'cajero'].includes(user?.rol) && 'Resumen general del sistema.'}
-            </p>
-          )}
-        </div>
+        <span className="dashboard-eyebrow">{ETIQUETAS_ROL[user?.rol] || 'Cooperativa'}</span>
+        <h1>{esReportes ? 'Reportes' : esPanel ? titulo : 'Panel'}</h1>
+        <p>
+          {esReportes
+            ? 'Indicadores de cartera, préstamos, cuentas e ingresos para supervisión.'
+            : DESCRIPCIONES_ROL[user?.rol] || 'Resumen general del sistema.'}
+        </p>
       </header>
 
-      {cargando && <p className="dashboard-loading" role="status">Cargando información del panel…</p>}
-      {errors.resumen && <div className="alert error" role="alert">{errors.resumen}</div>}
+      {errors.resumen && (
+        <EmptyState error>{errors.resumen}</EmptyState>
+      )}
 
       {esPanel && user?.rol === 'administrador' && (
-        <>
-          <PanelAdministrador data={sections} errors={errors} />
-          {sections.resumen && <ResumenGeneral data={sections.resumen} />}
-        </>
+        <PanelAdministrador data={sections} errors={errors} cargando={cargando} />
       )}
       {esPanel && user?.rol === 'oficial_credito' && (
-        <PanelOficialCredito data={sections} errors={errors} />
+        <PanelOficialCredito data={sections} errors={errors} cargando={cargando} />
       )}
-      {esPanel && user?.rol === 'cajero' && <PanelCajero data={sections} />}
-      {esPanel && !['administrador', 'oficial_credito', 'cajero'].includes(user?.rol) && (
-        <ResumenGeneral data={sections.resumen} />
+      {esPanel && user?.rol === 'cajero' && (
+        <PanelCajero data={sections} errors={errors} cargando={cargando} />
       )}
-
-      {esReportes && (
-        <ResumenGeneral data={sections.resumen} />
+      {esPanel && user?.rol === 'gerente' && (
+        <PanelGerente data={sections} errors={errors} cargando={cargando} />
+      )}
+      {esPanel && user?.rol === 'auditor' && (
+        <PanelAuditor data={sections} errors={errors} cargando={cargando} />
       )}
       {esReportes && puedeVerReportes && (
         <>
-          <ResumenMes />
-          <CuentasAbiertasCerradas />
-          <PrestadoVsIngresos />
-          <PrestamosPorTipo />
+          <BandaResumen data={sections.resumen} cargando={cargando} />
+          <div className="dashboard-report-grid">
+            <div className="dashboard-report-item"><ResumenMes /></div>
+            <div className="dashboard-report-item"><CuentasAbiertasCerradas /></div>
+            <div className="dashboard-report-item"><PrestadoVsIngresos /></div>
+            <div className="dashboard-report-item"><PrestamosPorTipo /></div>
+          </div>
         </>
       )}
     </div>

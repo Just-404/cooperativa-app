@@ -1,5 +1,7 @@
 .tickets-admin {
   padding: 20px;
+  container-type: inline-size;
+  container-name: tickets;
 }
 
 .tickets-admin-filtros {
@@ -51,9 +53,27 @@
 
 .tickets-admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: start;
   gap: 12px;
+}
+
+@container tickets (max-width: 1080px) {
+  .tickets-admin-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container tickets (max-width: 760px) {
+  .tickets-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container tickets (max-width: 420px) {
+  .tickets-admin-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .tickets-admin-card {
@@ -70,14 +90,23 @@
 }
 
 .tickets-admin-card h4 {
-  display: -webkit-box;
+  display: flex;
   flex: 0 0 4.1rem;
+  width: 100%;
   height: 4.1rem;
-  overflow: hidden;
   margin: 0 0 12px;
+  align-items: center;
+  justify-content: center;
   color: var(--ink);
   font-size: 0.95rem;
   line-height: 1.35;
+  text-align: center;
+}
+
+.tickets-admin-card h4 span {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;

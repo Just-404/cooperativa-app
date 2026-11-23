@@ -319,7 +319,7 @@ export default function SociosPage() {
 
       <table className="ledger">
         <thead>
-          <tr><th>Nombre</th><th>Documento</th><th>Email</th><th>Scoring</th><th>Estado</th><th></th></tr>
+          <tr><th>Nombre</th><th>Documento</th><th>Email</th><th>Scoring</th><th>Estado</th><th>Detalle</th></tr>
         </thead>
         <tbody>
           {visibles.map((s) => (
@@ -329,7 +329,11 @@ export default function SociosPage() {
               <td>{s.email || '—'}</td>
               <td className="mono">{s.scoring ?? '—'}</td>
               <td><EstadoTag estado={s.estado} /></td>
-              <td><Link className="link-accion" to={`/socios/${s.id}`}><Eye size={15} aria-hidden="true" /> Ver</Link></td>
+              <td>
+                <Link className="btn secondary btn-icon" to={`/socios/${s.id}`}>
+                  <Eye size={15} aria-hidden="true" /> Ver socio
+                </Link>
+              </td>
             </tr>
           ))}
           {visibles.length === 0 && (

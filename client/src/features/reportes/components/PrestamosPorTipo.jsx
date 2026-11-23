@@ -1,67 +1,63 @@
 import { useEffect, useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { COLORES_GRAFICOS } from '../../../utils/coloresGraficos.js';
+import PanelCard from './PanelCard.jsx';
+import EmptyState from './EmptyState.jsx';
+import ChartSkeleton from './ChartSkeleton.jsx';
 import { prestamosPorTipo } from '../services/reportes.service';
 
-const COLORES = ['#2f6f4f', '#c9a227', '#3a6ea5', '#b3402f', '#7a5195', '#4f9d9d'];
-
-// Detecta pantallas angostas y se actualiza al redimensionar
-function useEsMovil(maxAncho = 600) {
-    const [esMovil, setEsMovil] = useState(
-        typeof window !== 'undefined' && window.matchMedia(`(max-width: ${maxAncho}px)`).matches
-    );
-    useEffect(() => {
-        const mq = window.matchMedia(`(max-width: ${maxAncho}px)`);
-        const onChange = (e) => setEsMovil(e.matches);
-        mq.addEventListener('change', onChange);
-        return () => mq.removeEventListener('change', onChange);
-    }, [maxAncho]);
-    return esMovil;
-}
-
 export default function PrestamosPorTipo() {
-    const [data, setData] = useState([]);
-    const esMovil = useEsMovil();
+  const [datos, setDatos] = useState([]);
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
 
-    useEffect(() => { prestamosPorTipo().then(setData).catch(() => { }); }, []);
+  useEffect(() => {
+    let cancelado = false;
+    prestamosPorTipo()
+      .then((resultado) => {
+        if (!cancelado) setDatos(resultado);
+      })
+      .catch((err) => {
+        if (!cancelado) {
+          setError(err.response?.data?.error?.message || 'No se pudo cargar el gráfico.');
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false);
+      });
 
-    if (!data.length) return null;
-    const masUsado = data[0];
-    const menosUsado = data[data.length - 1];
-    const conDatos = data.filter((d) => d.cantidad > 0);
+    return () => { cancelado = true; };
+  }, []);
 
-    return (
-        <div className="card">
-            <h4 style={{ marginTop: 0 }}>Tipos de Préstamos Más Solicitados</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
-                Más usado: <b>{masUsado.nombre}</b> ({masUsado.cantidad}) ·
-                Menos usado: <b>{menosUsado.nombre}</b> ({menosUsado.cantidad})
-            </p>
+  const conDatos = datos.filter((item) => item.cantidad > 0);
 
-            <div style={{ width: '100%', height: esMovil ? 280 : 320 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={conDatos}
-                            dataKey="cantidad"
-                            nameKey="nombre"
-                            cx="50%"
-                            cy={esMovil ? '45%' : '50%'}
-                            outerRadius={esMovil ? '65%' : '75%'}
-                            label={esMovil ? false : ({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                            labelLine={!esMovil}
-                        >
-                            {conDatos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
-                        </Pie>
-                        <Tooltip />
-                        <Legend
-                            verticalAlign={esMovil ? 'bottom' : 'middle'}
-                            align={esMovil ? 'center' : 'right'}
-                            layout={esMovil ? 'horizontal' : 'vertical'}
-                            wrapperStyle={{ fontSize: '0.8rem' }}
-                        />
-                    </PieChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-    );
+  return (
+    <PanelCard
+      titulo="Préstamos por tipo"
+      descripcion="Distribución de las solicitudes por categoría."
+    >
+      {error && <EmptyState error>{error}</EmptyState>}
+      {cargando && !error && <ChartSkeleton />}
+      {!cargando && !error && (
+        conDatos.length >= 3 ? (
+          <div className="dashboard-chart" role="img" aria-label="Distribución de préstamos por tipo">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={conDatos} layout="vertical" margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
+                <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="nombre" width={140} axisLine={false} tickLine={false} />
+                <Tooltip />
+                <Bar dataKey="cantidad" name="Solicitudes" fill={COLORES_GRAFICOS.principal} radius={[0, 5, 5, 0]} maxBarSize={26} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : conDatos.length ? (
+          <ul className="dashboard-compact-values" aria-label="Préstamos por tipo">
+            {conDatos.map((item) => (
+              <li key={item.nombre}><span>{item.nombre}</span><strong>{item.cantidad}</strong></li>
+            ))}
+          </ul>
+        ) : <EmptyState>No hay préstamos por tipo para mostrar.</EmptyState>
+      )}
+    </PanelCard>
+  );
 }

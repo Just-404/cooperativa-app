@@ -242,7 +242,7 @@ export default function PrestamosPage() {
       </div>
 
       <table className="ledger">
-        <thead><tr><th>Socio</th><th>Tipo</th><th>Monto</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Socio</th><th>Tipo</th><th>Monto</th><th>Estado</th><th>Detalle</th></tr></thead>
         <tbody>
           {visibles.map((p) => (
             <tr key={p.id}>
@@ -250,7 +250,11 @@ export default function PrestamosPage() {
               <td>{p.tipoPrestamo?.nombre}</td>
               <td className="mono">RD$ {Number(p.montoSolicitado).toLocaleString()}</td>
               <td><EstadoTag estado={p.estado} /></td>
-              <td><Link className="link-accion" to={`/prestamos/${p.id}`}><Eye size={15} aria-hidden="true" /> Ver</Link></td>
+              <td>
+                <Link className="btn secondary btn-icon" to={`/prestamos/${p.id}`}>
+                  <Eye size={15} aria-hidden="true" /> Ver préstamo
+                </Link>
+              </td>
             </tr>
           ))}
           {visibles.length === 0 && (
