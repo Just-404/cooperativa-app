@@ -73,8 +73,10 @@ export default function PrestamosPorTipo() {
                                 cx="50%"
                                 cy={esMovil ? '45%' : '50%'}
                                 outerRadius={esMovil ? '65%' : '75%'}
-                                label={({ value, percent }) =>
-                                    esMovil ? value : `${value} (${(percent * 100).toFixed(0)}%)`
+                                label={
+                                    esMovil
+                                        ? false
+                                        : ({ value, percent }) => `${value} (${(percent * 100).toFixed(0)}%)`
                                 }
                                 labelLine={!esMovil}
                             >

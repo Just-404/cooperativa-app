@@ -53,13 +53,15 @@ export default function CuentasAbiertasCerradas() {
     const neto = totalAbiertas - totalCerradas;
 
     return (
-        <section>
+        <section className="card">
+            {/* Encabezado: queda fuera del ref, así que no sale en las descargas */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 8,
+                marginBottom: 12,
             }}>
                 <h4 style={{ margin: 0 }}>Cuentas Abiertas vs. Cerradas</h4>
 
@@ -75,6 +77,7 @@ export default function CuentasAbiertasCerradas() {
                     </select>
 
                     <span aria-hidden="true" style={{ width: 1, height: 18, background: 'currentColor', opacity: 0.2 }} />
+
                     <BotonDescarga
                         archivo="cuentas-abiertas-cerradas"
                         titulo="Cuentas Abiertas vs. Cerradas"
@@ -93,7 +96,8 @@ export default function CuentasAbiertasCerradas() {
             {error && <div className="alert error">{error}</div>}
 
             {!error && (
-                <div className="card" ref={graficaRef} style={{ opacity: cargando ? 0.6 : 1 }}>
+                /* Solo esto se captura para el PDF: totales + gráfica */
+                <div ref={graficaRef} style={{ opacity: cargando ? 0.6 : 1 }}>
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', marginBottom: 8 }}>
                         <span>Total abiertas: <b style={{ color: '#3f7d4e' }}>{totalAbiertas}</b></span>
                         <span>Total cerradas: <b style={{ color: '#a94442' }}>{totalCerradas}</b></span>

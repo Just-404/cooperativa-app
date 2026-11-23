@@ -18,6 +18,9 @@ export default function TotalSocios({ data }) {
         { etiqueta: 'Inactivos', cantidad: inactivos, porcentaje: pctInactivos, color: '#b88b2d' },
     ];
 
+    const pctVisibleActivos = Math.round(pctActivos);
+    const pctVisible = [pctVisibleActivos, 100 - pctVisibleActivos];
+
     return (
         <section className="dashboard-panel">
             <div className="dashboard-section-heading">
@@ -44,9 +47,10 @@ export default function TotalSocios({ data }) {
                         aria-label={`Socios: ${formatoNumero(activos)} activos y ${formatoNumero(inactivos)} inactivos`}
                         style={{
                             display: 'flex',
-                            gap: 3,
                             width: '100%',
                             height: 12,
+                            borderRadius: 999,
+                            overflow: 'hidden',
                         }}
                     >
                         {segmentos.map((s) =>
@@ -56,7 +60,6 @@ export default function TotalSocios({ data }) {
                                     style={{
                                         width: `${s.porcentaje}%`,
                                         background: s.color,
-                                        borderRadius: 999,
                                         transition: 'width 0.4s ease',
                                     }}
                                 />
@@ -66,51 +69,38 @@ export default function TotalSocios({ data }) {
 
                     <ul
                         style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: 12,
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            justifyContent: 'space-between',
+                            columnGap: 40,
+                            rowGap: 8,
                             listStyle: 'none',
                             padding: 0,
                             margin: 0,
                         }}
                     >
-                        {segmentos.map((s) => (
+                        {segmentos.map((s, i) => (
                             <li
                                 key={s.etiqueta}
-                                style={{
-                                    display: 'grid',
-                                    gap: 6,
-                                    padding: '12px 14px',
-                                    borderRadius: 12,
-                                    borderLeft: `4px solid ${s.color}`,
-                                    background: 'rgba(128, 128, 128, 0.08)',
-                                    textAlign: 'left',
-                                }}
+                                style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}
                             >
-                                <span style={{ fontSize: '0.8rem', opacity: 0.75 }}>{s.etiqueta}</span>
                                 <span
+                                    aria-hidden="true"
                                     style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: 8,
+                                        width: 9,
+                                        height: 9,
+                                        borderRadius: '50%',
+                                        background: s.color,
+                                        flexShrink: 0,
+                                        alignSelf: 'center',
                                     }}
-                                >
-                                    <strong style={{ fontSize: '1.4rem', lineHeight: 1 }}>
-                                        {formatoNumero(s.cantidad)}
-                                    </strong>
-                                    <span
-                                        style={{
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            color: s.color,
-                                            background: `${s.color}22`,
-                                        }}
-                                    >
-                                        {Math.round(s.porcentaje)}%
-                                    </span>
+                                />
+                                <span style={{ fontSize: '0.85rem', opacity: 0.75 }}>{s.etiqueta}</span>
+                                <strong style={{ fontSize: '1rem', lineHeight: 1 }}>
+                                    {formatoNumero(s.cantidad)}
+                                </strong>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: s.color }}>
+                                    {pctVisible[i]}%
                                 </span>
                             </li>
                         ))}

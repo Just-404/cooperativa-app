@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-    BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer, LabelList
+    BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer, LabelList,
 } from 'recharts';
 import { prestadoVsIngresos } from '../services/reportes.service';
 import BotonDescarga from './BotonDescarga';
 
 const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const fmt = (n) => `RD$ ${Number(n).toLocaleString()}`;
+
+// Valores compactos para las etiquetas: 1.2M, 350k
 const compacto = (v) => {
     const n = Number(v || 0);
     if (!n) return '';
@@ -57,13 +59,14 @@ export default function PrestadoVsIngresos() {
     const totalIngresos = datos.reduce((s, d) => s + Number(d.Ingresos || 0), 0);
 
     return (
-        <section>
+        <section className="card">
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 8,
+                marginBottom: 12,
             }}>
                 <h4 style={{ margin: 0 }}>Prestado vs. Ingresos</h4>
 
@@ -78,7 +81,6 @@ export default function PrestadoVsIngresos() {
                         ))}
                     </select>
 
-                    <span aria-hidden="true" style={{ width: 1, height: 18, background: 'currentColor', opacity: 0.2 }} />
                     <BotonDescarga
                         archivo="prestado-vs-ingresos"
                         titulo="Prestado vs. Ingresos"
@@ -97,7 +99,7 @@ export default function PrestadoVsIngresos() {
             {error && <div className="alert error">{error}</div>}
 
             {!error && (
-                <div className="card" ref={graficaRef} style={{ opacity: cargando ? 0.6 : 1 }}>
+                <div ref={graficaRef} style={{ opacity: cargando ? 0.6 : 1 }}>
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', marginBottom: 8 }}>
                         <span>Total prestado: <b style={{ color: '#a94442' }}>{fmt(totalPrestado)}</b></span>
                         <span>Total ingresos: <b style={{ color: '#3f7d4e' }}>{fmt(totalIngresos)}</b></span>
