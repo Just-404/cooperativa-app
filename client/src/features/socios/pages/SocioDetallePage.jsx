@@ -274,7 +274,7 @@ export default function SocioDetallePage() {
                     <th>Monto</th>
                     <th>Mora</th>
                     <th>Tasa aplicada</th>
-                    <th></th>
+                    <th>Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,7 +291,7 @@ export default function SocioDetallePage() {
                       </td>
                       <td>
                         <Link
-                          className="link-accion"
+                          className="btn secondary btn-icon"
                           to={`/prestamos/${cuota.prestamo?.id}`}
                         >
                           <Eye size={15} aria-hidden="true" /> Ver préstamo

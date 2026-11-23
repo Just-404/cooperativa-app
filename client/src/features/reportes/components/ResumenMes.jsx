@@ -1,113 +1,173 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { COLORES_GRAFICOS } from '../../../utils/coloresGraficos.js';
+import PanelCard from './PanelCard.jsx';
+import EmptyState from './EmptyState.jsx';
+import ChartSkeleton from './ChartSkeleton.jsx';
 import { prestamosDelMes } from '../services/reportes.service';
 
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
-    'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
 
 const mesAnterior = ({ anio, mes }) =>
-    mes === 1 ? { anio: anio - 1, mes: 12 } : { anio, mes: mes - 1 };
+  mes === 1 ? { anio: anio - 1, mes: 12 } : { anio, mes: mes - 1 };
 
 function Variacion({ actual, previo, invertir = false }) {
-    if (previo == null) return null;
-    const dif = actual - previo;
-    if (dif === 0) {
-        return <div style={{ fontSize: '0.7rem', color: 'var(--ink-soft)' }}>= igual que el mes anterior</div>;
-    }
-    const esBueno = invertir ? dif < 0 : dif > 0;
-    return (
-        <div style={{ fontSize: '0.7rem', color: esBueno ? 'var(--forest)' : 'var(--danger)' }}>
-            {dif > 0 ? '▲' : '▼'} {Math.abs(dif)} vs. mes anterior
-        </div>
-    );
+  if (previo == null) return null;
+  const diferencia = actual - previo;
+  if (diferencia === 0) return <span className="dashboard-indicator-detail">Igual que el mes anterior</span>;
+  const favorable = invertir ? diferencia < 0 : diferencia > 0;
+  return (
+    <span className={`dashboard-indicator-detail${favorable ? ' is-positive' : ' is-negative'}`}>
+      {diferencia > 0 ? '+' : '−'}{Math.abs(diferencia)} frente al mes anterior
+    </span>
+  );
 }
 
 export default function ResumenMes() {
-    const hoy = new Date();
-    const [periodo, setPeriodo] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
-    const [actual, setActual] = useState(null);
-    const [previo, setPrevio] = useState(null);
-    const [error, setError] = useState('');
+  const hoy = new Date();
+  const [periodo, setPeriodo] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
+  const [actual, setActual] = useState(null);
+  const [previo, setPrevio] = useState(null);
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
 
-    useEffect(() => {
-        const ant = mesAnterior(periodo);
-        setError('');
-        Promise.all([
-            prestamosDelMes(periodo.anio, periodo.mes),
-            prestamosDelMes(ant.anio, ant.mes),
-        ])
-            .then(([a, p]) => {
-                setActual(a);
-                setPrevio(p);
-            })
-            .catch((err) =>
-                setError(err.response?.data?.error?.message || 'No se pudo cargar el resumen del mes')
-            );
-    }, [periodo]);
+  useEffect(() => {
+    let cancelado = false;
+    const ant = mesAnterior(periodo);
+    setCargando(true);
+    setError('');
+    setActual(null);
+    setPrevio(null);
 
-    const mover = (delta) =>
-        setPeriodo(({ anio, mes }) => {
-            const m = mes + delta;
-            if (m < 1) return { anio: anio - 1, mes: 12 };
-            if (m > 12) return { anio: anio + 1, mes: 1 };
-            return { anio, mes: m };
-        });
+    Promise.all([
+      prestamosDelMes(periodo.anio, periodo.mes),
+      prestamosDelMes(ant.anio, ant.mes),
+    ])
+      .then(([mesActual, mesPrevio]) => {
+        if (cancelado) return;
+        setActual(mesActual);
+        setPrevio(mesPrevio);
+      })
+      .catch((err) => {
+        if (!cancelado) {
+          setError(err.response?.data?.error?.message || 'No se pudo cargar el resumen del mes.');
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false);
+      });
 
-    const esMesActual = periodo.anio === hoy.getFullYear() && periodo.mes === hoy.getMonth() + 1;
+    return () => { cancelado = true; };
+  }, [periodo]);
 
-    const tarjetas = [
-        { k: 'solicitados', titulo: 'Solicitados', color: 'var(--ink)' },
-        { k: 'aprobados', titulo: 'Aprobados', color: 'var(--forest)' },
-        { k: 'rechazados', titulo: 'Rechazados', color: 'var(--danger)', invertir: true },
-    ];
+  const mover = (delta) => setPeriodo(({ anio, mes }) => {
+    const siguienteMes = mes + delta;
+    if (siguienteMes < 1) return { anio: anio - 1, mes: 12 };
+    if (siguienteMes > 12) return { anio: anio + 1, mes: 1 };
+    return { anio, mes: siguienteMes };
+  });
 
-    const resueltos = actual ? actual.aprobados + actual.rechazados : 0;
-    const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
+  const esMesActual = periodo.anio === hoy.getFullYear() && periodo.mes === hoy.getMonth() + 1;
+  const resueltos = actual ? actual.aprobados + actual.rechazados : 0;
+  const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
+  const datos = actual && previo ? [
+    { etiqueta: 'Solicitados', actual: actual.solicitados, anterior: previo.solicitados },
+    { etiqueta: 'Aprobados', actual: actual.aprobados, anterior: previo.aprobados },
+    { etiqueta: 'Rechazados', actual: actual.rechazados, anterior: previo.rechazados },
+  ] : [];
+  const hayDatos = datos.some((fila) => fila.actual > 0 || fila.anterior > 0);
 
-    return (
-        <section>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <h4 style={{ margin: 0 }}>Préstamos del Mes</h4>
-                <div className="resumen-mes-nav" style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                    <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">
-                        <ChevronLeft size={16} aria-hidden="true" />
-                    </button>
-                    <span className="mono" style={{ fontSize: '0.85rem', minWidth: 130, textAlign: 'center' }}>
-                        {MESES[periodo.mes - 1]} {periodo.anio}
-                    </span>
-                    <button type="button" onClick={() => mover(1)} disabled={esMesActual} aria-label="Mes siguiente">
-                        <ChevronRight size={16} aria-hidden="true" />
-                    </button>
-                </div>
+  return (
+    <PanelCard
+      titulo="Préstamos del mes"
+      descripcion="Solicitudes y decisiones frente al mes anterior."
+      actions={(
+        <div className="resumen-mes-nav">
+          <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">
+            <ChevronLeft size={16} aria-hidden="true" />
+          </button>
+          <span className="mono">
+            {MESES[periodo.mes - 1]} {periodo.anio}
+          </span>
+          <button
+            type="button"
+            onClick={() => mover(1)}
+            disabled={esMesActual}
+            aria-label="Mes siguiente"
+          >
+            <ChevronRight size={16} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    >
+
+      {error && <EmptyState error>{error}</EmptyState>}
+      {cargando && !error && <ChartSkeleton />}
+      {!cargando && !error && actual && previo && (
+        <>
+          <div className="dashboard-indicator-grid">
+            <div className="dashboard-indicator">
+              <strong>{actual.solicitados}</strong>
+              <span>Solicitados</span>
+              <Variacion actual={actual.solicitados} previo={previo.solicitados} />
             </div>
+            <div className="dashboard-indicator">
+              <strong>{actual.aprobados}</strong>
+              <span>Aprobados</span>
+              <Variacion actual={actual.aprobados} previo={previo.aprobados} />
+            </div>
+            <div className="dashboard-indicator">
+              <strong>{actual.rechazados}</strong>
+              <span>Rechazados</span>
+              <Variacion actual={actual.rechazados} previo={previo.rechazados} invertir />
+            </div>
+            <div className="dashboard-indicator">
+              <strong>{tasa}%</strong>
+              <span>Tasa de aprobación de resueltos</span>
+            </div>
+          </div>
 
-            {error && <div className="alert error" style={{ marginTop: 12 }}>{error}</div>}
-
-            {actual && (
-                <>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 16 }}>
-                        {tarjetas.map(({ k, titulo, color, invertir }) => (
-                            <div key={k} className="card">
-                                <div className="mono" style={{ fontSize: '1.4rem', color }}>{actual[k]}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>{titulo}</div>
-                                <Variacion actual={actual[k]} previo={previo?.[k]} invertir={invertir} />
-                            </div>
-                        ))}
-                    </div>
-
-                    {resueltos > 0 && (
-                        <div style={{ marginTop: 16 }}>
-                            <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden' }}>
-                                <div style={{ width: `${tasa}%`, background: 'var(--forest)' }} />
-                                <div style={{ width: `${100 - tasa}%`, background: 'var(--danger)' }} />
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)', marginTop: 4 }}>
-                                {tasa}% de aprobación ({actual.aprobados} de {resueltos} resueltos)
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-        </section>
-    );
+          {hayDatos && datos.filter((fila) => fila.actual > 0 || fila.anterior > 0).length >= 3 ? (
+            <div className="dashboard-chart" role="img" aria-label="Comparación de solicitudes, aprobaciones y rechazos del mes actual y anterior">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={datos} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="etiqueta" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="actual" name="Mes actual" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="anterior" name="Mes anterior" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : !hayDatos ? (
+            <EmptyState>No hay préstamos registrados en estos meses.</EmptyState>
+          ) : (
+            <ul className="dashboard-compact-values" aria-label="Préstamos del mes frente al mes anterior">
+              {datos.filter((fila) => fila.actual > 0 || fila.anterior > 0).map((fila) => (
+                <li key={fila.etiqueta}>
+                  <span>{fila.etiqueta}</span>
+                  <strong>{fila.actual} actual · {fila.anterior} anterior</strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </PanelCard>
+  );
 }

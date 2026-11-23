@@ -128,7 +128,7 @@ export default function CuotasPagosPage() {
         <thead>
           <tr>
             <th>Prestamo #</th><th>Socio</th><th>Cuota #</th><th>Vencimiento</th><th>Atraso</th>
-            <th>Monto</th><th>Mora</th><th>Tasa aplicada</th><th>Estado</th><th></th>
+            <th>Monto</th><th>Mora</th><th>Tasa aplicada</th><th>Estado</th><th>Detalle</th>
           </tr>
         </thead>
         <tbody>
@@ -148,7 +148,7 @@ export default function CuotasPagosPage() {
               </td>
               <td><EstadoTag estado={c.estado} /></td>
               <td>
-                <Link className="link-accion" to={`/prestamos/${c.prestamo?.id}`}>
+                <Link className="btn secondary btn-icon" to={`/prestamos/${c.prestamo?.id}`}>
                   <Eye size={15} aria-hidden="true" /> Ver préstamo
                 </Link>
               </td>

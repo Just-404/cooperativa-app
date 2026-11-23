@@ -295,7 +295,9 @@ export default function AdminTicketsPage() {
                 className={`tickets-admin-card tickets-admin-estado-${ticket.estado}`}
                 aria-label={`${ticket.usuarioNombre || 'Usuario no disponible'}, ${labelTipo(ticket.tipo)}, ${fechaLegible(ticket.fechaCreacion)}, estado ${ESTADO_LABEL[ticket.estado] || ticket.estado}`}
               >
-                <h4 title={ticket.titulo}>{ticket.titulo}</h4>
+                <h4 title={ticket.titulo}>
+                  <span>{ticket.titulo}</span>
+                </h4>
                 <p className="tickets-admin-tipo">{labelTipo(ticket.tipo)}</p>
                 <p className="tickets-admin-persona">
                   Persona afectada: {ticket.usuarioNombre || 'No disponible'}
