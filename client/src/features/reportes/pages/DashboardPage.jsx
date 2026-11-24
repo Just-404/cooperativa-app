@@ -34,6 +34,7 @@ import EmptyState from '../components/EmptyState.jsx';
 import ChartSkeleton from '../components/ChartSkeleton.jsx';
 import AtencionCard from '../components/AtencionCard.jsx';
 import { COLORES_GRAFICOS } from '../../../utils/coloresGraficos.js';
+import TotalSocios from '../components/TotalSocios.jsx';
 
 const ETIQUETAS_ROL = {
   administrador: 'Administrador',
@@ -848,6 +849,7 @@ export default function DashboardPage({ modo = 'panel' }) {
       {esReportes && puedeVerReportes && (
         <>
           <BandaResumen data={sections.resumen} cargando={cargando} />
+          <TotalSocios data={sections.resumen} />
           <div className="dashboard-report-grid">
             <div className="dashboard-report-item"><ResumenMes /></div>
             <div className="dashboard-report-item"><CuentasAbiertasCerradas /></div>

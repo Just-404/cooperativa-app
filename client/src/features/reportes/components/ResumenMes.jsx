@@ -15,6 +15,7 @@ import PanelCard from './PanelCard.jsx';
 import EmptyState from './EmptyState.jsx';
 import ChartSkeleton from './ChartSkeleton.jsx';
 import { prestamosDelMes } from '../services/reportes.service';
+import BotonDescarga from './BotonDescarga';
 
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -23,6 +24,13 @@ const MESES = [
 
 const mesAnterior = ({ anio, mes }) =>
   mes === 1 ? { anio: anio - 1, mes: 12 } : { anio, mes: mes - 1 };
+
+const aValor = ({ anio, mes }) => `${anio}-${String(mes).padStart(2, '0')}`;
+
+const deValor = (valor) => {
+  const [anio, mes] = valor.split('-').map(Number);
+  return { anio, mes };
+};
 
 function Variacion({ actual, previo, invertir = false }) {
   if (previo == null) return null;
@@ -81,6 +89,14 @@ export default function ResumenMes() {
   });
 
   const esMesActual = periodo.anio === hoy.getFullYear() && periodo.mes === hoy.getMonth() + 1;
+  const maxValor = aValor({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
+  const mesPrevio = mesAnterior(periodo);
+
+  const onCambiarMes = (evento) => {
+    if (!evento.target.value) return; // el usuario borró el campo
+    setPeriodo(deValor(evento.target.value));
+  };
+
   const resueltos = actual ? actual.aprobados + actual.rechazados : 0;
   const tasa = resueltos ? Math.round((actual.aprobados / resueltos) * 100) : 0;
   const datos = actual && previo ? [
@@ -89,6 +105,22 @@ export default function ResumenMes() {
     { etiqueta: 'Rechazados', actual: actual.rechazados, anterior: previo.rechazados },
   ] : [];
   const hayDatos = datos.some((fila) => fila.actual > 0 || fila.anterior > 0);
+
+  const conceptos = [
+    { k: 'solicitados', titulo: 'Solicitados' },
+    { k: 'aprobados', titulo: 'Aprobados' },
+    { k: 'rechazados', titulo: 'Rechazados' },
+  ];
+  const filasDescarga = actual ? [
+    ...conceptos.map(({ k, titulo }) => ({
+      concepto: titulo,
+      cantidad: actual[k],
+      anterior: previo?.[k] ?? '',
+      variacion: previo ? actual[k] - previo[k] : '',
+    })),
+    { concepto: 'Resueltos (aprobados + rechazados)', cantidad: resueltos, anterior: '', variacion: '', resaltar: true },
+    { concepto: 'Tasa de aprobación (%)', cantidad: tasa, anterior: '', variacion: '', resaltar: true },
+  ] : [];
 
   return (
     <PanelCard
@@ -99,9 +131,14 @@ export default function ResumenMes() {
           <button type="button" onClick={() => mover(-1)} aria-label="Mes anterior">
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
-          <span className="mono">
-            {MESES[periodo.mes - 1]} {periodo.anio}
-          </span>
+          <input
+            type="month"
+            className="mono dashboard-chart-control"
+            value={aValor(periodo)}
+            max={maxValor}
+            onChange={onCambiarMes}
+            aria-label="Seleccionar mes"
+          />
           <button
             type="button"
             onClick={() => mover(1)}
@@ -110,10 +147,21 @@ export default function ResumenMes() {
           >
             <ChevronRight size={16} aria-hidden="true" />
           </button>
+          <BotonDescarga
+            archivo="resumen-mes"
+            titulo="Resumen del Mes"
+            periodo={`${MESES[periodo.mes - 1]} ${periodo.anio}`}
+            columnas={[
+              { header: 'Concepto', key: 'concepto' },
+              { header: 'Cantidad', key: 'cantidad' },
+              { header: `Mes anterior (${MESES[mesPrevio.mes - 1]} ${mesPrevio.anio})`, key: 'anterior' },
+              { header: 'Variación', key: 'variacion' },
+            ]}
+            filas={filasDescarga}
+          />
         </div>
       )}
     >
-
       {error && <EmptyState error>{error}</EmptyState>}
       {cargando && !error && <ChartSkeleton />}
       {!cargando && !error && actual && previo && (
