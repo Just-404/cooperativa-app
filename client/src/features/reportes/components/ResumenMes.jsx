@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Bar,
@@ -45,6 +45,7 @@ function Variacion({ actual, previo, invertir = false }) {
 }
 
 export default function ResumenMes() {
+  const graficaRef = useRef(null);
   const hoy = new Date();
   const [periodo, setPeriodo] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
   const [actual, setActual] = useState(null);
@@ -158,6 +159,7 @@ export default function ResumenMes() {
               { header: 'Variación', key: 'variacion' },
             ]}
             filas={filasDescarga}
+            grafica={graficaRef}
           />
         </div>
       )}
@@ -189,18 +191,20 @@ export default function ResumenMes() {
           </div>
 
           {hayDatos && datos.filter((fila) => fila.actual > 0 || fila.anterior > 0).length >= 3 ? (
-            <div className="dashboard-chart" role="img" aria-label="Comparación de solicitudes, aprobaciones y rechazos del mes actual y anterior">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={datos} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis dataKey="etiqueta" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="actual" name="Mes actual" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="anterior" name="Mes anterior" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div ref={graficaRef} style={{ padding: 12}}>
+              <div className="dashboard-chart" role="img" aria-label="Comparación de solicitudes, aprobaciones y rechazos del mes actual y anterior">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={datos} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="etiqueta" tick={{ fontSize: 10 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    <Bar dataKey="actual" name="Mes actual" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                    <Bar dataKey="anterior" name="Mes anterior" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           ) : !hayDatos ? (
             <EmptyState>No hay préstamos registrados en estos meses.</EmptyState>

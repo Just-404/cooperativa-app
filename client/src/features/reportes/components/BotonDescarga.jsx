@@ -24,11 +24,11 @@ export default function BotonDescarga({ archivo, titulo, periodo, columnas, fila
     return (
         <div style={{ position: 'relative' }}>
             <select
+                className="dashboard-chart-control"
                 value=""
                 onChange={(e) => descargar(e.target.value)}
                 disabled={generando || !filas?.length}
                 aria-label="Descargar reporte"
-                style={{ fontSize: '0.75rem', padding: '2px 6px', height: 26, width: 'auto', minWidth: 0 }}
             >
                 <option value="" disabled>{generando ? 'Generando…' : 'Descargar…'}</option>
                 <option value="xlsx">Excel (.xlsx)</option>

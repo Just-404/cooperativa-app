@@ -95,24 +95,40 @@ export async function exportarReporte({ formato, archivo, titulo, periodo, colum
 
         let y = 36;
 
-        // Gráfica (solo si el reporte tiene una)
+                // Gráfica (solo si el reporte tiene una)
         if (grafica) {
             const { toPng } = await import('html-to-image');
+            const PIXEL_RATIO = 2;
+            const PX_A_MM = 25.4 / 96;
+
+            // Medimos el contenido real, no solo la caja visible
+            const anchoPx = grafica.scrollWidth;
+            const altoPx = grafica.scrollHeight;
+
             const img = await toPng(grafica, {
-                pixelRatio: 2,
+                pixelRatio: PIXEL_RATIO,
                 backgroundColor: '#ffffff',
-                // evita que se vea apagada o con texto claro (tema oscuro / estado de carga)
-                style: { opacity: '1', color: '#222222' },
+                width: anchoPx,
+                height: altoPx,
+                style: {
+                    opacity: '1',
+                    color: '#222222',
+                    overflow: 'visible',
+                    width: `${anchoPx}px`,
+                    height: `${altoPx}px`,
+                    margin: '0',
+                },
             });
 
+            // Tamaño natural en mm; solo se reduce si no cabe, nunca se amplía
             const props = doc.getImageProperties(img);
-            let ancho = anchoPagina - 28;
-            let alto = (props.height * ancho) / props.width;
-            const altoMax = 110; // para que la tabla siga cabiendo en la primera página
-            if (alto > altoMax) {
-                alto = altoMax;
-                ancho = (props.width * alto) / props.height;
-            }
+            let ancho = (props.width / PIXEL_RATIO) * PX_A_MM;
+            let alto = (props.height / PIXEL_RATIO) * PX_A_MM;
+
+            const escala = Math.min(1, (anchoPagina - 28) / ancho, 90 / alto);
+            ancho *= escala;
+            alto *= escala;
+
             doc.addImage(img, 'PNG', (anchoPagina - ancho) / 2, y, ancho, alto);
             y += alto + 8;
         }
