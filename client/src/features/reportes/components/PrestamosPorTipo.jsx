@@ -68,7 +68,7 @@ export default function PrestamosPorTipo() {
       {error && <EmptyState error>{error}</EmptyState>}
       {cargando && !error && <ChartSkeleton />}
       {!cargando && !error && (
-        <div ref={graficaRef}>
+        <div ref={graficaRef} style={{ padding: 12}}>
           {conDatos.length >= 3 ? (
             <>
               {masUsado && menosUsado && (
@@ -81,11 +81,11 @@ export default function PrestamosPorTipo() {
               <div className="dashboard-chart" role="img" aria-label="Distribución de préstamos por tipo">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={conDatos} layout="vertical" margin={{ top: 4, right: 28, left: 0, bottom: 4 }}>
-                    <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="nombre" width={140} axisLine={false} tickLine={false} />
+                    <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                    <YAxis type="category" dataKey="nombre" width={140} axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                     <Tooltip />
-                    <Bar dataKey="cantidad" name="Solicitudes" fill={COLORES_GRAFICOS.principal} radius={[0, 5, 5, 0]} maxBarSize={26}>
-                      <LabelList dataKey="cantidad" position="right" fontSize={11} />
+                    <Bar dataKey="cantidad" name="Solicitudes" fill={COLORES_GRAFICOS.principal} radius={[0, 5, 5, 0]} maxBarSize={26} isAnimationActive={false}>
+                      <LabelList dataKey="cantidad" position="right" fontSize={11} isAnimationActive={false} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

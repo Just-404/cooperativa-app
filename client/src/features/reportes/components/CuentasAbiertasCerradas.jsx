@@ -61,6 +61,7 @@ export default function CuentasAbiertasCerradas() {
   }, [meses]);
 
   const filasConDatos = datos.filter((fila) => fila.Abiertas > 0 || fila.Cerradas > 0);
+  const hayGrafica = filasConDatos.length >= 3;
   const totalAbiertas = filasConDatos.reduce((suma, fila) => suma + Number(fila.Abiertas || 0), 0);
   const totalCerradas = filasConDatos.reduce((suma, fila) => suma + Number(fila.Cerradas || 0), 0);
   const neto = totalAbiertas - totalCerradas;
@@ -102,8 +103,14 @@ export default function CuentasAbiertasCerradas() {
       {error && <EmptyState error>{error}</EmptyState>}
       {cargando && !error && <ChartSkeleton />}
       {!cargando && !error && (
-        <div ref={graficaRef}>
-          {filasConDatos.length >= 3 ? (
+        <div
+          ref={hayGrafica ? graficaRef : null}
+          style={hayGrafica
+            ? { padding: 12, height: 300, width: '100%' }
+            : { width: '100%' }}
+          aria-hidden="true"
+        >
+          {hayGrafica ? (
             <>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', marginBottom: 8 }}>
                 <span>Total abiertas: <b style={{ color: COLORES_GRAFICOS.principal }}>{totalAbiertas}</b></span>
@@ -114,15 +121,15 @@ export default function CuentasAbiertasCerradas() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={datos} margin={{ top: 20, right: 12, left: 0, bottom: 8 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="nombre" />
-                    <YAxis allowDecimals={false} />
+                    <XAxis dataKey="nombre" tick={{ fontSize: 10 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
                     <Tooltip />
-                    <Legend />
-                    <Bar dataKey="Abiertas" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="Abiertas" position="top" fontSize={11} formatter={(valor) => valor || ''} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    <Bar dataKey="Abiertas" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                      <LabelList dataKey="Abiertas" position="top" fontSize={11} formatter={(valor) => valor || ''} isAnimationActive={false} />
                     </Bar>
-                    <Bar dataKey="Cerradas" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="Cerradas" position="top" fontSize={11} formatter={(valor) => valor || ''} />
+                    <Bar dataKey="Cerradas" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                      <LabelList dataKey="Cerradas" position="top" fontSize={11} formatter={(valor) => valor || ''} isAnimationActive={false} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

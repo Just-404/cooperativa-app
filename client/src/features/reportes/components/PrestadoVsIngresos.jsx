@@ -69,6 +69,7 @@ export default function PrestadoVsIngresos() {
   }, [meses]);
 
   const filasConDatos = datos.filter((fila) => fila.Prestado > 0 || fila.Ingresos > 0);
+  const hayGrafica = filasConDatos.length >= 3;
   const totalPrestado = filasConDatos.reduce((suma, fila) => suma + Number(fila.Prestado || 0), 0);
   const totalIngresos = filasConDatos.reduce((suma, fila) => suma + Number(fila.Ingresos || 0), 0);
   const filasDescarga = filasConDatos.length
@@ -109,8 +110,14 @@ export default function PrestadoVsIngresos() {
       {error && <EmptyState error>{error}</EmptyState>}
       {cargando && !error && <ChartSkeleton />}
       {!cargando && !error && (
-        <div ref={graficaRef}>
-          {filasConDatos.length >= 3 ? (
+        <div
+          ref={hayGrafica ? graficaRef : null}
+          style={hayGrafica
+            ? { padding: 12, height: 300, width: '100%' }
+            : { width: '100%' }}
+          aria-hidden="true"
+        >
+          {hayGrafica ? (
             <>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', marginBottom: 8 }}>
                 <span>Total prestado: <b style={{ color: COLORES_GRAFICOS.principal }}>{formatoMoneda(totalPrestado)}</b></span>
@@ -120,15 +127,15 @@ export default function PrestadoVsIngresos() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={datos} margin={{ top: 20, right: 12, left: 0, bottom: 8 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="nombre" />
-                    <YAxis tickFormatter={(valor) => (valor >= 1000 ? `${valor / 1000}k` : valor)} />
+                    <XAxis dataKey="nombre" tick={{ fontSize: 10 }} />
+                    <YAxis tickFormatter={(valor) => (valor >= 1000 ? `${valor / 1000}k` : valor)} tick={{ fontSize: 10 }} />
                     <Tooltip formatter={(valor) => formatoMoneda(valor)} />
-                    <Legend />
-                    <Bar dataKey="Prestado" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="Prestado" position="top" fontSize={10} formatter={compacto} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    <Bar dataKey="Prestado" fill={COLORES_GRAFICOS.principal} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                      <LabelList dataKey="Prestado" position="top" fontSize={10} formatter={compacto} isAnimationActive={false} />
                     </Bar>
-                    <Bar dataKey="Ingresos" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="Ingresos" position="top" fontSize={10} formatter={compacto} />
+                    <Bar dataKey="Ingresos" fill={COLORES_GRAFICOS.positivo} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                      <LabelList dataKey="Ingresos" position="top" fontSize={10} formatter={compacto} isAnimationActive={false} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

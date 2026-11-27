@@ -80,6 +80,12 @@ const ESTADOS_TICKET = [
   { estado: 'cancelled', etiqueta: 'Cancelados', color: COLORES_GRAFICOS.negativo },
 ];
 
+const REPORTES_POR_ROL = {
+  gerente: ['socios', 'mes', 'cuentas', 'prestado', 'tipo'],
+  auditor: ['socios', 'mes', 'cuentas', 'prestado', 'tipo'],
+  administrador: ['socios', 'cuentas', 'tipo'],
+};
+
 const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 function mensajeError(error, fallback) {
@@ -727,29 +733,6 @@ function PanelAuditor({ data, errors, cargando }) {
   );
 }
 
-function BandaResumen({ data, cargando }) {
-  const indicadores = [
-    ['Socios activos', formatoNumero(data?.totalSocios)],
-    ['Préstamos vigentes', formatoNumero(data?.prestamosVigentes)],
-    ['Cuotas en mora', formatoNumero(data?.cuotasEnMora)],
-    ['Ahorros administrados', formatoMoneda(data?.totalAhorros)],
-  ];
-  return (
-    <section className="dashboard-summary-strip" aria-label="Resumen general">
-      {indicadores.map(([etiqueta, valor]) => (
-        <div className="dashboard-summary-item" key={etiqueta}>
-          <span>{etiqueta}</span>
-          {cargando ? (
-            <span className="dashboard-skeleton dashboard-summary-skeleton" aria-hidden="true" />
-          ) : (
-            <strong>{valor}</strong>
-          )}
-        </div>
-      ))}
-    </section>
-  );
-}
-
 export default function DashboardPage({ modo = 'panel' }) {
   const { user } = useAuth();
   const [sections, setSections] = useState({});
@@ -812,7 +795,7 @@ export default function DashboardPage({ modo = 'panel' }) {
 
   const esPanel = modo === 'panel';
   const esReportes = modo === 'reportes';
-  const puedeVerReportes = ['administrador', 'gerente', 'auditor'].includes(user?.rol);
+  const ver = (clave) => REPORTES_POR_ROL[user?.rol]?.includes(clave);
   const titulo = useMemo(() => user?.nombre ? `Hola, ${user.nombre}` : 'Panel principal', [user?.nombre]);
 
   return (
@@ -846,15 +829,14 @@ export default function DashboardPage({ modo = 'panel' }) {
       {esPanel && user?.rol === 'auditor' && (
         <PanelAuditor data={sections} errors={errors} cargando={cargando} />
       )}
-      {esReportes && puedeVerReportes && (
+      {esReportes && (
         <>
-          <BandaResumen data={sections.resumen} cargando={cargando} />
-          <TotalSocios data={sections.resumen} />
+          {ver('socios') && <TotalSocios data={sections.resumen} />}
           <div className="dashboard-report-grid">
-            <div className="dashboard-report-item"><ResumenMes /></div>
-            <div className="dashboard-report-item"><CuentasAbiertasCerradas /></div>
-            <div className="dashboard-report-item"><PrestadoVsIngresos /></div>
-            <div className="dashboard-report-item"><PrestamosPorTipo /></div>
+            {ver('mes') && <div className="dashboard-report-item"><ResumenMes /></div>}
+            {ver('cuentas') && <div className="dashboard-report-item"><CuentasAbiertasCerradas /></div>}
+            {ver('prestado') && <div className="dashboard-report-item"><PrestadoVsIngresos /></div>}
+            {ver('tipo') && <div className="dashboard-report-item"><PrestamosPorTipo /></div>}
           </div>
         </>
       )}
