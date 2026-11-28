@@ -7,10 +7,13 @@ jest.mock('../models', () => ({
   },
   Socio: {},
   TipoPrestamo: {},
+  Cuota: {
+    count: jest.fn(),
+  },
 }));
 
-const { sequelize, Prestamo } = require('../models');
-const { revertirEstado } = require('./prestamos.service');
+const { sequelize, Prestamo, Cuota } = require('../models');
+const { revertirEstado, deshacerSolicitud } = require('./prestamos.service');
 
 const transaction = { LOCK: { UPDATE: 'UPDATE' } };
 
@@ -69,5 +72,47 @@ describe('revertir estado de préstamo', () => {
 
     await expect(revertirEstado('prestamo-1')).rejects.toMatchObject({ status: 400 });
     expect(prestamo.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('deshacer solicitud de préstamo', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    sequelize.transaction.mockImplementation((callback) => callback(transaction));
+  });
+
+  it('elimina una solicitud pendiente sin cuotas', async () => {
+    const prestamo = {
+      estado: 'solicitado',
+      destroy: jest.fn(async () => undefined),
+    };
+    Prestamo.findByPk.mockResolvedValue(prestamo);
+    Cuota.count.mockResolvedValue(0);
+
+    await deshacerSolicitud('prestamo-1');
+
+    expect(Cuota.count).toHaveBeenCalledWith({
+      where: { prestamoId: 'prestamo-1' },
+      transaction,
+    });
+    expect(prestamo.destroy).toHaveBeenCalledWith({ transaction });
+  });
+
+  it('rechaza deshacer una solicitud ya evaluada', async () => {
+    const prestamo = { estado: 'evaluado', destroy: jest.fn() };
+    Prestamo.findByPk.mockResolvedValue(prestamo);
+
+    await expect(deshacerSolicitud('prestamo-1')).rejects.toMatchObject({ status: 400 });
+    expect(Cuota.count).not.toHaveBeenCalled();
+    expect(prestamo.destroy).not.toHaveBeenCalled();
+  });
+
+  it('rechaza deshacer una solicitud con cuotas registradas', async () => {
+    const prestamo = { estado: 'solicitado', destroy: jest.fn() };
+    Prestamo.findByPk.mockResolvedValue(prestamo);
+    Cuota.count.mockResolvedValue(1);
+
+    await expect(deshacerSolicitud('prestamo-1')).rejects.toMatchObject({ status: 400 });
+    expect(prestamo.destroy).not.toHaveBeenCalled();
   });
 });

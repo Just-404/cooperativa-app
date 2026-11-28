@@ -26,6 +26,11 @@ function crearRespuesta(statusCode = 200) {
   return {
     statusCode,
     json: jest.fn((cuerpo) => cuerpo),
+    status: jest.fn(function (codigo) {
+      this.statusCode = codigo;
+      return this;
+    }),
+    send: jest.fn(),
     once: (evento, callback) => { listeners[evento] = callback; },
     terminar: () => listeners.finish(),
   };
@@ -168,6 +173,48 @@ test('mantiene el estado anterior en una eliminación y marca el posterior como 
   expect(detalle.operacion).toBe('eliminar');
   expect(detalle.antes).toMatchObject({ nombre: 'Socio' });
   expect(detalle.despues).toBeNull();
+});
+
+test('audita la eliminación de una solicitud de préstamo con respuesta 204', async () => {
+  modelos.Prestamo.findByPk.mockResolvedValueOnce({
+    id: 'prestamo-4',
+    socioId: 'socio-4',
+    estado: 'solicitado',
+    montoSolicitado: '12000.00',
+  });
+  modelos.Socio.findByPk.mockResolvedValueOnce({
+    id: 'socio-4',
+    nombre: 'Socio',
+    apellido: 'Afectado',
+  });
+  const req = {
+    method: 'DELETE',
+    params: { id: 'prestamo-4' },
+    body: {},
+    user: { id: 'cajero-1' },
+  };
+  const res = crearRespuesta();
+
+  auditoria('eliminar_solicitud_prestamo', 'prestamo')(req, res, jest.fn());
+  await esperarOperacionesPendientes();
+  res.status(204).send();
+  res.terminar();
+  await esperarOperacionesPendientes();
+
+  const evento = auditoriaService.registrar.mock.calls[0][0];
+  const detalle = JSON.parse(evento.detalle);
+  expect(evento).toMatchObject({
+    usuarioId: 'cajero-1',
+    accion: 'eliminar_solicitud_prestamo',
+    entidad: 'prestamo',
+    entidadId: 'prestamo-4',
+  });
+  expect(detalle).toMatchObject({
+    operacion: 'eliminar',
+    antes: { id: 'prestamo-4', estado: 'solicitado', montoSolicitado: '12000.00' },
+    despues: null,
+    afectado: 'Socio Afectado',
+  });
 });
 
 test('audita la restauración de feriados usando el año como identificador', async () => {

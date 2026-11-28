@@ -16,6 +16,9 @@ export async function revertirEstado(id) {
   const { data } = await apiClient.post(`/prestamos/${id}/revertir-estado`);
   return data;
 }
+export async function deshacerSolicitud(id) {
+  await apiClient.delete(`/prestamos/${id}`);
+}
 export async function listarTipos() {
   const { data } = await apiClient.get('/tipos-prestamo');
   return data;

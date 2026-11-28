@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useParams, Link } from 'react-router-dom';
+import { useLocation, useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Banknote,
@@ -8,9 +8,10 @@ import {
   ClipboardCheck,
   Coins,
   RefreshCw,
+  Trash2,
   X,
 } from 'lucide-react';
-import { obtener, revertirEstado } from '../services/prestamos.service';
+import { obtener, revertirEstado, deshacerSolicitud } from '../services/prestamos.service';
 import { evaluar } from '../../evaluacion/services/evaluacion.service';
 import { aprobar, rechazar } from '../../aprobacion/services/aprobacion.service';
 import { desembolsar } from '../../desembolso/services/desembolso.service';
@@ -33,6 +34,7 @@ const ANCHO_MINIMO_COMENTARIO = 432;
 export default function PrestamoDetallePage() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [prestamo, setPrestamo] = useState(null);
   const [cuotas, setCuotas] = useState([]);
@@ -198,6 +200,17 @@ export default function PrestamoDetallePage() {
     });
   }
 
+  function handleDeshacerSolicitud() {
+    setError('');
+    setConfirmacion({
+      tipo: 'deshacerSolicitud',
+      titulo: '¿Deshacer esta solicitud?',
+      mensaje: 'La solicitud creada por error se eliminará permanentemente. Esta acción no se puede revertir.',
+      confirmarTexto: 'Deshacer solicitud',
+      peligro: true,
+    });
+  }
+
   async function confirmarAccion() {
     if (!confirmacion || procesando) return;
     setError('');
@@ -216,6 +229,11 @@ export default function PrestamoDetallePage() {
       } else if (confirmacion.tipo === 'revertir') {
         await revertirEstado(id);
         setMensaje('Estado del préstamo revertido.');
+      } else if (confirmacion.tipo === 'deshacerSolicitud') {
+        await deshacerSolicitud(id);
+        setConfirmacion(null);
+        navigate(rutaRetorno, { replace: true });
+        return;
       }
       setComentario('');
       setConfirmacion(null);
@@ -359,14 +377,31 @@ export default function PrestamoDetallePage() {
               {comentario.length}/2000
             </small>
           </div>
-          <button
-            className="btn primary"
-            style={{ marginBottom: 20 }}
-            onClick={handleEvaluar}
-          >
-            <ClipboardCheck size={16} aria-hidden="true" /> Marcar como evaluado
-          </button>
         </>
+      )}
+
+      {prestamo.estado === 'solicitado' && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+          {puedeEvaluar && (
+            <button
+              className="btn primary"
+              onClick={handleEvaluar}
+              disabled={procesando}
+            >
+              <ClipboardCheck size={16} aria-hidden="true" /> Marcar como evaluado
+            </button>
+          )}
+          {['administrador', 'cajero'].includes(user?.rol) && (
+            <button
+              type="button"
+              className="btn danger"
+              onClick={handleDeshacerSolicitud}
+              disabled={procesando}
+            >
+              <Trash2 size={16} aria-hidden="true" /> Deshacer solicitud
+            </button>
+          )}
+        </div>
       )}
 
       {prestamo.estado === 'evaluado' && puedeAprobar && (
