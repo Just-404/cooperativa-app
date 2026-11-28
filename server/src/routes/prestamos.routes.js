@@ -18,14 +18,21 @@ router.post(
   controller.revertirEstado
 );
 
+router.delete(
+  '/:id',
+  auth, checkRole('administrador', 'cajero'),
+  auditoria('eliminar_solicitud_prestamo', 'prestamo'),
+  controller.deshacerSolicitud
+);
+
 router.post(
   '/',
-  auth, checkRole('administrador', 'cajero', 'oficial_credito'),
+  auth, checkRole('administrador', 'cajero'),
   [
     body('socioId').isUUID().withMessage('socioId inválido'),
     body('tipoPrestamoId').isUUID().withMessage('tipoPrestamoId inválido'),
-    body('montoSolicitado').isFloat({ gt: 0 }).withMessage('El monto solicitado debe ser mayor a cero'),
-    body('plazoMeses').isInt({ min: 1 }).withMessage('El plazo debe ser al menos 1 mes'),
+    body('montoSolicitado').isFloat({ gt: 0 }).withMessage('El monto solicitado debe ser mayor a cero').toFloat(),
+    body('plazoMeses').isInt({ min: 1 }).withMessage('El plazo debe ser al menos 1 mes').toInt(),
   ],
   validate,
   auditoria('solicitar_prestamo', 'prestamos'),

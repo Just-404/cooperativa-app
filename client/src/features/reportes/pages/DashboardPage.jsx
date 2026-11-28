@@ -67,6 +67,7 @@ const ETIQUETAS_ACCION = {
   retiro: 'Retiro',
   registrar_pago: 'Pago registrado',
   solicitar_prestamo: 'Solicitud de préstamo',
+  eliminar_solicitud_prestamo: 'Solicitud de préstamo eliminada',
   crear_usuario: 'Usuario creado',
   actualizar_usuario: 'Usuario actualizado',
   cambiar_estado_usuario: 'Estado de usuario cambiado',

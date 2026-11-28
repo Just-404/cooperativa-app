@@ -12,5 +12,8 @@ async function solicitar(req, res, next) {
 async function revertirEstado(req, res, next) {
   try { res.json(await prestamos.revertirEstado(req.params.id)); } catch (err) { next(err); }
 }
+async function deshacerSolicitud(req, res, next) {
+  try { await prestamos.deshacerSolicitud(req.params.id); res.status(204).send(); } catch (err) { next(err); }
+}
 
-module.exports = { listar, obtener, solicitar, revertirEstado };
+module.exports = { listar, obtener, solicitar, revertirEstado, deshacerSolicitud };

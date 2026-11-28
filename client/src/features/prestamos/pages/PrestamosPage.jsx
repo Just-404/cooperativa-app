@@ -8,6 +8,7 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 import SocioSelect from './SociosSelect.jsx';
 import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
+import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
 
 const POR_PAGINA = 10;
 const ESTADOS_PRESTAMO = [
@@ -52,6 +53,7 @@ export default function PrestamosPage() {
   const [errorSocios, setErrorSocios] = useState('');
   const [errorTipos, setErrorTipos] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [confirmacion, setConfirmacion] = useState(null);
   const busqueda = searchParams.get('q') || '';
   const estadoSolicitado = searchParams.get('estado') || '';
   const estadoFiltro = ESTADOS_PRESTAMO.some((estado) => estado.value === estadoSolicitado)
@@ -60,7 +62,7 @@ export default function PrestamosPage() {
 
   const [errorLista, setErrorLista] = useState('');
   const [cargandoLista, setCargandoLista] = useState(true);
-  const puedeSolicitar = ['administrador', 'cajero', 'oficial_credito'].includes(user?.rol);
+  const puedeSolicitar = ['administrador', 'cajero'].includes(user?.rol);
   const tipoSeleccionado = tipos.find((tipo) => tipo.id === form.tipoPrestamoId);
 
   async function cargar() {
@@ -92,6 +94,16 @@ export default function PrestamosPage() {
       return;
     }
     setError('');
+    setConfirmacion({
+      tipo: 'crearSolicitud',
+      titulo: '¿Crear esta solicitud de préstamo?',
+      mensaje: 'Confirma que los datos del socio, monto y plazo son correctos antes de registrarla.',
+      confirmarTexto: 'Crear solicitud',
+    });
+  }
+
+  async function confirmarSolicitud() {
+    if (!confirmacion || cargando) return;
     setCargando(true);
     try {
       await solicitar({
@@ -101,13 +113,25 @@ export default function PrestamosPage() {
       });
       setForm(VACIO);
       setMostrarForm(false);
+      setConfirmacion(null);
       setMensaje('La solicitud de préstamo se registró correctamente.');
       cargar();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'No se pudo registrar la solicitud');
+      setConfirmacion(null);
     } finally {
       setCargando(false);
     }
+  }
+
+  function confirmarAccion() {
+    if (!confirmacion) return;
+    if (confirmacion.tipo === 'descartarSolicitud') {
+      cerrarFormulario();
+      setConfirmacion(null);
+      return;
+    }
+    confirmarSolicitud();
   }
 
   const indexados = useMemo(
@@ -174,6 +198,21 @@ export default function PrestamosPage() {
     setMostrarForm(false);
   }
 
+  function cancelarFormulario() {
+    if (Object.values(form).some((valor) => String(valor).trim() !== '')) {
+      setConfirmacion({
+        tipo: 'descartarSolicitud',
+        titulo: '¿Descartar la solicitud?',
+        mensaje: 'Los datos ingresados no se guardarán.',
+        confirmarTexto: 'Salir sin guardar',
+        cancelarTexto: 'Continuar editando',
+        peligro: true,
+      });
+      return;
+    }
+    cerrarFormulario();
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
@@ -191,7 +230,7 @@ export default function PrestamosPage() {
       </div>
 
       {mostrarForm && (
-        <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) cerrarFormulario(); }}>
+        <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) cancelarFormulario(); }}>
           <form onSubmit={handleSubmit} className="card socio-modal" aria-labelledby="nueva-solicitud-titulo" role="dialog" aria-modal="true">
             <h3 id="nueva-solicitud-titulo">Solicitar préstamo</h3>
             <p className="socio-modal-description">Completa los datos de la solicitud.</p>
@@ -246,7 +285,7 @@ export default function PrestamosPage() {
               </div>
             </div>
             <div className="socio-modal-actions">
-              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>
+              <button className="btn secondary" type="button" onClick={cancelarFormulario} disabled={cargando}>
                 <X size={16} aria-hidden="true" /> Cancelar
               </button>
               <button className="btn primary" type="submit" disabled={cargando}>
@@ -336,6 +375,18 @@ export default function PrestamosPage() {
         opcionesPorPagina={opciones}
         onCambiarPorPagina={setPorPagina}
       />
+      {confirmacion && (
+        <ConfirmacionModal
+          titulo={confirmacion.titulo}
+          mensaje={confirmacion.mensaje}
+          confirmarTexto={confirmacion.confirmarTexto}
+          cancelarTexto={confirmacion.cancelarTexto}
+          peligro={confirmacion.peligro}
+          procesando={cargando}
+          onConfirmar={confirmarAccion}
+          onCancelar={() => { if (!cargando) setConfirmacion(null); }}
+        />
+      )}
     </div>
   );
 }
