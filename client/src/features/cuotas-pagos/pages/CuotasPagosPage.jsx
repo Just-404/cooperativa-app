@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Eye, FilterX } from 'lucide-react';
 import { listarEnMora } from '../services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
@@ -21,11 +21,14 @@ const TRAMOS = [
 ];
 
 export default function CuotasPagosPage() {
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cuotas, setCuotas] = useState([]);
   const [error, setError] = useState('');
   const [cargandoLista, setCargandoLista] = useState(true);
-  const [busqueda, setBusqueda] = useState('');
-  const [tramoFiltro, setTramoFiltro] = useState('');
+  const busqueda = searchParams.get('q') || '';
+  const tramoSolicitado = searchParams.get('atraso') || '';
+  const tramoFiltro = TRAMOS.some((tramo) => tramo.value === tramoSolicitado) ? tramoSolicitado : '';
 
   useEffect(() => {
     listarEnMora()
@@ -80,8 +83,21 @@ export default function CuotasPagosPage() {
   const hayFiltros = busqueda.trim() !== '' || tramoFiltro !== '';
 
   function limpiarFiltros() {
-    setBusqueda('');
-    setTramoFiltro('');
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('q');
+      next.delete('atraso');
+      return next;
+    }, { replace: true });
+  }
+
+  function cambiarParametro(clave, valor) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (valor) next.set(clave, valor);
+      else next.delete(clave);
+      return next;
+    }, { replace: true });
   }
 
   return (
@@ -104,14 +120,14 @@ export default function CuotasPagosPage() {
           placeholder="Buscar por socio, cédula, cuota o monto…"
           aria-label="Buscar cuotas en mora"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setBusqueda(''); }}
+          onChange={(e) => cambiarParametro('q', e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') cambiarParametro('q', ''); }}
           style={{ flex: '1 1 220px', width: 'auto', minWidth: 0 }}
         />
         <select
           aria-label="Filtrar por días de atraso"
           value={tramoFiltro}
-          onChange={(e) => setTramoFiltro(e.target.value)}
+          onChange={(e) => cambiarParametro('atraso', e.target.value)}
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los atrasos</option>
@@ -148,7 +164,11 @@ export default function CuotasPagosPage() {
               </td>
               <td><EstadoTag estado={c.estado} /></td>
               <td>
-                <Link className="btn secondary btn-icon" to={`/prestamos/${c.prestamo?.id}`}>
+                <Link
+                  className="btn secondary btn-icon"
+                  to={`/prestamos/${c.prestamo?.id}`}
+                  state={{ from: { pathname: '/pagos', search: location.search } }}
+                >
                   <Eye size={15} aria-hidden="true" /> Ver préstamo
                 </Link>
               </td>

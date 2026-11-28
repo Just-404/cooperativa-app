@@ -70,6 +70,11 @@ async function recalcularFechasCuotas(prestamoId, options = {}) {
     err.status = 404;
     throw err;
   }
+  if (prestamo.estado !== 'desembolsado') {
+    const err = new Error('Solo se pueden recalcular fechas de préstamos desembolsados y no cerrados');
+    err.status = 400;
+    throw err;
+  }
 
   const calendario = options.calendario || calendarioPorDefecto;
   const fechaBase = aISO(prestamo.fechaDesembolso || prestamo.fechaSolicitud || new Date());

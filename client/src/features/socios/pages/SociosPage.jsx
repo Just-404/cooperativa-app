@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Eye, FilterX, UserPlus, X } from 'lucide-react';
 import { listar, crear } from '../services/socios.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
@@ -54,6 +54,8 @@ const TRAMOS = [
 
 export default function SociosPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [socios, setSocios] = useState([]);
   const [form, setForm] = useState(VACIO);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -62,9 +64,11 @@ export default function SociosPage() {
   const [cargando, setCargando] = useState(false);
   const [cargandoLista, setCargandoLista] = useState(true);
   const [errorLista, setErrorLista] = useState('');
-  const [busqueda, setBusqueda] = useState('');
-  const [estadoFiltro, setEstadoFiltro] = useState('');
-  const [tramoFiltro, setTramoFiltro] = useState('');
+  const busqueda = searchParams.get('q') || '';
+  const estadoSolicitado = searchParams.get('estado') || '';
+  const estadoFiltro = ['activo', 'inactivo'].includes(estadoSolicitado) ? estadoSolicitado : '';
+  const tramoSolicitado = searchParams.get('scoring') || '';
+  const tramoFiltro = TRAMOS.some((tramo) => tramo.value === tramoSolicitado) ? tramoSolicitado : '';
 
   const puedeCrear = ['administrador', 'oficial_credito'].includes(user?.rol);
 
@@ -168,7 +172,7 @@ export default function SociosPage() {
 
     const coincideTramo = (p) => {
       if (!tramo) return true;                        // sin filtro: todos
-      if (tramo.value === 'sin') return p == null;    // null o undefined
+      if (tramo.value === 'sin-scoring') return p == null;
       return p != null && p >= tramo.min && p <= tramo.max;
     };
 
@@ -188,9 +192,22 @@ export default function SociosPage() {
   const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '' || tramoFiltro !== '';
 
   function limpiarFiltros() {
-    setBusqueda('');
-    setEstadoFiltro('');
-    setTramoFiltro('');
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('q');
+      next.delete('estado');
+      next.delete('scoring');
+      return next;
+    }, { replace: true });
+  }
+
+  function cambiarParametro(clave, valor) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (valor) next.set(clave, valor);
+      else next.delete(clave);
+      return next;
+    }, { replace: true });
   }
 
   function cerrarFormulario() {
@@ -285,14 +302,14 @@ export default function SociosPage() {
           placeholder="Buscar por nombre, cédula, email o teléfono…"
           aria-label="Buscar socios"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setBusqueda(''); }}
+          onChange={(e) => cambiarParametro('q', e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') cambiarParametro('q', ''); }}
           style={{ flex: '1 1 220px', width: 'auto', minWidth: 0 }}
         />
         <select
           aria-label="Filtrar por estado"
           value={estadoFiltro}
-          onChange={(e) => setEstadoFiltro(e.target.value)}
+          onChange={(e) => cambiarParametro('estado', e.target.value)}
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los estados</option>
@@ -303,7 +320,7 @@ export default function SociosPage() {
         <select
           aria-label="Filtrar por scoring crediticio"
           value={tramoFiltro}
-          onChange={(e) => setTramoFiltro(e.target.value)}
+          onChange={(e) => cambiarParametro('scoring', e.target.value)}
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los scorings</option>
@@ -330,7 +347,7 @@ export default function SociosPage() {
               <td className="mono">{s.scoring ?? '—'}</td>
               <td><EstadoTag estado={s.estado} /></td>
               <td>
-                <Link className="btn secondary btn-icon" to={`/socios/${s.id}`}>
+                <Link className="btn secondary btn-icon" to={`/socios/${s.id}${location.search}`}>
                   <Eye size={15} aria-hidden="true" /> Ver socio
                 </Link>
               </td>

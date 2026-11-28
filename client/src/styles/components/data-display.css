@@ -58,3 +58,10 @@ table.ledger tr:hover td {
 .tag-status.neutral {
   color: var(--ink-soft);
 }
+
+.tag-status.actionable {
+  color: var(--paper);
+  background: var(--forest);
+  border-color: var(--forest);
+  font-weight: 600;
+}

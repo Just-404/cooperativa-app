@@ -9,5 +9,8 @@ async function obtener(req, res, next) {
 async function solicitar(req, res, next) {
   try { res.status(201).json(await prestamos.solicitar(req.body)); } catch (err) { next(err); }
 }
+async function revertirEstado(req, res, next) {
+  try { res.json(await prestamos.revertirEstado(req.params.id)); } catch (err) { next(err); }
+}
 
-module.exports = { listar, obtener, solicitar };
+module.exports = { listar, obtener, solicitar, revertirEstado };

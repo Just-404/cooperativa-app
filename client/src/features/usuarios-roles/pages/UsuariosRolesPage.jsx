@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { FilterX, Pencil, Save, UserCheck, UserPlus, UserX, X } from 'lucide-react';
 import { listar, crear, actualizar, cambiarEstado } from '../services/usuarios-roles.service';
 import usePaginacion from '../../../hooks/usePaginacion';
@@ -24,6 +25,7 @@ const etiquetaRol = (rol) => ETIQUETAS_ROL[rol] || String(rol ?? '').replace(/_/
 
 export default function UsuariosRolesPage() {
   const { user: usuarioActual } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [usuarios, setUsuarios] = useState([]);
   const [form, setForm] = useState(VACIO);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -33,10 +35,14 @@ export default function UsuariosRolesPage() {
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
   const [cargandoLista, setCargandoLista] = useState(true);
-  const [busqueda, setBusqueda] = useState('');
-  const [rolFiltro, setRolFiltro] = useState('');
-  const [estadoFiltro, setEstadoFiltro] = useState('');
+  const busqueda = searchParams.get('q') || '';
+  const rolSolicitado = searchParams.get('rol') || '';
+  const rolFiltro = ROLES.includes(rolSolicitado) ? rolSolicitado : '';
+  const estadoSolicitado = searchParams.get('estado') || '';
+  const estadoFiltro = ['activo', 'inactivo'].includes(estadoSolicitado) ? estadoSolicitado : '';
   const [errorLista, setErrorLista] = useState('');   // ← añadir
+  const [formInicial, setFormInicial] = useState(VACIO);
+  const [confirmacionEdicion, setConfirmacionEdicion] = useState(null);
 
   function cargar() {
     setErrorLista('');                                // ← añadir
@@ -51,15 +57,23 @@ export default function UsuariosRolesPage() {
     e.preventDefault();
     setError('');
     setMensaje('');
+    if (!form.nombre.trim()) {
+      setError('El nombre es requerido.');
+      return;
+    }
+    if (usuarioEditando) {
+      setConfirmacionEdicion({
+        tipo: 'guardar',
+        titulo: '¿Guardar los cambios?',
+        mensaje: 'Confirma que la información del usuario es correcta antes de actualizarla.',
+        confirmarTexto: 'Guardar cambios',
+      });
+      return;
+    }
     setCargando(true);
     try {
-      if (usuarioEditando) {
-        await actualizar(usuarioEditando.id, form);
-        setMensaje('El usuario se actualizó correctamente.');
-      } else {
-        await crear(form);
-        setMensaje('El usuario se creó correctamente.');
-      }
+      await crear(form);
+      setMensaje('El usuario se creó correctamente.');
       setForm(VACIO);
       setMostrarForm(false);
       setUsuarioEditando(null);
@@ -102,17 +116,45 @@ export default function UsuariosRolesPage() {
     usuarioEditando?.id === usuarioActual?.id && usuarioEditando?.rol === 'administrador';
 
   function limpiarFiltros() {
-    setBusqueda('');
-    setRolFiltro('');
-    setEstadoFiltro('');
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('q');
+      next.delete('rol');
+      next.delete('estado');
+      return next;
+    }, { replace: true });
+  }
+
+  function cambiarParametro(clave, valor) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (valor) next.set(clave, valor);
+      else next.delete(clave);
+      return next;
+    }, { replace: true });
   }
 
   function cerrarFormulario() {
     setForm(VACIO);
     setError('');
     setMensaje('');
+    setConfirmacionEdicion(null);
     setMostrarForm(false);
     setUsuarioEditando(null);
+  }
+
+  function cancelarEdicion() {
+    if (JSON.stringify(form) !== JSON.stringify(formInicial)) {
+      setConfirmacionEdicion({
+        tipo: 'descartar',
+        titulo: '¿Descartar los cambios?',
+        mensaje: 'Los cambios que hiciste al usuario no se guardarán.',
+        confirmarTexto: 'Salir sin guardar',
+        peligro: true,
+      });
+      return;
+    }
+    cerrarFormulario();
   }
 
   function editarUsuario(usuario) {
@@ -122,14 +164,42 @@ export default function UsuariosRolesPage() {
       return;
     }
     setUsuarioEditando(usuario);
-    setForm({
+    const datos = {
       nombre: usuario.nombre,
       email: usuario.email,
       password: '',
       rol: usuario.rol,
-    });
+    };
+    setForm(datos);
+    setFormInicial(datos);
     setError('');
     setMostrarForm(true);
+  }
+
+  async function confirmarEdicion() {
+    if (!confirmacionEdicion) return;
+    if (confirmacionEdicion.tipo === 'descartar') {
+      cerrarFormulario();
+      return;
+    }
+    setCargando(true);
+    setError('');
+    setMensaje('');
+    try {
+      await actualizar(usuarioEditando.id, form);
+      setMensaje('El usuario se actualizó correctamente.');
+      setConfirmacionEdicion(null);
+      setForm(VACIO);
+      setError('');
+      setMostrarForm(false);
+      setUsuarioEditando(null);
+      cargar();
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'No se pudo actualizar el usuario');
+      setConfirmacionEdicion(null);
+    } finally {
+      setCargando(false);
+    }
   }
 
   function solicitarCambioEstado(usuario) {
@@ -184,7 +254,7 @@ export default function UsuariosRolesPage() {
       </div>
 
       {mostrarForm && (
-        <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) cerrarFormulario(); }}>
+        <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !cargando) (usuarioEditando ? cancelarEdicion : cerrarFormulario)(); }}>
           <form onSubmit={handleSubmit} className="card socio-modal" aria-labelledby="usuario-form-titulo" role="dialog" aria-modal="true">
             <h3 id="usuario-form-titulo">{usuarioEditando ? 'Editar usuario' : 'Crear usuario'}</h3>
             <p className="socio-modal-description">
@@ -226,7 +296,7 @@ export default function UsuariosRolesPage() {
               {editandoAdminActual && <small>No puedes cambiar el rol de tu propio usuario administrador.</small>}
             </div>
             <div className="socio-modal-actions">
-              <button className="btn secondary" type="button" onClick={cerrarFormulario} disabled={cargando}>
+              <button className="btn secondary" type="button" onClick={usuarioEditando ? cancelarEdicion : cerrarFormulario} disabled={cargando}>
                 <X size={16} aria-hidden="true" /> Cancelar
               </button>
               <button className="btn primary" type="submit" disabled={cargando}>
@@ -248,14 +318,14 @@ export default function UsuariosRolesPage() {
           placeholder="Buscar por nombre o email…"
           aria-label="Buscar usuarios"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setBusqueda(''); }}
+          onChange={(e) => cambiarParametro('q', e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') cambiarParametro('q', ''); }}
           style={{ flex: '1 1 220px', width: 'auto', minWidth: 0 }}
         />
         <select
           aria-label="Filtrar por rol"
           value={rolFiltro}
-          onChange={(e) => setRolFiltro(e.target.value)}
+          onChange={(e) => cambiarParametro('rol', e.target.value)}
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los roles</option>
@@ -264,7 +334,7 @@ export default function UsuariosRolesPage() {
         <select
           aria-label="Filtrar por estado"
           value={estadoFiltro}
-          onChange={(e) => setEstadoFiltro(e.target.value)}
+          onChange={(e) => cambiarParametro('estado', e.target.value)}
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los estados</option>
@@ -349,6 +419,17 @@ export default function UsuariosRolesPage() {
           procesando={cargando}
           onConfirmar={confirmarCambioEstado}
           onCancelar={() => { if (!cargando) setConfirmacion(null); }}
+        />
+      )}
+      {confirmacionEdicion && (
+        <ConfirmacionModal
+          titulo={confirmacionEdicion.titulo}
+          mensaje={confirmacionEdicion.mensaje}
+          confirmarTexto={confirmacionEdicion.confirmarTexto}
+          peligro={confirmacionEdicion.peligro}
+          procesando={cargando}
+          onConfirmar={confirmarEdicion}
+          onCancelar={() => { if (!cargando) setConfirmacionEdicion(null); }}
         />
       )}
 

@@ -4,6 +4,7 @@ const controller = require('../controllers/tickets.controller');
 const auth = require('../middlewares/auth.middleware');
 const checkRole = require('../middlewares/roles.middleware');
 const validate = require('../middlewares/validate.middleware');
+const auditoria = require('../middlewares/auditoria.middleware');
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.post(
       .notEmpty().withMessage('La descripción es requerida')
       .isLength({ max: 2000 }).withMessage('La descripción no puede superar los 2000 caracteres'),
     validate,
+    auditoria('crear_ticket', 'ticket'),
   ],
   controller.crearTicket
 );
@@ -57,6 +59,7 @@ router.patch(
     body('estado').isIn(['pending', 'resolved', 'cancelled']).withMessage('Estado inválido'),
     validate,
   ],
+  auditoria('actualizar_ticket', 'ticket'),
   controller.actualizarTicket
 );
 
@@ -66,6 +69,7 @@ router.delete(
   checkRole('administrador'),
   [param('id').isUUID().withMessage('ID de ticket inválido')],
   validate,
+  auditoria('eliminar_ticket', 'ticket'),
   controller.eliminarTicket
 );
 

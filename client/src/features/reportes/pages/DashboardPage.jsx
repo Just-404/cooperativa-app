@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowUpRight,
@@ -35,6 +35,7 @@ import ChartSkeleton from '../components/ChartSkeleton.jsx';
 import AtencionCard from '../components/AtencionCard.jsx';
 import { COLORES_GRAFICOS } from '../../../utils/coloresGraficos.js';
 import TotalSocios from '../components/TotalSocios.jsx';
+import BotonDescarga from '../components/BotonDescarga.jsx';
 
 const ETIQUETAS_ROL = {
   administrador: 'Administrador',
@@ -54,8 +55,7 @@ const DESCRIPCIONES_ROL = {
 
 const ETIQUETAS_ESTADO_PRESTAMO = {
   solicitado: 'Solicitado',
-  en_evaluacion: 'En evaluación',
-  evaluado: 'Evaluado',
+  evaluado: 'Evaluación',
   aprobado: 'Aprobado',
   rechazado: 'Rechazado',
   desembolsado: 'Desembolsado',
@@ -72,6 +72,9 @@ const ETIQUETAS_ACCION = {
   cambiar_estado_usuario: 'Estado de usuario cambiado',
   crear_socio: 'Socio creado',
   actualizar_socio: 'Socio actualizado',
+  crear_ticket: 'Ticket creado',
+  actualizar_ticket: 'Estado del ticket actualizado',
+  eliminar_ticket: 'Ticket eliminado',
 };
 
 const ESTADOS_TICKET = [
@@ -82,8 +85,8 @@ const ESTADOS_TICKET = [
 
 const REPORTES_POR_ROL = {
   gerente: ['socios', 'mes', 'cuentas', 'prestado', 'tipo'],
-  auditor: ['socios', 'mes', 'cuentas', 'prestado', 'tipo'],
-  administrador: ['socios', 'cuentas', 'tipo'],
+  auditor: ['socios', 'mes', 'cuentas', 'prestado', 'tipo', 'auditoria'],
+  administrador: ['socios', 'cuentas', 'tipo', 'auditoria'],
 };
 
 const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -322,9 +325,9 @@ function PanelAdministrador({ data, errors, cargando }) {
           <ErrorSeccion error={errors.tickets || errors.resumen || errors.prestamos} />
         ) : (
           <div className="dashboard-attention-grid">
-            {ticketsPendientes > 0 && <AtencionCard href="/tickets" etiqueta="Tickets pendientes" cantidad={ticketsPendientes} />}
+            {ticketsPendientes > 0 && <AtencionCard href="/tickets?estado=pending" etiqueta="Tickets pendientes" cantidad={ticketsPendientes} />}
             {Number(resumen?.cuotasEnMora) > 0 && <AtencionCard href="/pagos" etiqueta="Cuotas en mora" cantidad={formatoNumero(resumen.cuotasEnMora)} />}
-            {aprobadosPorDesembolsar > 0 && <AtencionCard href="/prestamos" etiqueta="Aprobados por desembolsar" cantidad={aprobadosPorDesembolsar} />}
+            {aprobadosPorDesembolsar > 0 && <AtencionCard href="/prestamos?estado=aprobado" etiqueta="Aprobados por desembolsar" cantidad={aprobadosPorDesembolsar} />}
             {!ticketsPendientes && !Number(resumen?.cuotasEnMora) && !aprobadosPorDesembolsar && (
               <EmptyState>Todo al día.</EmptyState>
             )}
@@ -336,7 +339,7 @@ function PanelAdministrador({ data, errors, cargando }) {
         <KpiCard
           etiqueta="Ahorros administrados"
           valor={errors.resumen ? '—' : formatoMoneda(resumen?.totalAhorros)}
-          href="/socios"
+          href="/socios?estado=activo"
           destacado
           cargando={cargando}
         />
@@ -344,19 +347,19 @@ function PanelAdministrador({ data, errors, cargando }) {
           etiqueta="Socios activos"
           valor={errors.resumen ? '—' : formatoNumero(resumen?.totalSocios)}
           detalle={errors.resumen ? 'No se pudo cargar' : `${formatoNumero(resumen?.sociosInactivos)} inactivos`}
-          href="/socios"
+          href="/socios?estado=activo"
           cargando={cargando}
         />
         <KpiCard
           etiqueta="Préstamos vigentes"
           valor={errors.resumen ? '—' : formatoNumero(resumen?.prestamosVigentes)}
-          href="/prestamos"
+          href="/prestamos?estado=desembolsado"
           cargando={cargando}
         />
         <KpiCard
           etiqueta="Usuarios activos"
           valor={errors.usuarios ? '—' : formatoNumero(usuariosActivos)}
-          href="/usuarios"
+          href="/usuarios?estado=activo"
           cargando={cargando}
         />
       </section>
@@ -381,7 +384,7 @@ function PanelAdministrador({ data, errors, cargando }) {
       </div>
 
       <div className="dashboard-secondary-grid">
-        <PanelCard titulo="Tickets por estado" enlace="/tickets" textoEnlace="Ver tickets">
+        <PanelCard titulo="Tickets por estado" enlace="/tickets?estado=pending" textoEnlace="Ver pendientes">
           <ErrorSeccion error={errors.tickets} />
           {!errors.tickets && <GraficoTickets datos={ticketsPorEstado} cargando={cargando} />}
         </PanelCard>
@@ -437,8 +440,8 @@ function PanelPrestamosRevision({ prestamos, error, cargando }) {
     <PanelCard
       titulo="Préstamos para revisión"
       descripcion="Solicitudes evaluadas que esperan decisión de gerencia."
-      enlace="/prestamos"
-      textoEnlace="Ver todas"
+      enlace="/prestamos?estado=evaluado"
+      textoEnlace="Ver pendientes"
     >
       <ErrorSeccion error={error} />
       {cargando && !error && <ChartSkeleton />}
@@ -525,11 +528,11 @@ function actividadAuditoriaPorFecha(eventos) {
 
 function PipelinePrestamos({ prestamos }) {
   const etapas = [
-    { estado: 'solicitado', etiqueta: 'Solicitado' },
-    { estado: 'en_evaluacion', etiqueta: 'En evaluación' },
-    { estado: 'evaluado', etiqueta: 'Evaluado' },
-    { estado: 'aprobado', etiqueta: 'Aprobado' },
-    { estado: 'desembolsado', etiqueta: 'Desembolsado' },
+    { estado: 'solicitado', etiqueta: 'Solicitud' },
+    { estado: 'evaluado', etiqueta: 'Evaluación' },
+    { estado: 'aprobado', etiqueta: 'Aprobación' },
+    { estado: 'desembolsado', etiqueta: 'Desembolso' },
+    { estado: 'rechazado', etiqueta: 'Rechazado' },
   ];
   return (
     <ol className="dashboard-pipeline" aria-label="Etapas del pipeline de préstamos">
@@ -546,9 +549,7 @@ function PipelinePrestamos({ prestamos }) {
 
 function PanelOficialCredito({ data, errors, cargando }) {
   const prestamos = data.prestamos || [];
-  const porEvaluar = prestamos.filter((prestamo) =>
-    ['solicitado', 'en_evaluacion'].includes(prestamo.estado)
-  ).length;
+  const porEvaluar = prestamos.filter((prestamo) => prestamo.estado === 'solicitado').length;
   const evaluados = prestamos.filter((prestamo) => prestamo.estado === 'evaluado').length;
   const porDesembolsar = prestamos.filter((prestamo) => prestamo.estado === 'aprobado').length;
   const solicitudesPorMes = useMemo(() => mesesSolicitud(prestamos), [prestamos]);
@@ -556,9 +557,9 @@ function PanelOficialCredito({ data, errors, cargando }) {
   return (
     <>
       <section className="dashboard-kpi-grid dashboard-kpi-grid-three" aria-label="Indicadores de crédito">
-        <KpiCard etiqueta="Por evaluar" valor={errors.prestamos ? '—' : formatoNumero(porEvaluar)} href="/prestamos" destacado cargando={cargando} />
-        <KpiCard etiqueta="Evaluados para decisión" valor={errors.prestamos ? '—' : formatoNumero(evaluados)} href="/prestamos" cargando={cargando} />
-        <KpiCard etiqueta="Aprobados por desembolsar" valor={errors.prestamos ? '—' : formatoNumero(porDesembolsar)} href="/prestamos" cargando={cargando} />
+        <KpiCard etiqueta="Por evaluar" valor={errors.prestamos ? '—' : formatoNumero(porEvaluar)} href="/prestamos?estado=solicitado" destacado cargando={cargando} />
+        <KpiCard etiqueta="Evaluados para decisión" valor={errors.prestamos ? '—' : formatoNumero(evaluados)} href="/prestamos?estado=evaluado" cargando={cargando} />
+        <KpiCard etiqueta="Aprobados por desembolsar" valor={errors.prestamos ? '—' : formatoNumero(porDesembolsar)} href="/prestamos?estado=aprobado" cargando={cargando} />
       </section>
       <div className="dashboard-chart-grid dashboard-official-grid">
         <PanelCard titulo="Pipeline de préstamos" descripcion="Solicitudes según su etapa actual." enlace="/prestamos" textoEnlace="Ver préstamos">
@@ -624,7 +625,7 @@ function PanelCajero({ data, errors, cargando }) {
         <KpiCard
           etiqueta="Aprobados por desembolsar"
           valor={errors.prestamos ? '—' : formatoNumero(porDesembolsar)}
-          href="/prestamos"
+          href="/prestamos?estado=aprobado"
           cargando={cargando}
         />
       </section>
@@ -654,10 +655,10 @@ function PanelGerente({ data, errors, cargando }) {
   return (
     <>
       <section className="dashboard-kpi-grid" aria-label="Indicadores de gerencia">
-        <KpiCard etiqueta="Pendientes de decisión" valor={errors.prestamos ? '—' : formatoNumero(pendientesDecision)} detalle="Solicitudes ya evaluadas" href="/prestamos" destacado alerta={pendientesDecision > 0} cargando={cargando} />
-        <KpiCard etiqueta="Aprobados por desembolsar" valor={errors.prestamos ? '—' : formatoNumero(aprobados)} href="/prestamos" cargando={cargando} />
+        <KpiCard etiqueta="Pendientes de decisión" valor={errors.prestamos ? '—' : formatoNumero(pendientesDecision)} detalle="Solicitudes ya evaluadas" href="/prestamos?estado=evaluado" destacado alerta={pendientesDecision > 0} cargando={cargando} />
+        <KpiCard etiqueta="Aprobados por desembolsar" valor={errors.prestamos ? '—' : formatoNumero(aprobados)} href="/prestamos?estado=aprobado" cargando={cargando} />
         <KpiCard etiqueta="Cuotas en mora" valor={errors.resumen ? '—' : formatoNumero(data.resumen?.cuotasEnMora)} href="/pagos" alerta={Number(data.resumen?.cuotasEnMora) > 0} cargando={cargando} />
-        <KpiCard etiqueta="Préstamos vigentes" valor={errors.resumen ? '—' : formatoNumero(data.resumen?.prestamosVigentes)} href="/prestamos" cargando={cargando} />
+        <KpiCard etiqueta="Préstamos vigentes" valor={errors.resumen ? '—' : formatoNumero(data.resumen?.prestamosVigentes)} href="/prestamos?estado=desembolsado" cargando={cargando} />
       </section>
       <div className="dashboard-chart-grid dashboard-manager-grid">
         <PanelPrestamosRevision prestamos={prestamos} error={errors.prestamos} cargando={cargando} />
@@ -672,8 +673,10 @@ function PanelGerente({ data, errors, cargando }) {
   );
 }
 
-function PanelAuditor({ data, errors, cargando }) {
-  const eventos = data.auditoria || [];
+function ActividadAuditoria({ eventos, error, cargando, mostrarEnlace = true }) {
+  const fechaGraficaRef = useRef(null);
+  const tipoGraficaRef = useRef(null);
+  const rolGraficaRef = useRef(null);
   const actividades = useMemo(() => {
     const conteo = new Map();
     eventos.forEach((evento) => {
@@ -696,39 +699,112 @@ function PanelAuditor({ data, errors, cargando }) {
     })).sort((a, b) => b.cantidad - a.cantidad || a.etiqueta.localeCompare(b.etiqueta, 'es'));
   }, [eventos]);
   const actividadPorFecha = useMemo(() => actividadAuditoriaPorFecha(eventos), [eventos]);
+
+  return (
+    <div className="dashboard-chart-grid dashboard-auditor-grid">
+      <PanelCard
+        titulo="Actividad por fecha"
+        descripcion="Acciones registradas en cada uno de los últimos siete días."
+        enlace={mostrarEnlace ? '/auditoria' : undefined}
+        textoEnlace={mostrarEnlace ? 'Revisar bitácora' : undefined}
+        actions={(
+          <BotonDescarga
+            archivo="actividad-bitacora-por-fecha"
+            titulo="Actividad de bitácora por fecha"
+            periodo="Últimos 7 días"
+            columnas={[
+              { header: 'Fecha', key: 'etiqueta' },
+              { header: 'Acciones', key: 'cantidad' },
+            ]}
+            filas={cargando || error ? [] : actividadPorFecha}
+            grafica={fechaGraficaRef}
+          />
+        )}
+      >
+        <ErrorSeccion error={error} />
+        {!error && (
+          <div ref={fechaGraficaRef}>
+            <GraficoTendencia
+              datos={actividadPorFecha}
+              descripcion="Cantidad de eventos de auditoría por fecha durante los últimos siete días"
+              cargando={cargando}
+            />
+          </div>
+        )}
+      </PanelCard>
+      <PanelCard
+        titulo="Actividad por tipo"
+        descripcion="Cinco tipos de acción más frecuentes."
+        enlace={mostrarEnlace ? '/auditoria' : undefined}
+        textoEnlace={mostrarEnlace ? 'Revisar bitácora' : undefined}
+        actions={(
+          <BotonDescarga
+            archivo="actividad-bitacora-por-tipo"
+            titulo="Actividad de bitácora por tipo"
+            periodo="Hasta 200 registros recientes"
+            columnas={[
+              { header: 'Tipo de actividad', key: 'etiqueta' },
+              { header: 'Acciones', key: 'cantidad' },
+            ]}
+            filas={cargando || error ? [] : actividades}
+            grafica={tipoGraficaRef}
+          />
+        )}
+      >
+        <ErrorSeccion error={error} />
+        {!error && (
+          <div ref={tipoGraficaRef}>
+            <GraficoBarras datos={actividades} descripcion="Acciones recientes de auditoría por tipo" cargando={cargando} />
+          </div>
+        )}
+      </PanelCard>
+      <PanelCard
+        titulo="Actividad por rol"
+        descripcion="Eventos atribuidos a cada perfil."
+        enlace={mostrarEnlace ? '/auditoria' : undefined}
+        textoEnlace={mostrarEnlace ? 'Revisar bitácora' : undefined}
+        actions={(
+          <BotonDescarga
+            archivo="actividad-bitacora-por-rol"
+            titulo="Actividad de bitácora por rol"
+            periodo="Hasta 200 registros recientes"
+            columnas={[
+              { header: 'Rol', key: 'etiqueta' },
+              { header: 'Acciones', key: 'cantidad' },
+            ]}
+            filas={cargando || error ? [] : actividadPorRol}
+            grafica={rolGraficaRef}
+          />
+        )}
+      >
+        <ErrorSeccion error={error} />
+        {!error && (
+          <div ref={rolGraficaRef}>
+            <ListaCompacta datos={actividadPorRol} ariaLabel="Actividad por rol de usuario" />
+          </div>
+        )}
+      </PanelCard>
+    </div>
+  );
+}
+
+function PanelAuditor({ data, errors, cargando }) {
+  const eventos = data.auditoria || [];
   const usuariosConActividad = new Set(eventos.map((evento) => evento.usuarioId).filter(Boolean)).size;
+  const tiposActividad = new Set(eventos.map((evento) => evento.accion || 'otra')).size;
 
   return (
     <>
       <section className="dashboard-kpi-grid dashboard-kpi-grid-three" aria-label="Indicadores de auditoría">
         <KpiCard etiqueta="Acciones recientes" valor={errors.auditoria ? '—' : formatoNumero(eventos.length)} detalle="Hasta 200 registros recientes" href="/auditoria" destacado cargando={cargando} />
         <KpiCard etiqueta="Usuarios con actividad" valor={errors.auditoria ? '—' : formatoNumero(usuariosConActividad)} href="/auditoria" cargando={cargando} />
-        <KpiCard etiqueta="Tipos de actividad" valor={errors.auditoria ? '—' : formatoNumero(actividades.length)} href="/auditoria" cargando={cargando} />
+        <KpiCard etiqueta="Tipos de actividad" valor={errors.auditoria ? '—' : formatoNumero(tiposActividad)} href="/auditoria" cargando={cargando} />
       </section>
-      <div className="dashboard-chart-grid dashboard-auditor-grid">
-        <PanelCard titulo="Actividad por fecha" descripcion="Acciones registradas en cada uno de los últimos siete días." enlace="/auditoria" textoEnlace="Revisar bitácora">
-          <ErrorSeccion error={errors.auditoria} />
-          {!errors.auditoria && (
-            <GraficoTendencia
-              datos={actividadPorFecha}
-              descripcion="Cantidad de eventos de auditoría por fecha durante los últimos siete días"
-              cargando={cargando}
-            />
-          )}
-        </PanelCard>
-        <PanelCard titulo="Actividad por tipo" descripcion="Cinco tipos de acción más frecuentes." enlace="/auditoria" textoEnlace="Revisar bitácora">
-          <ErrorSeccion error={errors.auditoria} />
-          {!errors.auditoria && (
-            <GraficoBarras datos={actividades} descripcion="Acciones recientes de auditoría por tipo" cargando={cargando} />
-          )}
-        </PanelCard>
-        <PanelCard titulo="Actividad por rol" descripcion="Eventos atribuidos a cada perfil." enlace="/auditoria" textoEnlace="Revisar bitácora">
-          <ErrorSeccion error={errors.auditoria} />
-          {!errors.auditoria && (
-            <ListaCompacta datos={actividadPorRol} ariaLabel="Actividad por rol de usuario" />
-          )}
-        </PanelCard>
-      </div>
+      <ActividadAuditoria
+        eventos={eventos}
+        error={errors.auditoria}
+        cargando={cargando}
+      />
     </>
   );
 }
@@ -745,6 +821,9 @@ export default function DashboardPage({ modo = 'panel' }) {
 
     if (modo === 'reportes') {
       solicitudes.push(['resumen', resumen()]);
+      if (['administrador', 'auditor'].includes(user?.rol)) {
+        solicitudes.push(['auditoria', listarAuditoria()]);
+      }
     } else if (user?.rol === 'administrador') {
       solicitudes.push(
         ['resumen', resumen()],
@@ -838,6 +917,22 @@ export default function DashboardPage({ modo = 'panel' }) {
             {ver('prestado') && <div className="dashboard-report-item"><PrestadoVsIngresos /></div>}
             {ver('tipo') && <div className="dashboard-report-item"><PrestamosPorTipo /></div>}
           </div>
+          {ver('auditoria') && (
+            <section aria-labelledby="dashboard-report-auditoria-title">
+              <div className="dashboard-section-heading">
+                <div>
+                  <h2 id="dashboard-report-auditoria-title">Actividad de bitácora</h2>
+                  <p>Resumen de las acciones registradas en el sistema.</p>
+                </div>
+              </div>
+              <ActividadAuditoria
+                eventos={sections.auditoria || []}
+                error={errors.auditoria}
+                cargando={cargando}
+                mostrarEnlace={false}
+              />
+            </section>
+          )}
         </>
       )}
     </div>

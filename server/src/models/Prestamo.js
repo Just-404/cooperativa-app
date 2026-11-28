@@ -9,7 +9,7 @@ const Prestamo = sequelize.define('Prestamo', {
   tasaInteresAnual: { type: DataTypes.DECIMAL(5, 2) },
   estado: {
     type: DataTypes.ENUM(
-      'solicitado', 'en_evaluacion', 'evaluado',
+      'solicitado', 'evaluado',
       'aprobado', 'rechazado', 'desembolsado', 'cerrado'
     ),
     defaultValue: 'solicitado',

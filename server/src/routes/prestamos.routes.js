@@ -12,6 +12,13 @@ router.get('/', auth, controller.listar);
 router.get('/:id', auth, controller.obtener);
 
 router.post(
+  '/:id/revertir-estado',
+  auth, checkRole('administrador'),
+  auditoria('revertir_estado_prestamo', 'prestamo'),
+  controller.revertirEstado
+);
+
+router.post(
   '/',
   auth, checkRole('administrador', 'cajero', 'oficial_credito'),
   [
