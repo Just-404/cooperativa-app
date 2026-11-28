@@ -235,7 +235,7 @@ function GraficoTickets({ datos, cargando }) {
           <XAxis type="number" hide />
           <YAxis type="category" dataKey="etiqueta" hide />
           <Tooltip formatter={(valor) => [formatoNumero(valor), 'Tickets']} />
-          <Legend />
+          <Legend itemSorter={null} />
           {datos.map((item) => (
             <Bar
               key={item.estado}
