@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowLeft, Calculator, Eye, Pencil, Save, UserCheck, UserX, Wallet, X } from 'lucide-react';
 import { actualizar, cambiarEstado, obtener } from '../services/socios.service';
 import { calcular, obtenerPorSocio } from '../../scoring/services/scoring.service';
@@ -40,6 +40,7 @@ function formatoMonto(monto) {
 
 export default function SocioDetallePage() {
   const { id } = useParams();
+  const location = useLocation();
   const { user } = useAuth();
   const [socio, setSocio] = useState(null);
   const [scoring, setScoring] = useState([]);
@@ -189,7 +190,7 @@ export default function SocioDetallePage() {
   if (!socio) {
     return (
       <div>
-        <Link className="link-accion" to="/socios"><ArrowLeft size={15} aria-hidden="true" /> Volver a socios</Link>
+        <Link className="link-accion" to={`/socios${location.search}`}><ArrowLeft size={15} aria-hidden="true" /> Volver a socios</Link>
         {error && <div className="alert error" role="alert">{error}</div>}
       </div>
     );
@@ -203,7 +204,7 @@ export default function SocioDetallePage() {
 
   return (
     <div>
-      <Link className="link-accion" to="/socios" style={{ fontSize: '0.82rem' }}>
+      <Link className="link-accion" to={`/socios${location.search}`} style={{ fontSize: '0.82rem' }}>
         <ArrowLeft size={15} aria-hidden="true" /> Volver a socios
       </Link>
       <div className="socio-detail-heading">

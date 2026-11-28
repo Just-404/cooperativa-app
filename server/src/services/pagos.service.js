@@ -193,8 +193,8 @@ async function registrarAbonoCapital(prestamoId, monto, usuarioId) {
       err.status = 404;
       throw err;
     }
-    if (prestamo.estado !== 'desembolsado' && prestamo.estado !== 'cerrado') {
-      const err = new Error('Solo se puede abonar capital a préstamos desembolsados');
+    if (prestamo.estado !== 'desembolsado') {
+      const err = new Error('Solo se puede abonar capital a préstamos desembolsados y no cerrados');
       err.status = 400;
       throw err;
     }

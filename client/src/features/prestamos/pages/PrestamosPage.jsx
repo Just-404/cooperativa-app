@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Eye, FilePlus, FilterX, Send, X } from 'lucide-react';
 import { listar, solicitar, listarTipos } from '../services/prestamos.service';
 import { listar as listarSocios } from '../../socios/services/socios.service';
@@ -10,14 +10,38 @@ import usePaginacion from '../../../hooks/usePaginacion';
 import Paginacion from '../../../components/common/Paginacion.jsx';
 
 const POR_PAGINA = 10;
+const ESTADOS_PRESTAMO = [
+  { value: 'solicitado', label: 'Solicitado' },
+  { value: 'evaluado', label: 'Evaluación' },
+  { value: 'aprobado', label: 'Aprobado' },
+  { value: 'desembolsado', label: 'Desembolso' },
+  { value: 'rechazado', label: 'Rechazado' },
+];
+const ROL_POR_ESTADO = {
+  solicitado: 'oficial_credito',
+  evaluado: 'gerente',
+  aprobado: 'cajero',
+  desembolsado: 'cajero',
+};
+const ESTILO_FILTRO_ACCIONABLE = {
+  color: 'var(--white)',
+  backgroundColor: 'var(--forest)',
+  fontWeight: 700,
+};
 const normalizar = (t) =>
   String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 
 const VACIO = { socioId: '', tipoPrestamoId: '', montoSolicitado: '', plazoMeses: '' };
 
+function esEstadoAccionable(estado, rol) {
+  return rol !== 'administrador' && ROL_POR_ESTADO[estado] === rol;
+}
+
 export default function PrestamosPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [prestamos, setPrestamos] = useState([]);
   const [socios, setSocios] = useState([]);
   const [tipos, setTipos] = useState([]);
@@ -28,8 +52,11 @@ export default function PrestamosPage() {
   const [errorSocios, setErrorSocios] = useState('');
   const [errorTipos, setErrorTipos] = useState('');
   const [cargando, setCargando] = useState(false);
-  const [busqueda, setBusqueda] = useState('');
-  const [estadoFiltro, setEstadoFiltro] = useState('');
+  const busqueda = searchParams.get('q') || '';
+  const estadoSolicitado = searchParams.get('estado') || '';
+  const estadoFiltro = ESTADOS_PRESTAMO.some((estado) => estado.value === estadoSolicitado)
+    ? estadoSolicitado
+    : '';
 
   const [errorLista, setErrorLista] = useState('');
   const [cargandoLista, setCargandoLista] = useState(true);
@@ -83,11 +110,6 @@ export default function PrestamosPage() {
     }
   }
 
-  const estados = useMemo(
-    () => [...new Set(prestamos.map((p) => p.estado).filter(Boolean))],
-    [prestamos]
-  );
-
   const indexados = useMemo(
     () =>
       prestamos.map((p) => ({
@@ -120,8 +142,30 @@ export default function PrestamosPage() {
   const hayFiltros = busqueda.trim() !== '' || estadoFiltro !== '';
 
   function limpiarFiltros() {
-    setBusqueda('');
-    setEstadoFiltro('');
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('q');
+      next.delete('estado');
+      return next;
+    }, { replace: true });
+  }
+
+  function cambiarParametro(clave, valor) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (valor) next.set(clave, valor);
+      else next.delete(clave);
+      return next;
+    }, { replace: true });
+  }
+
+  function cambiarEstadoFiltro(estado) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (estado) next.set('estado', estado);
+      else next.delete('estado');
+      return next;
+    }, { replace: true });
   }
 
   function cerrarFormulario() {
@@ -221,17 +265,24 @@ export default function PrestamosPage() {
           type="search"
           placeholder="Buscar por socio, tipo o monto…"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(e) => cambiarParametro('q', e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') cambiarParametro('q', ''); }}
           style={{ flex: '1 1 220px', width: 'auto', minWidth: 0 }}
         />
         <select
           value={estadoFiltro}
-          onChange={(e) => { setEstadoFiltro(e.target.value); }}
+          onChange={(e) => cambiarEstadoFiltro(e.target.value)}
           style={{ flex: '0 0 auto', width: 'auto' }}
         >
           <option value="">Todos los estados</option>
-          {estados.map((e) => (
-            <option key={e} value={e}>{e.charAt(0).toLocaleUpperCase('es') + e.slice(1)}</option>
+          {ESTADOS_PRESTAMO.map(({ value, label }) => (
+            <option
+              key={value}
+              value={value}
+              style={esEstadoAccionable(value, user?.rol) ? ESTILO_FILTRO_ACCIONABLE : undefined}
+            >
+              {label}
+            </option>
           ))}
         </select>
         {hayFiltros && (
@@ -249,9 +300,14 @@ export default function PrestamosPage() {
               <td>{p.socio?.nombre} {p.socio?.apellido}</td>
               <td>{p.tipoPrestamo?.nombre}</td>
               <td className="mono">RD$ {Number(p.montoSolicitado).toLocaleString()}</td>
-              <td><EstadoTag estado={p.estado} /></td>
               <td>
-                <Link className="btn secondary btn-icon" to={`/prestamos/${p.id}`}>
+                <EstadoTag
+                  estado={p.estado}
+                  resaltado={esEstadoAccionable(p.estado, user?.rol)}
+                />
+              </td>
+              <td>
+                <Link className="btn secondary btn-icon" to={`/prestamos/${p.id}${location.search}`}>
                   <Eye size={15} aria-hidden="true" /> Ver préstamo
                 </Link>
               </td>

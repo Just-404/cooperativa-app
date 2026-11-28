@@ -13,6 +13,7 @@ router.post(
   auth, checkRole('administrador', 'oficial_credito'),
   [
     body('comentario')
+      .trim()
       .notEmpty().withMessage('El comentario de evaluación es requerido')
       .bail()
       .isLength({ max: 2000 }).withMessage('El comentario de evaluación no puede superar los 2,000 caracteres'),

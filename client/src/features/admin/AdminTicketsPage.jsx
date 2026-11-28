@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Eye, FilterX, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { listarTickets, actualizarTicket, eliminarTicket } from '../../services/tickets.service';
@@ -36,14 +37,15 @@ function fechaLegible(fecha) {
 
 export default function AdminTicketsPage() {
   const { isReady } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
   const [errorOperacion, setErrorOperacion] = useState('');
   const [mensajeOperacion, setMensajeOperacion] = useState('');
   const [filtro, setFiltro] = useState({
-    estado: '',
-    tipo: '',
+    estado: ESTADO_LABEL[searchParams.get('estado')] ? searchParams.get('estado') : '',
+    tipo: TIPO_LABEL[searchParams.get('tipo')] ? searchParams.get('tipo') : '',
     periodo: 'todos',
     fechaDesde: '',
     fechaHasta: '',
@@ -131,6 +133,30 @@ export default function AdminTicketsPage() {
   function actualizarFiltro(e) {
     const { name, value } = e.target;
     setFiltro((actual) => ({ ...actual, [name]: value }));
+    if (name === 'estado' || name === 'tipo') {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (value) next.set(name, value);
+        else next.delete(name);
+        return next;
+      }, { replace: true });
+    }
+  }
+
+  function limpiarFiltros() {
+    setFiltro({
+      estado: '',
+      tipo: '',
+      periodo: 'todos',
+      fechaDesde: '',
+      fechaHasta: '',
+    });
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('estado');
+      next.delete('tipo');
+      return next;
+    }, { replace: true });
   }
 
   function actualizarFecha(e) {
@@ -247,13 +273,7 @@ export default function AdminTicketsPage() {
           <button
             type="button"
             className="btn ghost"
-            onClick={() => setFiltro({
-              estado: '',
-              tipo: '',
-              periodo: 'todos',
-              fechaDesde: '',
-              fechaHasta: '',
-            })}
+            onClick={limpiarFiltros}
           >
             <FilterX size={16} aria-hidden="true" /> Limpiar filtros
           </button>

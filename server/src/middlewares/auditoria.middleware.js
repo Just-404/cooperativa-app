@@ -41,6 +41,7 @@ const ACCIONES_DE_ACTUALIZACION = new Set([
   'aprobar_prestamo',
   'rechazar_prestamo',
   'evaluar_prestamo',
+  'revertir_estado_prestamo',
   'desembolsar_prestamo',
   'cerrar_cuenta',
   'recalcular_fechas_cuotas',

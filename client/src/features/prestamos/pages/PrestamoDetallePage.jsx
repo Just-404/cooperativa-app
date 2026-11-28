@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useLocation, useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Banknote,
@@ -10,12 +10,13 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react';
-import { obtener } from '../services/prestamos.service';
+import { obtener, revertirEstado } from '../services/prestamos.service';
 import { evaluar } from '../../evaluacion/services/evaluacion.service';
 import { aprobar, rechazar } from '../../aprobacion/services/aprobacion.service';
 import { desembolsar } from '../../desembolso/services/desembolso.service';
 import { listarCuotas, registrarPago, registrarAbonoCapital, recalcularFechasCuotas } from '../../cuotas-pagos/services/cuotas-pagos.service';
 import EstadoTag from '../../../components/common/EstadoTag.jsx';
+import ConfirmacionModal from '../../../components/common/ConfirmacionModal.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import { formatearFecha, nombreDia } from '../../../utils/fecha';
 
@@ -24,7 +25,6 @@ const PASOS = [
   { estado: 'evaluado', label: 'Evaluación' },
   { estado: 'aprobado', label: 'Aprobación' },
   { estado: 'desembolsado', label: 'Desembolso' },
-  { estado: 'cerrado', label: 'Cuotas / pago' },
 ];
 
 const ANCHO_MINIMO_COMENTARIO = 432;
@@ -32,6 +32,7 @@ const ANCHO_MINIMO_COMENTARIO = 432;
 
 export default function PrestamoDetallePage() {
   const { id } = useParams();
+  const location = useLocation();
   const { user } = useAuth();
   const [prestamo, setPrestamo] = useState(null);
   const [cuotas, setCuotas] = useState([]);
@@ -42,6 +43,8 @@ export default function PrestamoDetallePage() {
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [abonoMonto, setAbonoMonto] = useState('');
+  const [procesando, setProcesando] = useState(false);
+  const [confirmacion, setConfirmacion] = useState(null);
   const comentarioCardRef = useRef(null);
   const comentarioTextareaRef = useRef(null);
 
@@ -145,6 +148,86 @@ export default function PrestamoDetallePage() {
     }
   }
 
+  async function handleEvaluar() {
+    if (!comentario.trim()) {
+      setError('El comentario de evaluación es requerido.');
+      return;
+    }
+    setError('');
+    setConfirmacion({
+      tipo: 'evaluar',
+      titulo: '¿Marcar como evaluado?',
+      mensaje: 'Confirma que la evaluación del préstamo está completa antes de continuar.',
+      confirmarTexto: 'Marcar como evaluado',
+    });
+  }
+
+  async function handleAprobar() {
+    setError('');
+    setConfirmacion({
+      tipo: 'aprobar',
+      titulo: '¿Aprobar este préstamo?',
+      mensaje: 'Confirma que la información del préstamo es correcta antes de aprobarlo.',
+      confirmarTexto: 'Aprobar préstamo',
+    });
+  }
+
+  async function handleRechazar() {
+    if (!comentario.trim()) {
+      setError('El motivo del rechazo es requerido.');
+      return;
+    }
+    setError('');
+    setConfirmacion({
+      tipo: 'rechazar',
+      titulo: '¿Rechazar este préstamo?',
+      mensaje: 'Confirma el rechazo. La decisión y el motivo quedarán registrados.',
+      confirmarTexto: 'Rechazar préstamo',
+      peligro: true,
+    });
+  }
+
+  async function handleRevertirEstado() {
+    setError('');
+    setConfirmacion({
+      tipo: 'revertir',
+      titulo: '¿Revertir el estado del préstamo?',
+      mensaje: 'El préstamo volverá a la etapa anterior y se limpiarán los datos de la decisión revertida.',
+      confirmarTexto: 'Revertir estado',
+      peligro: true,
+    });
+  }
+
+  async function confirmarAccion() {
+    if (!confirmacion || procesando) return;
+    setError('');
+    setMensaje('');
+    setProcesando(true);
+    try {
+      if (confirmacion.tipo === 'evaluar') {
+        await evaluar(id, comentario.trim());
+        setMensaje('Préstamo marcado como evaluado.');
+      } else if (confirmacion.tipo === 'aprobar') {
+        await aprobar(id, prestamo.montoSolicitado, comentario);
+        setMensaje('Préstamo aprobado.');
+      } else if (confirmacion.tipo === 'rechazar') {
+        await rechazar(id, comentario.trim());
+        setMensaje('Préstamo rechazado.');
+      } else if (confirmacion.tipo === 'revertir') {
+        await revertirEstado(id);
+        setMensaje('Estado del préstamo revertido.');
+      }
+      setComentario('');
+      setConfirmacion(null);
+      cargar();
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'No se pudo completar la acción');
+      setConfirmacion(null);
+    } finally {
+      setProcesando(false);
+    }
+  }
+
   async function handlePago(cuota) {
     setError(''); setMensaje('');
     const total = Number(cuota.montoTotal) + Number(cuota.montoMora || 0);
@@ -186,7 +269,16 @@ export default function PrestamoDetallePage() {
 
   if (!prestamo) return null;
   const rechazado = prestamo.estado === 'rechazado';
+  const cerrado = prestamo.estado === 'cerrado';
   const pasoActualIdx = Math.max(0, PASOS.findIndex((p) => p.estado === prestamo.estado));
+  const rutaRetorno = location.state?.from || `/prestamos${location.search}`;
+  const estadoParaRevertir = prestamo.estado === 'evaluado' ? 'Solicitud' : 'Evaluación';
+  const siguienteAccion = {
+    solicitado: { rol: 'Oficial de crédito', accion: 'la evaluación' },
+    evaluado: { rol: 'Gerente', accion: 'la aprobación o el rechazo' },
+    aprobado: { rol: 'Cajero', accion: 'el desembolso' },
+    desembolsado: { rol: 'Cajero', accion: 'el registro de los pagos' },
+  }[prestamo.estado];
 
   // Verificar si hay cuotas anteriores impagas para cada cuota
   const cuotasConBloqueo = cuotas.map((c, idx) => {
@@ -198,7 +290,7 @@ export default function PrestamoDetallePage() {
 
   return (
     <div>
-      <Link className="link-accion" to="/prestamos" style={{ fontSize: '0.82rem' }}>
+      <Link className="link-accion" to={rutaRetorno} style={{ fontSize: '0.82rem' }}>
         <ArrowLeft size={15} aria-hidden="true" /> Volver a préstamos
       </Link>
       <h3 style={{ marginTop: 10 }}>
@@ -233,6 +325,23 @@ export default function PrestamoDetallePage() {
         </div>
       )}
 
+      {siguienteAccion && (
+        <div className="alert" style={{ margin: '0 0 16px' }} role="status">
+          Para continuar con el préstamo, el rol <strong>{siguienteAccion.rol}</strong> debe realizar {siguienteAccion.accion}.
+        </div>
+      )}
+
+      {user?.rol === 'administrador' && ['evaluado', 'aprobado', 'rechazado'].includes(prestamo.estado) && (
+        <button
+          type="button"
+          className="btn secondary"
+          style={{ marginBottom: 16 }}
+          onClick={handleRevertirEstado}
+        >
+          <RefreshCw size={16} aria-hidden="true" /> Revertir a {estadoParaRevertir}
+        </button>
+      )}
+
       {prestamo.estado === 'solicitado' && puedeEvaluar && (
         <>
           <div ref={comentarioCardRef} className="card" style={{ width: 480, maxWidth: '100%', marginBottom: 10 }}>
@@ -253,7 +362,7 @@ export default function PrestamoDetallePage() {
           <button
             className="btn primary"
             style={{ marginBottom: 20 }}
-            onClick={() => accion(() => evaluar(id, comentario))}
+            onClick={handleEvaluar}
           >
             <ClipboardCheck size={16} aria-hidden="true" /> Marcar como evaluado
           </button>
@@ -278,10 +387,10 @@ export default function PrestamoDetallePage() {
             </small>
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <button className="btn primary" onClick={() => accion(() => aprobar(id, prestamo.montoSolicitado, comentario))}>
+            <button className="btn primary" onClick={handleAprobar}>
               <Check size={16} aria-hidden="true" /> Aprobar
             </button>
-            <button className="btn danger" onClick={() => accion(() => rechazar(id, comentario))}>
+            <button className="btn danger" onClick={handleRechazar}>
               <X size={16} aria-hidden="true" /> Rechazar
             </button>
           </div>
@@ -300,8 +409,8 @@ export default function PrestamoDetallePage() {
       {cuotas.length > 0 && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <h4 style={{ margin: 0 }}>Cuotas</h4>
-            {puedeRegistrarPago && (
+            <h4 style={{ margin: 0 }}>{cerrado ? 'Pagos realizados' : 'Cuotas'}</h4>
+            {!cerrado && puedeRegistrarPago && (
               <div className="card" style={{ padding: 12, maxWidth: 350, margin: 0, boxShadow: 'none'}}>
                 <label style={{ display: 'block', marginBottom: 6 }}>Abono a capital</label>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -323,38 +432,40 @@ export default function PrestamoDetallePage() {
             )}
           </div>
 
-          <div style={{ marginBottom: 16, padding: 12, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Total a pagar (pendiente)</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)', fontFamily: "'Roboto Slab', serif" }}>
-                RD$ {totalPendiente.toLocaleString()}
+          {!cerrado && (
+            <div style={{ marginBottom: 16, padding: 12, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Total a pagar (pendiente)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)', fontFamily: "'Roboto Slab', serif" }}>
+                  RD$ {totalPendiente.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Cuotas pagadas</div>
+                <div style={{ fontSize: '1rem', color: 'var(--ink)' }}>{cuotasPagadas} de {cuotas.length}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Total préstamo (capital + intereses)</div>
+                <div style={{ fontSize: '1rem', color: 'var(--ink)' }}>RD$ {totalPrestamoConIntereses.toLocaleString()}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={handleRecalcularFechas}
+                  disabled={prestamo.estado !== 'desembolsado'}
+                >
+                  <RefreshCw size={16} aria-hidden="true" /> Recalcular fechas de vencimiento
+                </button>
+                <small style={{ color: 'var(--ink-soft)' }}>Ajusta feriados y fines de semana</small>
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Cuotas pagadas</div>
-              <div style={{ fontSize: '1rem', color: 'var(--ink)' }}>{cuotasPagadas} de {cuotas.length}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Total préstamo (capital + intereses)</div>
-              <div style={{ fontSize: '1rem', color: 'var(--ink)' }}>RD$ {totalPrestamoConIntereses.toLocaleString()}</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={handleRecalcularFechas}
-                disabled={prestamo.estado !== 'desembolsado' && prestamo.estado !== 'cerrado'}
-              >
-                <RefreshCw size={16} aria-hidden="true" /> Recalcular fechas de vencimiento
-              </button>
-              <small style={{ color: 'var(--ink-soft)' }}>Ajusta feriados y fines de semana</small>
-            </div>
-          </div>
+          )}
 
           <table className="ledger">
             <thead><tr><th>#</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Mora</th><th>Total</th><th>Estado</th><th></th></tr></thead>
             <tbody>
-              {cuotasConBloqueo.map((c) => {
+              {cuotasConBloqueo.filter((c) => !cerrado || c.estado === 'pagada').map((c) => {
                 const total = Number(c.montoTotal) + Number(c.montoMora || 0);
                 const puedePagar = c.estado !== 'pagada' && puedeRegistrarPago && !c.bloqueada;
                 return (
@@ -377,7 +488,7 @@ export default function PrestamoDetallePage() {
                     <td className="mono">{total.toLocaleString()}</td>
                     <td><EstadoTag estado={c.estado} /></td>
                     <td>
-                      {c.estado !== 'pagada' && puedeRegistrarPago && (
+                      {!cerrado && c.estado !== 'pagada' && puedeRegistrarPago && (
                         <button
                           className="btn ghost"
                           onClick={() => handlePago(c)}
@@ -394,12 +505,24 @@ export default function PrestamoDetallePage() {
               })}
             </tbody>
           </table>
-          {cuotasConBloqueo.some(c => c.bloqueada && c.estado !== 'pagada') && (
+          {!cerrado && cuotasConBloqueo.some(c => c.bloqueada && c.estado !== 'pagada') && (
             <p style={{ color: 'var(--ink-soft)', fontSize: '0.85rem', marginTop: 8 }}>
               Las cuotas en gris están bloqueadas: debe pagar las anteriores en orden.
             </p>
           )}
         </>
+      )}
+
+      {confirmacion && (
+        <ConfirmacionModal
+          titulo={confirmacion.titulo}
+          mensaje={confirmacion.mensaje}
+          confirmarTexto={confirmacion.confirmarTexto}
+          peligro={confirmacion.peligro}
+          procesando={procesando}
+          onConfirmar={confirmarAccion}
+          onCancelar={() => { if (!procesando) setConfirmacion(null); }}
+        />
       )}
     </div>
   );

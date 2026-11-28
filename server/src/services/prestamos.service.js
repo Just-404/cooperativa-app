@@ -1,4 +1,4 @@
-const { Prestamo, Socio, TipoPrestamo } = require('../models');
+const { sequelize, Prestamo, Socio, TipoPrestamo } = require('../models');
 
 async function listar() {
   return Prestamo.findAll({
@@ -58,4 +58,42 @@ async function solicitar({ socioId, tipoPrestamoId, montoSolicitado, plazoMeses 
   });
 }
 
-module.exports = { listar, obtener, solicitar };
+async function revertirEstado(id) {
+  return sequelize.transaction(async (transaction) => {
+    const prestamo = await Prestamo.findByPk(id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!prestamo) {
+      const err = new Error('Préstamo no encontrado');
+      err.status = 404;
+      throw err;
+    }
+
+    let cambios;
+    if (prestamo.estado === 'evaluado') {
+      cambios = {
+        estado: 'solicitado',
+        comentarioEvaluacion: null,
+        fechaEvaluacion: null,
+      };
+    } else if (prestamo.estado === 'aprobado' || prestamo.estado === 'rechazado') {
+      cambios = {
+        estado: 'evaluado',
+        montoAprobado: null,
+        comentarioAprobacion: null,
+        usuarioAprobadorId: null,
+        fechaAprobacion: null,
+      };
+    } else {
+      const err = new Error('Solo se puede revertir un préstamo antes del desembolso');
+      err.status = 400;
+      throw err;
+    }
+
+    await prestamo.update(cambios, { transaction });
+    return prestamo;
+  });
+}
+
+module.exports = { listar, obtener, solicitar, revertirEstado };

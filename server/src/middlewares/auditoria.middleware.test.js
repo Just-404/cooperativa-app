@@ -199,3 +199,127 @@ test('audita la restauración de feriados usando el año como identificador', as
   expect(detalle.antes).toHaveLength(1);
   expect(detalle.despues).toHaveLength(2);
 });
+
+test('registra la creación de tickets con su estado y usuario afectado', async () => {
+  modelos.Ticket.findByPk.mockResolvedValueOnce({
+    id: 'ticket-1',
+    usuarioId: 'usuario-1',
+    tipo: 'report_problem',
+    titulo: 'Problema de acceso',
+    estado: 'pending',
+  });
+  modelos.Usuario.findByPk.mockResolvedValueOnce({
+    id: 'usuario-1',
+    nombre: 'Usuario',
+    apellido: 'Prueba',
+  });
+  const req = {
+    method: 'POST',
+    params: {},
+    body: { tipo: 'report_problem', titulo: 'Problema de acceso', descripcion: 'No puedo ingresar' },
+    user: { id: 'usuario-1' },
+  };
+  const res = crearRespuesta(201);
+
+  auditoria('crear_ticket', 'ticket')(req, res, jest.fn());
+  await esperarOperacionesPendientes();
+  res.json({ ticket: { id: 'ticket-1' } });
+  res.terminar();
+  await esperarOperacionesPendientes();
+
+  const evento = auditoriaService.registrar.mock.calls[0][0];
+  const detalle = JSON.parse(evento.detalle);
+  expect(evento).toMatchObject({
+    usuarioId: 'usuario-1',
+    accion: 'crear_ticket',
+    entidad: 'ticket',
+    entidadId: 'ticket-1',
+  });
+  expect(detalle).toMatchObject({
+    operacion: 'insertar',
+    antes: null,
+    despues: { tipo: 'report_problem', estado: 'pending' },
+    afectado: 'Usuario Prueba',
+  });
+});
+
+test('registra el cambio de estado de un ticket realizado por el administrador', async () => {
+  modelos.Ticket.findByPk
+    .mockResolvedValueOnce({
+      id: 'ticket-2',
+      usuarioId: 'usuario-2',
+      tipo: 'forgot_password',
+      estado: 'pending',
+    })
+    .mockResolvedValueOnce({
+      id: 'ticket-2',
+      usuarioId: 'usuario-2',
+      tipo: 'forgot_password',
+      estado: 'resolved',
+    });
+  modelos.Usuario.findByPk.mockResolvedValueOnce({ id: 'usuario-2', nombre: 'Solicitante' });
+  const req = {
+    method: 'PATCH',
+    params: { id: 'ticket-2' },
+    body: { estado: 'resolved' },
+    user: { id: 'admin-1' },
+  };
+  const res = crearRespuesta();
+
+  auditoria('actualizar_ticket', 'ticket')(req, res, jest.fn());
+  await esperarOperacionesPendientes();
+  res.json({ ticket: { id: 'ticket-2', estado: 'resolved' } });
+  res.terminar();
+  await esperarOperacionesPendientes();
+
+  const evento = auditoriaService.registrar.mock.calls[0][0];
+  const detalle = JSON.parse(evento.detalle);
+  expect(evento).toMatchObject({
+    usuarioId: 'admin-1',
+    accion: 'actualizar_ticket',
+    entidad: 'ticket',
+    entidadId: 'ticket-2',
+  });
+  expect(detalle).toMatchObject({
+    operacion: 'actualizar',
+    antes: { estado: 'pending' },
+    despues: { estado: 'resolved' },
+  });
+});
+
+test('registra la eliminación de tickets gestionada por un administrador', async () => {
+  modelos.Ticket.findByPk.mockResolvedValueOnce({
+    id: 'ticket-3',
+    usuarioId: 'usuario-3',
+    tipo: 'report_problem',
+    estado: 'cancelled',
+  });
+  modelos.Usuario.findByPk.mockResolvedValueOnce({ id: 'usuario-3', nombre: 'Solicitante' });
+  const req = {
+    method: 'DELETE',
+    params: { id: 'ticket-3' },
+    body: {},
+    user: { id: 'admin-1' },
+  };
+  const res = crearRespuesta();
+
+  auditoria('eliminar_ticket', 'ticket')(req, res, jest.fn());
+  await esperarOperacionesPendientes();
+  res.json({ mensaje: 'Ticket eliminado exitosamente' });
+  res.terminar();
+  await esperarOperacionesPendientes();
+
+  const evento = auditoriaService.registrar.mock.calls[0][0];
+  const detalle = JSON.parse(evento.detalle);
+  expect(evento).toMatchObject({
+    usuarioId: 'admin-1',
+    accion: 'eliminar_ticket',
+    entidad: 'ticket',
+    entidadId: 'ticket-3',
+  });
+  expect(detalle).toMatchObject({
+    operacion: 'eliminar',
+    antes: { estado: 'cancelled' },
+    despues: null,
+  });
+});
